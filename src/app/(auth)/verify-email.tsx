@@ -43,7 +43,7 @@ export default function VerifyEmailScreen() {
     try {
       await authApi.verifyEmail({ email: email.trim(), code: code.trim() });
       Alert.alert('Thành công', 'Tài khoản của bạn đã được xác thực!', [
-        { text: 'Đăng nhập ngay', onPress: () => router.replace('/login') }
+        { text: 'Đăng nhập ngay', onPress: () => router.replace('/(auth)/login') }
       ]);
     } catch (error) {
       if (error instanceof AppError) {
@@ -91,7 +91,7 @@ export default function VerifyEmailScreen() {
           </ThemedText>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(200).duration(600).springify()} style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#ffffff' }]}>
+        <Animated.View entering={FadeInUp.delay(200).duration(600).springify()} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           <View style={styles.form}>
             
             <MaterialInput
@@ -100,7 +100,7 @@ export default function VerifyEmailScreen() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              editable={!emailParam} // Lock email if passed from register
+              editable={!emailParam}
             />
 
             <MaterialInput
@@ -112,7 +112,7 @@ export default function VerifyEmailScreen() {
             />
 
             <AnimatedPressable
-              style={[styles.button, buttonAnimatedStyle, { opacity: loading ? 0.7 : 1 }]}
+              style={[styles.button, buttonAnimatedStyle, { backgroundColor: colors.primary, opacity: loading ? 0.7 : 1 }]}
               onPressIn={() => (buttonScale.value = withSpring(0.95))}
               onPressOut={() => (buttonScale.value = withSpring(1))}
               onPress={handleVerify}
@@ -129,17 +129,17 @@ export default function VerifyEmailScreen() {
               <ThemedText style={styles.footerText}>Chưa nhận được mã? </ThemedText>
               <Pressable onPress={handleResend} disabled={resending || loading}>
                 {resending ? (
-                  <ActivityIndicator size="small" color="#3525CD" style={{ marginLeft: 4 }} />
+                  <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 4 }} />
                 ) : (
-                  <ThemedText style={[styles.linkText, (resending || loading) && { opacity: 0.5 }]}>Gửi lại</ThemedText>
+                  <ThemedText style={[styles.linkText, { color: colors.primary }, (resending || loading) && { opacity: 0.5 }]}>Gửi lại</ThemedText>
                 )}
               </Pressable>
             </View>
 
             <View style={styles.backToLogin}>
-              <Link href="/login" asChild>
+              <Link href="/(auth)/login" asChild>
                 <Pressable>
-                  <ThemedText style={styles.linkText}>Quay lại Đăng nhập</ThemedText>
+                  <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Quay lại Đăng nhập</ThemedText>
                 </Pressable>
               </Link>
             </View>
@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     marginTop: Spacing.two,
     textAlign: 'center',
+    fontWeight: '700',
   },
   subtitle: {
     opacity: 0.7,
@@ -183,27 +184,19 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 24,
     padding: Spacing.four,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 5,
+    borderWidth: 1,
+    elevation: 4,
   },
   form: {
     gap: Spacing.two,
   },
   button: {
-    height: 56,
-    backgroundColor: '#3525CD',
+    height: 54,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: Spacing.three,
-    shadowColor: '#3525CD',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    width: '100%',
   },
   buttonText: {
     color: '#ffffff',
@@ -221,7 +214,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   linkText: {
-    color: '#3525CD',
     fontWeight: '700',
     fontSize: 14,
   },
@@ -230,3 +222,4 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
 });
+

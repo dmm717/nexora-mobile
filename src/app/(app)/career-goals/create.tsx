@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { careerGoalsApi } from '@/api/career-goals.api';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { CreateCareerGoalRequest } from '@/api/types';
 
@@ -45,75 +45,82 @@ export default function CreateCareerGoalScreen() {
       Alert.alert('Lỗi', 'Vai trò và Cấp bậc không được để trống.');
       return;
     }
-    createMutation.mutate(form);
+    createMutation.mutate({
+      targetRole: form.targetRole.trim(),
+      seniority: form.seniority.trim(),
+      industry: form.industry?.trim() || undefined,
+      targetCompany: form.targetCompany?.trim() || undefined,
+    });
   };
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <ThemedText type="title" style={styles.title}>Tạo Mục Tiêu</ThemedText>
+          <ThemedText type="title" style={styles.title}>Tạo Mục Tiêu Nghề Nghiệp</ThemedText>
         </View>
 
-        <ScrollView contentContainerStyle={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Vai trò mục tiêu (Target Role) *</ThemedText>
-            <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]}
-              placeholder="VD: Software Engineer"
-              placeholderTextColor="#999"
-              value={form.targetRole}
-              onChangeText={(text) => setForm({ ...form, targetRole: text })}
-            />
-          </View>
+        <ScrollView contentContainerStyle={styles.formContainer} showsVerticalScrollIndicator={false}>
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>Vai trò mục tiêu (Target Role) *</ThemedText>
+              <TextInput
+                style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.inputBorder }]}
+                placeholder="VD: Software Engineer, Product Manager"
+                placeholderTextColor={colors.textMuted}
+                value={form.targetRole}
+                onChangeText={(text) => setForm({ ...form, targetRole: text })}
+              />
+            </View>
 
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Cấp bậc (Seniority) *</ThemedText>
-            <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]}
-              placeholder="VD: Senior, Junior, Intern"
-              placeholderTextColor="#999"
-              value={form.seniority}
-              onChangeText={(text) => setForm({ ...form, seniority: text })}
-            />
-          </View>
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>Cấp bậc (Seniority) *</ThemedText>
+              <TextInput
+                style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.inputBorder }]}
+                placeholder="VD: Senior, Middle, Junior, Intern"
+                placeholderTextColor={colors.textMuted}
+                value={form.seniority}
+                onChangeText={(text) => setForm({ ...form, seniority: text })}
+              />
+            </View>
 
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Ngành (Industry)</ThemedText>
-            <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]}
-              placeholder="VD: Fintech, E-commerce"
-              placeholderTextColor="#999"
-              value={form.industry}
-              onChangeText={(text) => setForm({ ...form, industry: text })}
-            />
-          </View>
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>Ngành (Industry)</ThemedText>
+              <TextInput
+                style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.inputBorder }]}
+                placeholder="VD: Fintech, E-commerce, AI"
+                placeholderTextColor={colors.textMuted}
+                value={form.industry}
+                onChangeText={(text) => setForm({ ...form, industry: text })}
+              />
+            </View>
 
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Công ty mục tiêu (Target Company)</ThemedText>
-            <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]}
-              placeholder="VD: Google, VNG"
-              placeholderTextColor="#999"
-              value={form.targetCompany}
-              onChangeText={(text) => setForm({ ...form, targetCompany: text })}
-            />
-          </View>
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>Công ty mục tiêu (Target Company)</ThemedText>
+              <TextInput
+                style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.inputBorder }]}
+                placeholder="VD: Google, Shopee, VNG"
+                placeholderTextColor={colors.textMuted}
+                value={form.targetCompany}
+                onChangeText={(text) => setForm({ ...form, targetCompany: text })}
+              />
+            </View>
 
-          <TouchableOpacity 
-            style={[styles.submitButton, createMutation.isPending && styles.disabledButton]} 
-            onPress={handleSubmit}
-            disabled={createMutation.isPending}
-          >
-            {createMutation.isPending ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <ThemedText style={styles.submitButtonText}>Tạo mới</ThemedText>
-            )}
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.submitButton, { backgroundColor: colors.primary }, createMutation.isPending && styles.disabledButton]} 
+              onPress={handleSubmit}
+              disabled={createMutation.isPending}
+            >
+              {createMutation.isPending ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <ThemedText style={styles.submitButtonText}>Tạo Mục Tiêu Mới</ThemedText>
+              )}
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -128,12 +135,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.four,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(150, 150, 150, 0.2)',
   },
-  backButton: { marginRight: Spacing.four },
-  title: { fontSize: 20 },
+  backButton: { marginRight: Spacing.three },
+  title: { fontSize: 20, fontWeight: '700' },
   formContainer: {
     padding: Spacing.four,
+  },
+  card: {
+    borderRadius: Radius.lg,
+    padding: Spacing.four,
+    borderWidth: 1,
+    ...Shadows.sm,
     gap: Spacing.four,
   },
   inputGroup: {
@@ -141,21 +153,21 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   input: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: Radius.md,
     padding: 12,
-    fontSize: 16,
+    fontSize: 15,
   },
   submitButton: {
-    backgroundColor: '#3525CD',
-    borderRadius: 12,
+    borderRadius: Radius.md,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: Spacing.four,
+    marginTop: Spacing.two,
+    ...Shadows.sm,
   },
   disabledButton: { opacity: 0.7 },
-  submitButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  submitButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });

@@ -2,8 +2,9 @@ import { tokenStorage } from '@/services/storage';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiErrorResponse, AppError } from './types';
 
-const API_BASE_URL =
+export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL || 'https://nexora-backend-q32b.onrender.com/api/v1';
+
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

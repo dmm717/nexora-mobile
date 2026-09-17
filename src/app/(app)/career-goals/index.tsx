@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { careerGoalsApi } from '@/api/career-goals.api';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function CareerGoalsScreen() {
@@ -34,7 +34,7 @@ export default function CareerGoalsScreen() {
   if (isLoading && !isRefetching) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#3525CD" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </ThemedView>
     );
   }
@@ -42,7 +42,8 @@ export default function CareerGoalsScreen() {
   if (isError) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ThemedText>Có lỗi xảy ra khi tải danh sách mục tiêu. Vui lòng thử lại.</ThemedText>
+        <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
+        <ThemedText style={{ marginTop: Spacing.two }}>Có lỗi xảy ra khi tải danh sách mục tiêu. Vui lòng thử lại.</ThemedText>
       </ThemedView>
     );
   }
@@ -50,7 +51,7 @@ export default function CareerGoalsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
@@ -59,46 +60,65 @@ export default function CareerGoalsScreen() {
 
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
         >
           <TouchableOpacity 
-            style={styles.createButton} 
+            style={[styles.createButton, { backgroundColor: colors.primary }]} 
             onPress={() => router.push('/(app)/career-goals/create' as any)}
           >
             <Ionicons name="add-circle-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
             <ThemedText style={styles.createButtonText}>Tạo mục tiêu mới</ThemedText>
           </TouchableOpacity>
+
           {goals?.length === 0 ? (
-            <ThemedText style={styles.emptyText}>Chưa có mục tiêu nào được tạo.</ThemedText>
+            <View style={styles.emptyContainer}>
+              <Ionicons name="flag-outline" size={48} color={colors.textMuted} />
+              <ThemedText style={styles.emptyText}>Chưa có mục tiêu nào được tạo.</ThemedText>
+            </View>
           ) : (
             goals?.map((goal) => (
               <View 
                 key={goal.id} 
                 style={[
                   styles.card, 
-                  { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#ffffff' },
+                  { backgroundColor: colors.card, borderColor: goal.active ? colors.primary : colors.cardBorder },
                   goal.active && styles.activeCard
                 ]}
               >
                 <View style={styles.cardHeader}>
                   <ThemedText style={styles.goalRole}>{goal.targetRole}</ThemedText>
-                  {goal.active && (
-                    <View style={styles.activeBadge}>
+                  {goal.active ? (
+                    <View style={[styles.activeBadge, { backgroundColor: colors.primary }]}>
                       <ThemedText style={styles.activeBadgeText}>Đang chọn</ThemedText>
+                    </View>
+                  ) : (
+                    <View style={[styles.seniorityBadge, { backgroundColor: colors.primaryLight }]}>
+                      <ThemedText style={[styles.seniorityBadgeText, { color: colors.primary }]}>
+                        {goal.seniority}
+                      </ThemedText>
                     </View>
                   )}
                 </View>
-                <ThemedText style={styles.goalDetail}>Kinh nghiệm: {goal.seniority}</ThemedText>
+
+                {goal.active && (
+                  <View style={[styles.seniorityBadge, { backgroundColor: colors.primaryLight, alignSelf: 'flex-start' }]}>
+                    <ThemedText style={[styles.seniorityBadgeText, { color: colors.primary }]}>
+                      Cấp bậc: {goal.seniority}
+                    </ThemedText>
+                  </View>
+                )}
+
                 {goal.industry && <ThemedText style={styles.goalDetail}>Ngành: {goal.industry}</ThemedText>}
-                {goal.targetCompany && <ThemedText style={styles.goalDetail}>Công ty: {goal.targetCompany}</ThemedText>}
+                {goal.targetCompany && <ThemedText style={styles.goalDetail}>Công ty mục tiêu: {goal.targetCompany}</ThemedText>}
 
                 {!goal.active && (
                   <TouchableOpacity 
-                    style={styles.setActiveBtn}
+                    style={[styles.setActiveBtn, { backgroundColor: colors.primaryLight }]}
                     onPress={() => setActiveMutation.mutate(goal.id)}
                     disabled={setActiveMutation.isPending}
                   >
-                    <ThemedText style={styles.setActiveText}>
+                    <ThemedText style={[styles.setActiveText, { color: colors.primary }]}>
                       {setActiveMutation.isPending && setActiveMutation.variables === goal.id ? 'Đang chọn...' : 'Chọn làm mục tiêu chính'}
                     </ThemedText>
                   </TouchableOpacity>
@@ -124,50 +144,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.four,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(150, 150, 150, 0.2)',
   },
   backButton: {
-    marginRight: Spacing.four,
+    marginRight: Spacing.three,
   },
   title: {
     fontSize: 20,
+    fontWeight: '700',
   },
   scrollContent: {
     padding: Spacing.four,
-    gap: Spacing.four,
+    gap: Spacing.three,
   },
   createButton: {
-    backgroundColor: '#3525CD',
-    borderRadius: 12,
+    borderRadius: Radius.md,
     paddingVertical: 14,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.two,
+    ...Shadows.sm,
   },
   createButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 16,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: Spacing.four,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.six,
+    gap: Spacing.two,
+  },
+  emptyText: {
+    opacity: 0.6,
+    fontStyle: 'italic',
   },
   card: {
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     padding: Spacing.four,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    ...Shadows.sm,
     gap: Spacing.two,
   },
   activeCard: {
     borderWidth: 2,
-    borderColor: '#3525CD',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -176,41 +203,41 @@ const styles = StyleSheet.create({
   },
   goalRole: {
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 17,
     flex: 1,
   },
   activeBadge: {
-    backgroundColor: '#3525CD',
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: Radius.full,
   },
   activeBadgeText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '700',
+  },
+  seniorityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+  },
+  seniorityBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   goalDetail: {
     fontSize: 14,
     opacity: 0.8,
   },
-  emptyText: {
-    opacity: 0.6,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: Spacing.six,
-  },
   setActiveBtn: {
     marginTop: Spacing.two,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(53, 37, 205, 0.1)',
-    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.md,
     alignSelf: 'flex-start',
   },
   setActiveText: {
-    color: '#3525CD',
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: 13,
   }
 });

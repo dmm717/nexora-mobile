@@ -122,7 +122,7 @@ export default function RegisterScreen() {
 
             <View style={styles.footer}>
               <ThemedText style={styles.footerText}>Đã có tài khoản? </ThemedText>
-              <Link href="/login" asChild>
+              <Link href="/(auth)/login" asChild>
                 <Pressable>
                   <ThemedText style={styles.linkText}>Đăng nhập ngay</ThemedText>
                 </Pressable>

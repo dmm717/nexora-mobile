@@ -57,7 +57,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login({ email: targetEmail, password: targetPassword });
-      router.replace('/');
+      router.replace('/(tabs)/home' as any);
     } catch (error) {
       if (error instanceof AppError) {
         if (error.code === 'USER_UNVERIFIED' || error.code === 'EMAIL_NOT_VERIFIED') {
@@ -147,7 +147,7 @@ export default function LoginScreen() {
 
             <View style={styles.footer}>
               <ThemedText style={styles.footerText}>Chưa có tài khoản? </ThemedText>
-              <Link href="/register" asChild>
+              <Link href="/(auth)/register" asChild>
                 <Pressable>
                   <ThemedText style={styles.linkText}>Tạo tài khoản mới</ThemedText>
                 </Pressable>

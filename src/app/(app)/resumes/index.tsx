@@ -11,7 +11,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { resumesApi } from '@/api/resumes.api';
 import { profileApi } from '@/api/profile.api';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function ResumesScreen() {
@@ -35,15 +35,12 @@ export default function ResumesScreen() {
 
   const uploadMutation = useMutation({
     mutationFn: async (file: DocumentPicker.DocumentPickerAsset) => {
-      // 1. Lấy presign URL
       const intent = await resumesApi.presign({
         fileName: file.name,
         contentType: file.mimeType || 'application/pdf',
         size: file.size || 0,
       });
 
-      // 2. Đọc file dưới dạng base64 rồi chuyển sang mảng bytes (hoặc upload trực tiếp qua FileSystem nếu uploadUrl hỗ trợ)
-      // Dùng expo-file-system upload
       const uploadResult = await FileSystem.uploadAsync(intent.uploadUrl, file.uri, {
         httpMethod: 'PUT',
         headers: {
@@ -55,7 +52,6 @@ export default function ResumesScreen() {
         throw new Error('Upload to S3 failed');
       }
 
-      // 3. Finalize
       await resumesApi.finalize({ uploadToken: intent.token });
     },
     onSuccess: () => {
@@ -96,7 +92,7 @@ export default function ResumesScreen() {
   if (isLoading && !isRefetching) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#3525CD" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </ThemedView>
     );
   }
@@ -104,19 +100,20 @@ export default function ResumesScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <ThemedText type="title" style={styles.title}>Quản lý CV</ThemedText>
+          <ThemedText type="title" style={styles.title}>Quản Lý CV</ThemedText>
         </View>
 
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
         >
           <TouchableOpacity 
-            style={[styles.uploadButton, uploadMutation.isPending && styles.disabledButton]} 
+            style={[styles.uploadButton, { backgroundColor: colors.primary }, uploadMutation.isPending && styles.disabledButton]} 
             onPress={handleUpload}
             disabled={uploadMutation.isPending}
           >
@@ -124,46 +121,62 @@ export default function ResumesScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <Ionicons name="cloud-upload-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-                <ThemedText style={styles.uploadButtonText}>Tải lên CV mới</ThemedText>
+                <Ionicons name="cloud-upload-outline" size={22} color="#fff" style={{ marginRight: 8 }} />
+                <ThemedText style={styles.uploadButtonText}>Tải lên CV mới (PDF/DOCX)</ThemedText>
               </>
             )}
           </TouchableOpacity>
 
           {isError ? (
-            <ThemedText style={styles.emptyText}>Có lỗi xảy ra khi tải danh sách CV.</ThemedText>
+            <View style={styles.emptyContainer}>
+              <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
+              <ThemedText style={styles.emptyText}>Có lỗi xảy ra khi tải danh sách CV.</ThemedText>
+            </View>
           ) : resumes?.length === 0 ? (
-            <ThemedText style={styles.emptyText}>Chưa có CV nào được tải lên.</ThemedText>
+            <View style={styles.emptyContainer}>
+              <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
+              <ThemedText style={styles.emptyText}>Chưa có CV nào được tải lên.</ThemedText>
+            </View>
           ) : (
             resumes?.map((resume) => (
               <View 
                 key={resume.id} 
                 style={[
                   styles.card, 
-                  { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#ffffff' },
+                  { backgroundColor: colors.card, borderColor: resume.id === primaryResumeId ? colors.accent : colors.cardBorder },
                   resume.id === primaryResumeId && styles.primaryCard
                 ]}
               >
                 <View style={styles.cardHeader}>
-                  <ThemedText style={styles.resumeName}>{resume.fileName}</ThemedText>
+                  <View style={styles.resumeTitleRow}>
+                    <Ionicons name="document-text" size={22} color={resume.id === primaryResumeId ? colors.accent : colors.primary} />
+                    <ThemedText style={styles.resumeName}>{resume.fileName}</ThemedText>
+                  </View>
                   {resume.id === primaryResumeId && (
-                    <View style={styles.primaryBadge}>
+                    <View style={[styles.primaryBadge, { backgroundColor: colors.accent }]}>
                       <ThemedText style={styles.primaryBadgeText}>CV Chính</ThemedText>
                     </View>
                   )}
                 </View>
-                <ThemedText style={styles.resumeDetail}>Trạng thái: {resume.status}</ThemedText>
-                <ThemedText style={styles.resumeDetail}>
-                  Kích thước: {(resume.size / 1024).toFixed(2)} KB
-                </ThemedText>
+
+                <View style={styles.detailsRow}>
+                  <View style={[styles.statusChip, { backgroundColor: colors.primaryLight }]}>
+                    <ThemedText style={[styles.statusChipText, { color: colors.primary }]}>
+                      Trạng thái: {resume.status}
+                    </ThemedText>
+                  </View>
+                  <ThemedText style={styles.resumeDetail}>
+                    {(resume.size / 1024).toFixed(1)} KB
+                  </ThemedText>
+                </View>
                 
                 {resume.id !== primaryResumeId && resume.status === 'ready' && (
                   <TouchableOpacity 
-                    style={styles.setPrimaryBtn}
+                    style={[styles.setPrimaryBtn, { backgroundColor: colors.accentLight }]}
                     onPress={() => setPrimaryMutation.mutate(resume.id)}
                     disabled={setPrimaryMutation.isPending}
                   >
-                    <ThemedText style={styles.setPrimaryText}>
+                    <ThemedText style={[styles.setPrimaryText, { color: colors.accent }]}>
                       {setPrimaryMutation.isPending ? 'Đang đặt...' : 'Đặt làm CV chính'}
                     </ThemedText>
                   </TouchableOpacity>
@@ -185,51 +198,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.four,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(150, 150, 150, 0.2)',
   },
-  backButton: { marginRight: Spacing.four },
-  title: { fontSize: 20 },
-  scrollContent: { padding: Spacing.four, gap: Spacing.four },
+  backButton: { marginRight: Spacing.three },
+  title: { fontSize: 20, fontWeight: '700' },
+  scrollContent: { padding: Spacing.four, gap: Spacing.three },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   uploadButton: {
-    backgroundColor: '#3525CD',
-    borderRadius: 12,
+    borderRadius: Radius.md,
     paddingVertical: 14,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.two,
+    ...Shadows.sm,
   },
   disabledButton: { opacity: 0.7 },
-  uploadButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  card: {
-    borderRadius: 16,
-    padding: Spacing.four,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+  uploadButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.six,
     gap: Spacing.two,
   },
-  primaryCard: { borderWidth: 2, borderColor: '#3525CD' },
+  emptyText: { opacity: 0.6, fontStyle: 'italic', textAlign: 'center' },
+  card: {
+    borderRadius: Radius.lg,
+    padding: Spacing.four,
+    borderWidth: 1,
+    ...Shadows.sm,
+    gap: Spacing.three,
+  },
+  primaryCard: { borderWidth: 2 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  resumeName: { fontWeight: '700', fontSize: 15, flex: 1, marginRight: 8 },
-  primaryBadge: { backgroundColor: '#3525CD', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  primaryBadgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+  resumeTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flex: 1 },
+  resumeName: { fontWeight: '700', fontSize: 16, flex: 1 },
+  primaryBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.full },
+  primaryBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  detailsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  statusChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.sm },
+  statusChipText: { fontSize: 12, fontWeight: '600' },
   resumeDetail: { fontSize: 13, opacity: 0.7 },
-  emptyText: { opacity: 0.6, fontStyle: 'italic', textAlign: 'center', marginTop: Spacing.six },
   setPrimaryBtn: {
-    marginTop: Spacing.two,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(53, 37, 205, 0.1)',
-    borderRadius: 8,
+    marginTop: Spacing.one,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.md,
     alignSelf: 'flex-start',
   },
   setPrimaryText: {
-    color: '#3525CD',
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: 13,
   }
 });
