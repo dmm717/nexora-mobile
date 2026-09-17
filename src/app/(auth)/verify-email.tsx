@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View, Image } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import Animated, { FadeInUp, FadeInDown, withSpring, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeInDown, Easing } from 'react-native-reanimated';
 import { AppError } from '@/api/types';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { MaterialInput } from '@/components/material-input';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { authApi } from '@/api/auth.api';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import { TouchableScale } from '@/components/ui/touchable-scale';
+import { GlassCard } from '@/components/ui/glass-card';
+import { AmbientBackground } from '@/components/ui/ambient-background';
 
 export default function VerifyEmailScreen() {
   const { email: emailParam } = useLocalSearchParams<{ email: string }>();
@@ -24,14 +24,6 @@ export default function VerifyEmailScreen() {
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
-
-  // Button Scale Animation
-  const buttonScale = useSharedValue(1);
-  const buttonAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: buttonScale.value }],
-    };
-  });
 
   const handleVerify = async () => {
     if (!email.trim() || !code.trim()) {
@@ -78,135 +70,142 @@ export default function VerifyEmailScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
-        
-        <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.header}>
-          <Image source={require('@/assets/images/logo.png')} style={styles.logo} resizeMode="contain" />
-          <ThemedText type="title" style={styles.title}>
-            Xác Thực Email
-          </ThemedText>
-          <ThemedText style={styles.subtitle}>
-            Nhập mã gồm 6 chữ số chúng tôi vừa gửi đến email của bạn
-          </ThemedText>
-        </Animated.View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <Animated.View entering={FadeInDown.duration(800).easing(Easing.out(Easing.cubic))} style={styles.brandHeader}>
+            <Image source={require('@/assets/images/logo.png')} style={styles.logoImage} resizeMode="contain" />
+            <ThemedText type="title" style={styles.title}>
+              Xác Thực Email
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Nhập mã gồm 6 chữ số vừa được gửi đến email của bạn
+            </ThemedText>
+          </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(200).duration(600).springify()} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <View style={styles.form}>
-            
-            <MaterialInput
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              editable={!emailParam}
-            />
+          {/* Form Card */}
+          <Animated.View entering={FadeInUp.delay(200).duration(800).easing(Easing.out(Easing.cubic))}>
+            <GlassCard hasGlow glowColor={colors.glowPrimary} style={styles.card}>
+              <View style={styles.formStack}>
+                <MaterialInput
+                  label="Địa chỉ Email"
+                  leftIcon="mail-outline"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!emailParam}
+                />
 
-            <MaterialInput
-              label="Mã xác thực (6 số)"
-              value={code}
-              onChangeText={setCode}
-              keyboardType="number-pad"
-              maxLength={6}
-            />
+                <MaterialInput
+                  label="Mã OTP (6 số)"
+                  leftIcon="key-outline"
+                  value={code}
+                  onChangeText={setCode}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                />
 
-            <AnimatedPressable
-              style={[styles.button, buttonAnimatedStyle, { backgroundColor: colors.primary, opacity: loading ? 0.7 : 1 }]}
-              onPressIn={() => (buttonScale.value = withSpring(0.95))}
-              onPressOut={() => (buttonScale.value = withSpring(1))}
-              onPress={handleVerify}
-              disabled={loading || resending}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <ThemedText style={styles.buttonText}>Xác Thực</ThemedText>
-              )}
-            </AnimatedPressable>
+                <TouchableScale
+                  style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                  onPress={handleVerify}
+                  disabled={loading || resending}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <ThemedText style={styles.submitButtonText}>Xác Thực Tài Khoản</ThemedText>
+                  )}
+                </TouchableScale>
 
-            <View style={styles.footer}>
-              <ThemedText style={styles.footerText}>Chưa nhận được mã? </ThemedText>
-              <Pressable onPress={handleResend} disabled={resending || loading}>
-                {resending ? (
-                  <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 4 }} />
-                ) : (
-                  <ThemedText style={[styles.linkText, { color: colors.primary }, (resending || loading) && { opacity: 0.5 }]}>Gửi lại</ThemedText>
-                )}
-              </Pressable>
-            </View>
+                <View style={styles.resendRow}>
+                  <ThemedText style={styles.footerText}>Chưa nhận được mã? </ThemedText>
+                  <Pressable onPress={handleResend} disabled={resending || loading} hitSlop={8}>
+                    {resending ? (
+                      <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 4 }} />
+                    ) : (
+                      <ThemedText style={[styles.linkText, { color: colors.primary }, (resending || loading) && { opacity: 0.5 }]}>
+                        Gửi lại mã
+                      </ThemedText>
+                    )}
+                  </Pressable>
+                </View>
 
-            <View style={styles.backToLogin}>
-              <Link href="/(auth)/login" asChild>
-                <Pressable>
-                  <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Quay lại Đăng nhập</ThemedText>
-                </Pressable>
-              </Link>
-            </View>
-
-          </View>
-        </Animated.View>
+                <View style={styles.backRow}>
+                  <Link href="/(auth)/login" asChild>
+                    <Pressable hitSlop={8}>
+                      <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Quay lại Đăng nhập</ThemedText>
+                    </Pressable>
+                  </Link>
+                </View>
+              </View>
+            </GlassCard>
+          </Animated.View>
+        </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </AmbientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+  safeArea: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
+    padding: Spacing.four,
     justifyContent: 'center',
   },
-  header: {
-    marginBottom: Spacing.five,
+  brandHeader: {
     alignItems: 'center',
-    gap: Spacing.one,
+    marginBottom: Spacing.four,
   },
-  logo: {
-    width: 120,
-    height: 120,
+  logoImage: {
+    width: 60,
+    height: 60,
     marginBottom: Spacing.two,
   },
   title: {
-    fontSize: 28,
-    marginTop: Spacing.two,
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: -0.5,
     textAlign: 'center',
-    fontWeight: '700',
   },
   subtitle: {
     opacity: 0.7,
     textAlign: 'center',
-    fontSize: 15,
+    fontSize: 14,
+    marginTop: 4,
+    maxWidth: 300,
+    lineHeight: 19,
   },
   card: {
-    borderRadius: 24,
     padding: Spacing.four,
-    borderWidth: 1,
-    elevation: 4,
+    gap: Spacing.three,
   },
-  form: {
+  formStack: {
     gap: Spacing.two,
   },
-  button: {
-    height: 54,
-    borderRadius: 16,
+  submitButton: {
+    height: 52,
+    borderRadius: Radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.three,
+    marginTop: Spacing.two,
     width: '100%',
   },
-  buttonText: {
+  submitButtonText: {
     color: '#ffffff',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 16,
   },
-  footer: {
+  resendRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: Spacing.four,
+    marginTop: Spacing.three,
     alignItems: 'center',
   },
   footerText: {
@@ -214,12 +213,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   linkText: {
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 14,
   },
-  backToLogin: {
+  backRow: {
     alignItems: 'center',
     marginTop: Spacing.two,
   },
 });
-

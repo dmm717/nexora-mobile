@@ -6,8 +6,9 @@ export const resumesApi = {
    * Yêu cầu presigned URL để upload file (S3)
    */
   presign: async (request: PresignUploadRequest): Promise<UploadIntent> => {
-    const res = await apiClient.post<{ data?: UploadIntent } | UploadIntent>('/uploads/presign', request);
-    return 'data' in res.data && res.data.data ? res.data.data : (res.data as UploadIntent);
+    const res = await apiClient.post<any>('/uploads/presign', request);
+    const data = res.data?.data ?? res.data;
+    return data as UploadIntent;
   },
 
   /**
@@ -31,23 +32,36 @@ export const resumesApi = {
    * Xác nhận hoàn tất upload resume
    */
   finalize: async (request: FinalizeResumeRequest): Promise<ResumeView> => {
-    const res = await apiClient.post<{ data?: ResumeView } | ResumeView>('/resumes', request);
-    return 'data' in res.data && res.data.data ? res.data.data : (res.data as ResumeView);
+    const res = await apiClient.post<any>('/resumes', request);
+    const data = res.data?.data ?? res.data;
+    return data as ResumeView;
   },
 
   /**
-   * Lấy danh sách resumes
+   * Lấy danh sách resumes (Bảo đảm luôn trả về mảng hợp lệ)
    */
   list: async (): Promise<ResumeView[]> => {
-    const res = await apiClient.get<{ data?: ResumeView[] } | ResumeView[]>('/resumes');
-    return 'data' in res.data && res.data.data ? res.data.data : (res.data as ResumeView[]);
+    try {
+      const res = await apiClient.get<any>('/resumes');
+      const raw = res.data;
+      if (Array.isArray(raw)) return raw;
+      if (raw && Array.isArray(raw.data)) return raw.data;
+      if (raw && Array.isArray(raw.items)) return raw.items;
+      return [];
+    } catch (err: any) {
+      if (err?.status === 404 || err?.code === 'NOT_FOUND' || err?.response?.status === 404) {
+        return [];
+      }
+      throw err;
+    }
   },
 
   /**
    * Lấy chi tiết resume
    */
   get: async (id: string): Promise<ResumeView> => {
-    const res = await apiClient.get<{ data?: ResumeView } | ResumeView>(`/resumes/${id}`);
-    return 'data' in res.data && res.data.data ? res.data.data : (res.data as ResumeView);
+    const res = await apiClient.get<any>(`/resumes/${id}`);
+    const data = res.data?.data ?? res.data;
+    return data as ResumeView;
   }
 };

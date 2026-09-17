@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link, useRouter } from 'expo-router';
-import Animated, { FadeInUp, FadeInDown, withSpring, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { Link } from 'expo-router';
+import Animated, { FadeInUp, FadeInDown, Easing } from 'react-native-reanimated';
 import { AppError } from '@/api/types';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { MaterialInput } from '@/components/material-input';
-import { Colors, Spacing, Radius } from '@/constants/theme';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { authApi } from '@/api/auth.api';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import { TouchableScale } from '@/components/ui/touchable-scale';
+import { GlassCard } from '@/components/ui/glass-card';
+import { AmbientBackground } from '@/components/ui/ambient-background';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -21,17 +21,9 @@ export default function ForgotPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [resetDone, setResetDone] = useState(false);
 
-  const router = useRouter();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
-
-  const buttonScale = useSharedValue(1);
-  const buttonAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: buttonScale.value }],
-    };
-  });
 
   const handleSendRequest = async () => {
     if (!email.trim()) {
@@ -81,159 +73,175 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
-        <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.header}>
-          <ThemedText type="title" style={styles.title}>
-            {resetDone ? 'Thành công!' : step === 'request' ? 'Quên Mật Khẩu?' : 'Đặt Lai Mật Khẩu'}
-          </ThemedText>
-          <ThemedText style={styles.subtitle}>
-            {resetDone
-              ? 'Mật khẩu của bạn đã được cập nhật thành công.'
-              : step === 'request'
-              ? 'Nhập email của bạn và chúng tôi sẽ gửi mã xác thực khôi phục mật khẩu.'
-              : `Nhập mã OTP đã gửi tới ${email} và mật khẩu mới.`}
-          </ThemedText>
-        </Animated.View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <Animated.View entering={FadeInDown.duration(800).easing(Easing.out(Easing.cubic))} style={styles.brandHeader}>
+            <Image 
+              source={require('@/assets/images/logo.png')} 
+              style={styles.logoImage} 
+              resizeMode="contain" 
+            />
+            <ThemedText type="title" style={styles.title}>
+              {resetDone ? 'Khôi Phục Thành Công' : step === 'request' ? 'Quên Mật Khẩu?' : 'Đặt Lại Mật Khẩu'}
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>
+              {resetDone
+                ? 'Mật khẩu của bạn đã được cập nhật thành công.'
+                : step === 'request'
+                ? 'Nhập email của bạn để nhận mã OTP khôi phục mật khẩu.'
+                : `Nhập mã OTP đã gửi tới ${email} và mật khẩu mới.`}
+            </ThemedText>
+          </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(200).duration(600).springify()} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          {resetDone ? (
-            <Animated.View entering={FadeInUp.duration(400)} style={styles.successContainer}>
-              <View style={[styles.successIcon, { backgroundColor: colors.accentLight }]}>
-                <ThemedText style={{ fontSize: 40 }}>✅</ThemedText>
-              </View>
-              <ThemedText style={styles.successText}>
-                Bạn có thể đăng nhập ngay bây giờ bằng mật khẩu mới.
-              </ThemedText>
-              
-              <Link href="/(auth)/login" asChild>
-                <AnimatedPressable
-                  style={[styles.button, buttonAnimatedStyle, { backgroundColor: colors.primary, marginTop: Spacing.four }]}
-                  onPressIn={() => (buttonScale.value = withSpring(0.95))}
-                  onPressOut={() => (buttonScale.value = withSpring(1))}
-                >
-                  <ThemedText style={styles.buttonText}>Đăng Nhập Ngay</ThemedText>
-                </AnimatedPressable>
-              </Link>
-            </Animated.View>
-          ) : step === 'request' ? (
-            <View style={styles.form}>
-              <MaterialInput
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-              />
+          {/* Form Card */}
+          <Animated.View entering={FadeInUp.delay(200).duration(800).easing(Easing.out(Easing.cubic))}>
+            <GlassCard hasGlow glowColor={colors.glowPrimary} style={styles.card}>
+              {resetDone ? (
+                <View style={styles.successContainer}>
+                  <View style={[styles.successIcon, { backgroundColor: colors.accentLight }]}>
+                    <ThemedText style={{ fontSize: 36 }}>✅</ThemedText>
+                  </View>
+                  <ThemedText style={styles.successText}>
+                    Bạn có thể đăng nhập ngay bây giờ bằng mật khẩu mới vừa thiết lập.
+                  </ThemedText>
+                  
+                  <Link href="/(auth)/login" asChild>
+                    <TouchableScale style={[styles.submitButton, { backgroundColor: colors.primary, marginTop: Spacing.three }]}>
+                      <ThemedText style={styles.submitButtonText}>Đăng Nhập Ngay</ThemedText>
+                    </TouchableScale>
+                  </Link>
+                </View>
+              ) : step === 'request' ? (
+                <View style={styles.formStack}>
+                  <MaterialInput
+                    label="Địa chỉ Email"
+                    leftIcon="mail-outline"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                  />
 
-              <AnimatedPressable
-                style={[styles.button, buttonAnimatedStyle, { backgroundColor: colors.primary, opacity: loading ? 0.7 : 1 }]}
-                onPressIn={() => (buttonScale.value = withSpring(0.95))}
-                onPressOut={() => (buttonScale.value = withSpring(1))}
-                onPress={handleSendRequest}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#ffffff" />
-                ) : (
-                  <ThemedText style={styles.buttonText}>Gửi Yêu Cầu Khôi Phục</ThemedText>
-                )}
-              </AnimatedPressable>
+                  <TouchableScale
+                    style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                    onPress={handleSendRequest}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#ffffff" />
+                    ) : (
+                      <ThemedText style={styles.submitButtonText}>Gửi Mã OTP Khôi Phục</ThemedText>
+                    )}
+                  </TouchableScale>
 
-              <TouchableOpacity onPress={() => setStep('reset')} style={{ alignItems: 'center', marginTop: Spacing.two }}>
-                <ThemedText style={[styles.linkText, { color: colors.primary }]}>Đã có mã OTP? Nhập mật khẩu mới</ThemedText>
-              </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setStep('reset')} style={styles.subLink}>
+                    <ThemedText style={[styles.linkText, { color: colors.primary }]}>
+                      Đã có mã OTP? Nhập mật khẩu mới
+                    </ThemedText>
+                  </TouchableOpacity>
 
-              <View style={styles.footer}>
-                <Link href="/(auth)/login" asChild>
-                  <Pressable>
-                    <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Quay lại Đăng nhập</ThemedText>
-                  </Pressable>
-                </Link>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.form}>
-              <MaterialInput
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+                  <View style={styles.footerRow}>
+                    <Link href="/(auth)/login" asChild>
+                      <Pressable hitSlop={8}>
+                        <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Quay lại Đăng nhập</ThemedText>
+                      </Pressable>
+                    </Link>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.formStack}>
+                  <MaterialInput
+                    label="Email"
+                    leftIcon="mail-outline"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
 
-              <MaterialInput
-                label="Mã xác thực (OTP Code)"
-                value={code}
-                onChangeText={setCode}
-                keyboardType="number-pad"
-              />
+                  <MaterialInput
+                    label="Mã OTP (6 chữ số)"
+                    leftIcon="key-outline"
+                    value={code}
+                    onChangeText={setCode}
+                    keyboardType="number-pad"
+                  />
 
-              <MaterialInput
-                label="Mật khẩu mới"
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry
-              />
+                  <MaterialInput
+                    label="Mật khẩu mới"
+                    leftIcon="lock-closed-outline"
+                    isPassword
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                  />
 
-              <AnimatedPressable
-                style={[styles.button, buttonAnimatedStyle, { backgroundColor: colors.primary, opacity: loading ? 0.7 : 1 }]}
-                onPressIn={() => (buttonScale.value = withSpring(0.95))}
-                onPressOut={() => (buttonScale.value = withSpring(1))}
-                onPress={handleResetPassword}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#ffffff" />
-                ) : (
-                  <ThemedText style={styles.buttonText}>Đặt Lai Mật Khẩu</ThemedText>
-                )}
-              </AnimatedPressable>
+                  <TouchableScale
+                    style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                    onPress={handleResetPassword}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#ffffff" />
+                    ) : (
+                      <ThemedText style={styles.submitButtonText}>Đặt Lại Mật Khẩu</ThemedText>
+                    )}
+                  </TouchableScale>
 
-              <TouchableOpacity onPress={() => setStep('request')} style={{ alignItems: 'center', marginTop: Spacing.two }}>
-                <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Gửi lại mã OTP</ThemedText>
-              </TouchableOpacity>
-            </View>
-          )}
-        </Animated.View>
+                  <TouchableOpacity onPress={() => setStep('request')} style={styles.subLink}>
+                    <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Gửi lại mã OTP mới</ThemedText>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </GlassCard>
+          </Animated.View>
+        </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </AmbientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+  safeArea: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
+    padding: Spacing.four,
     justifyContent: 'center',
   },
-  header: {
-    marginBottom: Spacing.five,
+  brandHeader: {
     alignItems: 'center',
-    gap: Spacing.one,
+    marginBottom: Spacing.four,
+  },
+  logoImage: {
+    width: 60,
+    height: 60,
+    marginBottom: Spacing.two,
   },
   title: {
-    fontSize: 28,
-    marginTop: Spacing.two,
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: -0.5,
     textAlign: 'center',
-    fontWeight: '700',
   },
   subtitle: {
     opacity: 0.7,
     textAlign: 'center',
-    fontSize: 15,
+    fontSize: 14,
+    marginTop: 4,
+    maxWidth: 320,
+    lineHeight: 19,
   },
   card: {
-    borderRadius: Radius.xl,
     padding: Spacing.four,
-    borderWidth: 1,
-    elevation: 4,
+    gap: Spacing.three,
   },
-  form: {
+  formStack: {
     gap: Spacing.two,
   },
   successContainer: {
@@ -241,39 +249,43 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
   },
   successIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.two,
   },
   successText: {
     textAlign: 'center',
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
+    opacity: 0.8,
   },
-  button: {
-    height: 54,
-    borderRadius: Radius.md,
+  submitButton: {
+    height: 52,
+    borderRadius: Radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.three,
+    marginTop: Spacing.two,
     width: '100%',
   },
-  buttonText: {
+  submitButtonText: {
     color: '#ffffff',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 16,
   },
-  footer: {
+  subLink: {
+    alignItems: 'center',
+    marginTop: Spacing.two,
+  },
+  footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: Spacing.four,
+    marginTop: Spacing.three,
   },
   linkText: {
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 14,
   },
 });
-

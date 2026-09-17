@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View, Image } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import Animated, { FadeIn, FadeOut, FadeInUp, FadeInDown, withSpring, useAnimatedStyle, useSharedValue, LinearTransition, Easing } from 'react-native-reanimated';
+import Animated, { FadeOut, FadeInUp, FadeInDown, Easing } from 'react-native-reanimated';
 import { AppError } from '@/api/types';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { MaterialInput } from '@/components/material-input';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-// import { AnimatedIcon } from '@/components/animated-icon';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import { TouchableScale } from '@/components/ui/touchable-scale';
+import { GlassCard } from '@/components/ui/glass-card';
+import { AmbientBackground } from '@/components/ui/ambient-background';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -22,11 +21,10 @@ export default function LoginScreen() {
   const [isSplash, setIsSplash] = useState(true);
 
   useEffect(() => {
-    // Start splash transition after a short delay
     const timer = setTimeout(() => {
       setIsSplash(false);
       SplashScreen.hideAsync();
-    }, 1200);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -37,17 +35,9 @@ export default function LoginScreen() {
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  // Button Scale Animation
-  const buttonScale = useSharedValue(1);
-  const buttonAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: buttonScale.value }],
-    };
-  });
-
-  const handleLogin = async (overrideEmail?: string, overridePassword?: string) => {
-    const targetEmail = overrideEmail ?? email.trim();
-    const targetPassword = overridePassword ?? password.trim();
+  const handleLogin = async () => {
+    const targetEmail = email.trim();
+    const targetPassword = password.trim();
 
     if (!targetEmail || !targetPassword) {
       Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ email và mật khẩu');
@@ -69,7 +59,7 @@ export default function LoginScreen() {
           Alert.alert('Đăng nhập thất bại', `[${error.code}] ${error.message}`);
         }
       } else {
-        Alert.alert('Đăng nhập thất bại', 'Có lỗi xảy ra khi gọi backend API. Vui lòng kiểm tra lại tài khoản.');
+        Alert.alert('Đăng nhập thất bại', 'Có lỗi xảy ra khi kết nối hệ thống. Vui lòng thử lại.');
       }
     } finally {
       setLoading(false);
@@ -77,12 +67,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
         
         {/* Splash Screen */}
         {isSplash && (
-          <Animated.View exiting={FadeOut.duration(800)} style={styles.splashContainer}>
+          <Animated.View exiting={FadeOut.duration(600)} style={styles.splashContainer}>
             <Image 
               source={require('@/assets/images/logo.png')} 
               style={styles.splashLogo} 
@@ -91,171 +81,178 @@ export default function LoginScreen() {
           </Animated.View>
         )}
 
-        {/* Main Form */}
+        {/* Main Login Form */}
         {!isSplash && (
-          <View style={styles.mainContent}>
-            <Animated.View entering={FadeInDown.duration(1000).easing(Easing.out(Easing.cubic))} style={styles.titleContainer}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Top Brand Header */}
+            <Animated.View entering={FadeInDown.duration(800).easing(Easing.out(Easing.cubic))} style={styles.brandHeader}>
+              <Image 
+                source={require('@/assets/images/logo.png')} 
+                style={styles.logoImage} 
+                resizeMode="contain" 
+              />
               <ThemedText type="title" style={styles.title}>
-                Đăng nhập
+                Nexora AI
               </ThemedText>
               <ThemedText style={styles.subtitle}>
-                Nền tảng phỏng vấn AI thông minh
+                Nền tảng phỏng vấn & huấn luyện kỹ năng sự nghiệp thông minh
               </ThemedText>
             </Animated.View>
 
-            <Animated.View entering={FadeInUp.delay(300).duration(1000).easing(Easing.out(Easing.cubic))} style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#ffffff' }]}>
-            <View style={styles.form}>
-            
-            <MaterialInput
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
+            {/* Glassmorphic Form Card */}
+            <Animated.View entering={FadeInUp.delay(200).duration(800).easing(Easing.out(Easing.cubic))}>
+              <GlassCard hasGlow glowColor={colors.glowPrimary} style={styles.card}>
+                <ThemedText type="subtitle" style={styles.cardTitle}>
+                  Đăng Nhập Tài Khoản
+                </ThemedText>
 
-            <MaterialInput
-              label="Mật khẩu"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoComplete="password"
-            />
+                <View style={styles.formStack}>
+                  <MaterialInput
+                    label="Địa chỉ Email"
+                    leftIcon="mail-outline"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                  />
 
-            <View style={styles.forgotPasswordContainer}>
-              <Link href="/(auth)/forgot-password" asChild>
-                <Pressable>
-                  <ThemedText style={styles.forgotPasswordText}>Quên mật khẩu?</ThemedText>
-                </Pressable>
-              </Link>
-            </View>
+                  <MaterialInput
+                    label="Mật khẩu"
+                    leftIcon="lock-closed-outline"
+                    isPassword
+                    value={password}
+                    onChangeText={setPassword}
+                    autoComplete="password"
+                  />
 
-            <AnimatedPressable
-              style={[styles.button, buttonAnimatedStyle, { opacity: loading ? 0.7 : 1 }]}
-              onPressIn={() => (buttonScale.value = withSpring(0.95))}
-              onPressOut={() => (buttonScale.value = withSpring(1))}
-              onPress={() => handleLogin()}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <ThemedText style={styles.buttonText}>Đăng Nhập</ThemedText>
-              )}
-            </AnimatedPressable>
+                  <View style={styles.forgotRow}>
+                    <Link href="/(auth)/forgot-password" asChild>
+                      <Pressable hitSlop={8}>
+                        <ThemedText style={[styles.forgotText, { color: colors.primary }]}>
+                          Quên mật khẩu?
+                        </ThemedText>
+                      </Pressable>
+                    </Link>
+                  </View>
 
-            <View style={styles.footer}>
-              <ThemedText style={styles.footerText}>Chưa có tài khoản? </ThemedText>
-              <Link href="/(auth)/register" asChild>
-                <Pressable>
-                  <ThemedText style={styles.linkText}>Tạo tài khoản mới</ThemedText>
-                </Pressable>
-              </Link>
-            </View>
+                  <TouchableScale
+                    style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                    onPress={handleLogin}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#ffffff" />
+                    ) : (
+                      <ThemedText style={styles.submitButtonText}>Đăng Nhập</ThemedText>
+                    )}
+                  </TouchableScale>
+                </View>
 
-          </View>
-          </Animated.View>
-          </View>
+                <View style={styles.footerRow}>
+                  <ThemedText style={styles.footerText}>Chưa có tài khoản? </ThemedText>
+                  <Link href="/(auth)/register" asChild>
+                    <Pressable hitSlop={8}>
+                      <ThemedText style={[styles.linkText, { color: colors.primary }]}>Tạo tài khoản mới</ThemedText>
+                    </Pressable>
+                  </Link>
+                </View>
+              </GlassCard>
+            </Animated.View>
+          </ScrollView>
         )}
       </SafeAreaView>
-    </ThemedView>
+    </AmbientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    justifyContent: 'center',
-  },
+  safeArea: { flex: 1 },
   splashContainer: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
   },
   splashLogo: {
-    width: 140,
-    height: 140,
+    width: 130,
+    height: 130,
   },
-  mainContent: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
+    padding: Spacing.four,
     justifyContent: 'center',
   },
-  titleContainer: {
+  brandHeader: {
     alignItems: 'center',
-    gap: Spacing.one,
-    marginBottom: Spacing.five,
+    marginBottom: Spacing.four,
+  },
+  logoImage: {
+    width: 64,
+    height: 64,
+    marginBottom: Spacing.two,
   },
   title: {
-    fontSize: 28,
-    marginTop: Spacing.two,
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: -0.5,
     textAlign: 'center',
   },
   subtitle: {
     opacity: 0.7,
     textAlign: 'center',
-    fontSize: 15,
+    fontSize: 14,
+    marginTop: 4,
+    maxWidth: 300,
+    lineHeight: 19,
   },
   card: {
-    borderRadius: 24,
     padding: Spacing.four,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 5,
+    gap: Spacing.three,
   },
-  form: {
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: Spacing.one,
+  },
+  formStack: {
     gap: Spacing.two,
   },
-  button: {
-    height: 56,
-    backgroundColor: '#3525CD',
-    borderRadius: 16,
+  forgotRow: {
+    alignItems: 'flex-end',
+    marginVertical: 2,
+  },
+  forgotText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  submitButton: {
+    height: 52,
+    borderRadius: Radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.three,
-    shadowColor: '#3525CD',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    marginTop: Spacing.two,
   },
-  buttonText: {
+  submitButtonText: {
     color: '#ffffff',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 16,
   },
-  footer: {
+  footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: Spacing.four,
+    marginTop: Spacing.three,
   },
   footerText: {
     opacity: 0.7,
     fontSize: 14,
   },
   linkText: {
-    color: '#3525CD',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 14,
-  },
-  forgotPasswordContainer: {
-    alignItems: 'flex-end',
-    marginTop: -Spacing.one,
-  },
-  forgotPasswordText: {
-    color: '#3525CD',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

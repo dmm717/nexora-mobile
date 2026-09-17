@@ -1,20 +1,22 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, RefreshControl, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, StyleSheet, ScrollView, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { profileApi } from '@/api/profile.api';
 import { useAuth } from '@/context/auth-context';
-import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { TouchableScale } from '@/components/ui/touchable-scale';
+import { GlassCard } from '@/components/ui/glass-card';
+import { AmbientBackground } from '@/components/ui/ambient-background';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
@@ -24,14 +26,6 @@ export default function ProfileScreen() {
     queryFn: profileApi.getCareerProfile,
     enabled: !!user,
   });
-
-  if (isLoading && !isRefetching) {
-    return (
-      <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </ThemedView>
-    );
-  }
 
   const identity = data?.identity;
   const activeGoal = data?.activeCareerGoal;
@@ -43,318 +37,231 @@ export default function ProfileScreen() {
   const avatarLetter = (displayName || email || 'N').charAt(0).toUpperCase();
 
   return (
-    <ThemedView style={styles.container}>
+    <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView 
+        {/* Top Header */}
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.headerTitle}>Hồ Sơ Cán Bộ</ThemedText>
+        </View>
+
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
         >
-          {/* Header Profile Card */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.profileHeader}>
-              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
-                <ThemedText style={styles.avatarText}>
-                  {avatarLetter}
-                </ThemedText>
-              </View>
-              <View style={styles.profileInfo}>
-                <ThemedText type="title" style={styles.profileName}>
-                  {displayName}
-                </ThemedText>
-                <ThemedText style={styles.profileEmail}>{email}</ThemedText>
-                <View style={[styles.xpBadge, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="briefcase-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                  <ThemedText style={[styles.xpText, { color: colors.primary }]}>
+          {isLoading && !isRefetching ? (
+            <View style={styles.centerContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : (
+            <>
+              {/* User Identity Header - Centered */}
+              <View style={styles.profileHeaderCenter}>
+                <View style={[styles.avatarPlaceholderLarge, { backgroundColor: colors.primary }]}>
+                  <ThemedText style={styles.avatarTextLarge}>{avatarLetter}</ThemedText>
+                </View>
+                <ThemedText style={styles.profileNameLarge}>{displayName}</ThemedText>
+                <ThemedText style={styles.profileEmailCenter}>{email}</ThemedText>
+                <View style={[styles.xpBadgeCenter, { backgroundColor: colors.primaryLight }]}>
+                  <Ionicons name="briefcase" size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                  <ThemedText style={[styles.xpTextCenter, { color: colors.primary }]}>
                     {yearsOfExperience} năm kinh nghiệm
                   </ThemedText>
                 </View>
               </View>
-            </View>
-          </View>
 
-          {/* Active Career Goal */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.cardTitleRow}>
-              <Ionicons name="flag-outline" size={20} color={colors.primary} />
-              <ThemedText type="subtitle" style={styles.sectionTitle}>Mục Tiêu Nghề Nghiệp</ThemedText>
-            </View>
-            {activeGoal ? (
-              <View style={styles.goalDetailBox}>
-                <View style={styles.roleBadgeRow}>
-                  <ThemedText style={styles.goalRole}>{activeGoal.targetRole}</ThemedText>
-                  <View style={[styles.seniorityBadge, { backgroundColor: colors.accentLight }]}>
-                    <ThemedText style={[styles.seniorityText, { color: colors.accent }]}>
-                      {activeGoal.seniority}
-                    </ThemedText>
-                  </View>
-                </View>
-                {activeGoal.industry && (
-                  <ThemedText style={styles.goalDetail}>Ngành: {activeGoal.industry}</ThemedText>
-                )}
-                {activeGoal.targetCompany && (
-                  <ThemedText style={styles.goalDetail}>Mục tiêu công ty: {activeGoal.targetCompany}</ThemedText>
-                )}
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>Cài đặt tài khoản</ThemedText>
+                <GlassCard style={styles.settingsGroup}>
+                  
+                  {/* Pricing & Subscription */}
+                  <TouchableScale onPress={() => router.push('/(app)/pricing' as any)}>
+                    <View style={styles.settingItem}>
+                      <View style={[styles.settingIconBadge, { backgroundColor: colors.secondaryLight }]}>
+                        <Ionicons name="card" size={20} color={colors.secondary} />
+                      </View>
+                      <View style={styles.settingTextContent}>
+                        <ThemedText style={styles.settingTitle}>Gói Dịch Vụ (Pricing)</ThemedText>
+                        <ThemedText style={styles.settingSub}>Quản lý quyền hạn nâng cao</ThemedText>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </View>
+                  </TouchableScale>
+
+                  <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+
+                  {/* Career Goal */}
+                  <TouchableScale onPress={() => router.push('/(app)/career-goals' as any)}>
+                    <View style={styles.settingItem}>
+                      <View style={[styles.settingIconBadge, { backgroundColor: colors.primaryLight }]}>
+                        <Ionicons name="briefcase" size={20} color={colors.primary} />
+                      </View>
+                      <View style={styles.settingTextContent}>
+                        <ThemedText style={styles.settingTitle}>Mục Tiêu Nghề Nghiệp</ThemedText>
+                        <ThemedText style={styles.settingSub} numberOfLines={1}>
+                          {activeGoal ? `${activeGoal.targetRole}` : 'Chưa thiết lập'}
+                        </ThemedText>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </View>
+                  </TouchableScale>
+
+                  <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+
+                  {/* Primary Resume */}
+                  <TouchableScale onPress={() => router.push('/(app)/resumes' as any)}>
+                    <View style={styles.settingItem}>
+                      <View style={[styles.settingIconBadge, { backgroundColor: colors.accentLight }]}>
+                        <Ionicons name="document-text" size={20} color={colors.accent} />
+                      </View>
+                      <View style={styles.settingTextContent}>
+                        <ThemedText style={styles.settingTitle}>CV Phân Tích Chính</ThemedText>
+                        <ThemedText style={styles.settingSub} numberOfLines={1}>
+                          {primaryResume ? primaryResume.fileName : 'Chưa có CV nào'}
+                        </ThemedText>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </View>
+                  </TouchableScale>
+
+                </GlassCard>
               </View>
-            ) : (
-              <ThemedText style={styles.emptyText}>Chưa có mục tiêu nghề nghiệp nào được đặt.</ThemedText>
-            )}
-            
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.primaryLight }]}
-              onPress={() => router.push('/(app)/career-goals' as any)}
-            >
-              <ThemedText style={[styles.actionButtonText, { color: colors.primary }]}>Quản lý mục tiêu</ThemedText>
-            </TouchableOpacity>
-          </View>
 
-          {/* Primary Resume */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.cardTitleRow}>
-              <Ionicons name="document-text-outline" size={20} color={colors.accent} />
-              <ThemedText type="subtitle" style={styles.sectionTitle}>CV Hiện Tại (Primary Resume)</ThemedText>
-            </View>
-            {primaryResume ? (
-              <View style={styles.resumeDetailBox}>
-                <View style={styles.resumeHeaderRow}>
-                  <ThemedText style={styles.resumeName}>{primaryResume.fileName}</ThemedText>
-                  <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
-                    <ThemedText style={[styles.statusBadgeText, { color: colors.accent }]}>
-                      {primaryResume.status}
-                    </ThemedText>
-                  </View>
-                </View>
-              </View>
-            ) : (
-              <ThemedText style={styles.emptyText}>Chưa có CV nào được chọn làm CV chính.</ThemedText>
-            )}
+              {/* Red Logout Button */}
+              <TouchableScale
+                style={styles.logoutBtn}
+                onPress={logout}
+              >
+                <ThemedText style={[styles.logoutBtnText, { color: colors.danger }]}>Đăng Xuất</ThemedText>
+              </TouchableScale>
 
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.accentLight }]}
-              onPress={() => router.push('/(app)/resumes' as any)}
-            >
-              <ThemedText style={[styles.actionButtonText, { color: colors.accent }]}>Quản lý CV</ThemedText>
-            </TouchableOpacity>
-          </View>
-
-          {/* Phân tích CV */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.cardTitleRow}>
-              <Ionicons name="analytics-outline" size={20} color={colors.warning} />
-              <ThemedText type="subtitle" style={styles.sectionTitle}>Phân Tích CV</ThemedText>
-            </View>
-            <ThemedText style={styles.goalDetail}>
-              Nhận đánh giá chuyên sâu và điểm số cho CV của bạn dựa trên mục tiêu nghề nghiệp.
-            </ThemedText>
-            
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.primary }]}
-              onPress={() => router.push('/(app)/cv-analysis' as any)}
-            >
-              <ThemedText style={[styles.actionButtonText, { color: '#ffffff' }]}>Phân tích ngay</ThemedText>
-            </TouchableOpacity>
-          </View>
-
-          {/* Growth & Roadmap Shortcuts */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.cardTitleRow}>
-              <Ionicons name="trending-up-outline" size={20} color={colors.secondary} />
-              <ThemedText type="subtitle" style={styles.sectionTitle}>Phát Triển & Lộ Trình</ThemedText>
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.growthLinkRow, { backgroundColor: colors.backgroundElement }]}
-              onPress={() => router.push('/(app)/growth/skill-profile' as any)}
-            >
-              <Ionicons name="ribbon-outline" size={20} color={colors.accent} style={{ marginRight: 8 }} />
-              <ThemedText style={styles.growthLinkText}>Hồ Sơ Năng Lực AI</ThemedText>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.growthLinkRow, { backgroundColor: colors.backgroundElement }]}
-              onPress={() => router.push('/(app)/growth/progress-dashboard' as any)}
-            >
-              <Ionicons name="speedometer-outline" size={20} color={colors.warning} style={{ marginRight: 8 }} />
-              <ThemedText style={styles.growthLinkText}>Bảng Tiến Độ & Readiness</ThemedText>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.growthLinkRow, { backgroundColor: colors.backgroundElement }]}
-              onPress={() => router.push('/(app)/growth/learning-path' as any)}
-            >
-              <Ionicons name="map-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
-              <ThemedText style={styles.growthLinkText}>Lộ Trình Học Tập AI (Learning Path)</ThemedText>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-          </View>
-
-
+              <ThemedText style={styles.versionText}>Phiên bản 1.0.0</ThemedText>
+            </>
+          )}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </AmbientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  safeArea: { flex: 1 },
+  header: {
+    padding: Spacing.four,
+    paddingBottom: Spacing.two,
   },
-  safeArea: {
-    flex: 1,
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   scrollContent: {
     padding: Spacing.four,
-    gap: Spacing.four,
+    paddingBottom: Spacing.six,
+    gap: Spacing.six,
   },
   centerContainer: {
-    flex: 1,
+    padding: Spacing.six,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Spacing.four,
   },
-  retryBtn: {
-    marginTop: Spacing.three,
-    paddingHorizontal: Spacing.four,
+  profileHeaderCenter: {
+    alignItems: 'center',
     paddingVertical: Spacing.two,
-    backgroundColor: '#4F46E5',
-    borderRadius: Radius.sm,
+    gap: Spacing.one,
   },
-  retryBtnText: {
+  avatarPlaceholderLarge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.two,
+  },
+  avatarTextLarge: {
     color: '#ffffff',
-    fontWeight: '600',
+    fontSize: 32,
+    fontWeight: '800',
   },
-  card: {
-    borderRadius: Radius.lg,
-    padding: Spacing.four,
-    borderWidth: 1,
-    ...Shadows.sm,
+  profileNameLarge: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  profileEmailCenter: {
+    fontSize: 14,
+    opacity: 0.6,
+  },
+  xpBadgeCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    marginTop: Spacing.two,
+  },
+  xpTextCenter: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  section: {
     gap: Spacing.three,
   },
-  profileHeader: {
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.5,
+    marginLeft: Spacing.one,
+  },
+  settingsGroup: {
+    borderRadius: Radius.lg,
+    overflow: 'hidden',
+  },
+  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.four,
+    padding: Spacing.four,
+    gap: Spacing.three,
   },
-  avatarPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  settingIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: {
-    color: '#ffffff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  profileInfo: {
+  settingTextContent: {
     flex: 1,
-    gap: 4,
   },
-  profileName: {
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  profileEmail: {
-    fontSize: 13,
-    opacity: 0.7,
-  },
-  xpBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-    marginTop: 4,
-  },
-  xpText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  cardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  emptyText: {
-    opacity: 0.6,
-    fontStyle: 'italic',
-  },
-  goalDetailBox: {
-    gap: 6,
-  },
-  roleBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  goalRole: {
-    fontWeight: '700',
+  settingTitle: {
     fontSize: 16,
+    fontWeight: '600',
   },
-  seniorityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-  },
-  seniorityText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  goalDetail: {
+  settingSub: {
     fontSize: 13,
-    opacity: 0.8,
+    opacity: 0.5,
+    marginTop: 2,
   },
-  resumeDetailBox: {
-    gap: 4,
+  divider: {
+    height: 1,
+    width: '100%',
+    marginLeft: 60,
   },
-  resumeHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  logoutBtn: {
+    paddingVertical: Spacing.four,
     alignItems: 'center',
-  },
-  resumeName: {
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-  },
-  statusBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  actionButton: {
     marginTop: Spacing.two,
-    paddingVertical: 12,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Radius.md,
-    alignItems: 'center',
   },
-  actionButtonText: {
+  logoutBtnText: {
+    fontSize: 16,
     fontWeight: '700',
-    fontSize: 14,
   },
-  growthLinkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.three,
-    borderRadius: Radius.md,
-    marginTop: 4,
-  },
-  growthLinkText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
+  versionText: {
+    textAlign: 'center',
+    fontSize: 12,
+    opacity: 0.4,
+    marginTop: Spacing.two,
   },
 });
-

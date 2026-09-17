@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, TextInput, TextInputProps, View } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { StyleSheet, TextInput, TextInputProps, View, Pressable } from 'react-native';
 import Animated, {
   interpolate,
   interpolateColor,
@@ -7,35 +7,44 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Colors } from '@/constants/theme';
+import { Colors, Radius } from '@/constants/theme';
 
 interface MaterialInputProps extends TextInputProps {
   label: string;
   error?: string;
+  isPassword?: boolean;
+  leftIcon?: keyof typeof Ionicons.glyphMap;
 }
 
 export const MaterialInput: React.FC<MaterialInputProps> = ({
   label,
   error,
   value,
+  isPassword = false,
+  leftIcon,
+  secureTextEntry,
   onFocus,
   onBlur,
+  style,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
-  const isDark = themeKey === 'dark';
-  
+
   // Animation values
   const focusAnim = useSharedValue(value ? 1 : 0);
 
   const handleFocus = (e: any) => {
     setIsFocused(true);
     focusAnim.value = withTiming(1, { duration: 200 });
-    if (onFocus) onFocus(e);
+    onFocus?.(e);
   };
 
   const handleBlur = (e: any) => {
@@ -43,14 +52,18 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
     if (!value) {
       focusAnim.value = withTiming(0, { duration: 200 });
     }
-    if (onBlur) onBlur(e);
+    onBlur?.(e);
+  };
+
+  const handleContainerPress = () => {
+    inputRef.current?.focus();
   };
 
   // Label animation style
   const animatedLabelStyle = useAnimatedStyle(() => {
     const textColor = interpolateColor(focusAnim.value, [0, 1], [
       colors.textSecondary,
-      error ? '#FF3B30' : (isFocused ? '#3525CD' : colors.textSecondary)
+      error ? colors.danger : (isFocused ? colors.primary : colors.textSecondary)
     ]);
     
     return {
@@ -58,7 +71,7 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
       transform: [
         { translateY: interpolate(focusAnim.value, [0, 1], [0, -27]) },
         { scale: interpolate(focusAnim.value, [0, 1], [1, 0.85]) },
-        { translateX: interpolate(focusAnim.value, [0, 1], [0, -6]) }
+        { translateX: interpolate(focusAnim.value, [0, 1], [0, leftIcon ? 20 : -6]) }
       ]
     };
   });
@@ -66,8 +79,8 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
   // Border animation style
   const animatedContainerStyle = useAnimatedStyle(() => {
     const borderColor = interpolateColor(focusAnim.value, [0, 1], [
-      colors.backgroundSelected,
-      error ? '#FF3B30' : (isFocused ? '#3525CD' : colors.backgroundSelected)
+      colors.inputBorder,
+      error ? colors.danger : (isFocused ? colors.primary : colors.inputBorder)
     ]);
     return {
       borderColor,
@@ -77,21 +90,59 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.inputContainer, animatedContainerStyle, { backgroundColor: colors.backgroundElement }]}>
-        <Animated.Text style={[styles.label, animatedLabelStyle, { backgroundColor: colors.backgroundElement }]}>
-          {label}
-        </Animated.Text>
-        <TextInput
-          style={[styles.input, { color: colors.text }]}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          value={value}
-          placeholderTextColor="transparent"
-          {...props}
-        />
-      </Animated.View>
+      <Pressable onPress={handleContainerPress}>
+        <Animated.View style={[styles.inputContainer, animatedContainerStyle, { backgroundColor: colors.inputBackground }]}>
+          {leftIcon && (
+            <Ionicons
+              name={leftIcon}
+              size={20}
+              color={isFocused ? colors.primary : colors.textMuted}
+              style={styles.leftIcon}
+            />
+          )}
+
+          <Animated.Text
+            pointerEvents="none"
+            style={[
+              styles.label,
+              animatedLabelStyle,
+              {
+                backgroundColor: colors.inputBackground,
+                left: leftIcon ? 42 : 14,
+              },
+            ]}
+          >
+            {label}
+          </Animated.Text>
+
+          <TextInput
+            ref={inputRef}
+            style={[styles.input, { color: colors.text }]}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            value={value}
+            secureTextEntry={isPassword ? !showPassword : secureTextEntry}
+            placeholderTextColor="transparent"
+            {...props}
+          />
+
+          {isPassword && (
+            <Pressable
+              onPress={() => setShowPassword(!showPassword)}
+              hitSlop={12}
+              style={styles.eyeButton}
+            >
+              <Ionicons
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={22}
+                color={colors.textSecondary}
+              />
+            </Pressable>
+          )}
+        </Animated.View>
+      </Pressable>
       {error ? (
-        <Animated.Text style={styles.errorText}>{error}</Animated.Text>
+        <Animated.Text style={[styles.errorText, { color: colors.danger }]}>{error}</Animated.Text>
       ) : null}
     </View>
   );
@@ -100,20 +151,23 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    marginVertical: 8,
+    marginVertical: 6,
   },
   inputContainer: {
     height: 56,
-    borderRadius: 12,
+    borderRadius: Radius.sm,
     paddingHorizontal: 16,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     position: 'relative',
+  },
+  leftIcon: {
+    marginRight: 10,
   },
   label: {
     position: 'absolute',
-    left: 14,
     top: 17,
-    fontSize: 16,
+    fontSize: 15,
     paddingHorizontal: 4,
     zIndex: 1,
   },
@@ -126,8 +180,11 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     zIndex: 0,
   },
+  eyeButton: {
+    padding: 6,
+    marginLeft: 6,
+  },
   errorText: {
-    color: '#FF3B30',
     fontSize: 12,
     marginTop: 4,
     marginLeft: 16,

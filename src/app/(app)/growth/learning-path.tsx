@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import { ActivityIndicator, StyleSheet, ScrollView, View, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -8,8 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { growthApi } from '@/api/growth.api';
-import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { GlassCard } from '@/components/ui/glass-card';
+import { SkeletonCard } from '@/components/ui/skeleton-loader';
+import { TouchableScale } from '@/components/ui/touchable-scale';
 
 export default function LearningPathScreen() {
   const router = useRouter();
@@ -87,9 +90,9 @@ export default function LearningPathScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableScale onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
+          </TouchableScale>
           <ThemedText type="title" style={styles.title}>Lộ Trình Học Tập AI</ThemedText>
         </View>
 
@@ -99,11 +102,12 @@ export default function LearningPathScreen() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
         >
           {isLoading ? (
-            <ThemedView style={styles.centerContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </ThemedView>
+            <View style={{ gap: 16 }}>
+              <SkeletonCard />
+              <SkeletonCard />
+            </View>
           ) : isError || !path ? (
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <GlassCard style={{ padding: Spacing.four, alignItems: 'center' }}>
               <Ionicons name="map-outline" size={48} color={colors.primary} style={{ alignSelf: 'center' }} />
               <ThemedText type="subtitle" style={{ textAlign: 'center', marginTop: Spacing.two }}>
                 {isCareerGoalRequired ? 'Yêu Cầu Mục Tiêu Nghề Nghiệp' : 'Chưa Có Lộ Trình Học Tập'}
@@ -115,14 +119,14 @@ export default function LearningPathScreen() {
               </ThemedText>
 
               {isCareerGoalRequired ? (
-                <TouchableOpacity
+                <TouchableScale
                   style={[styles.primaryButton, { backgroundColor: colors.primary }]}
                   onPress={() => router.push('/(app)/profile' as any)}
                 >
                   <ThemedText style={styles.primaryButtonText}>Thiết Lập Mục Tiêu Nghề Nghiệp</ThemedText>
-                </TouchableOpacity>
+                </TouchableScale>
               ) : (
-                <TouchableOpacity
+                <TouchableScale
                   style={[styles.primaryButton, { backgroundColor: colors.primary }]}
                   onPress={() => generateMutation.mutate()}
                   disabled={generateMutation.isPending}
@@ -135,13 +139,13 @@ export default function LearningPathScreen() {
                       <ThemedText style={styles.primaryButtonText}>Tạo Lộ Trình Mới Ngay</ThemedText>
                     </>
                   )}
-                </TouchableOpacity>
+                </TouchableScale>
               )}
-            </View>
+            </GlassCard>
           ) : (
             <>
-              {/* Progress Banner */}
-              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+              {/* Progress Spotlight Card */}
+              <GlassCard hasGlow glowColor={colors.glowPrimary} style={styles.progressCard}>
                 <View style={styles.cardHeaderRow}>
                   <View style={{ flex: 1 }}>
                     <ThemedText type="subtitle" style={styles.cardTitle}>Tiến Độ Hoàn Thành Lộ Trình</ThemedText>
@@ -165,7 +169,7 @@ export default function LearningPathScreen() {
                 </View>
 
                 {/* Refresh Path Action */}
-                <TouchableOpacity
+                <TouchableScale
                   style={[styles.refreshButton, { borderColor: colors.primaryLight, backgroundColor: colors.primaryLight }]}
                   onPress={() => refreshMutation.mutate()}
                   disabled={refreshMutation.isPending}
@@ -180,72 +184,88 @@ export default function LearningPathScreen() {
                       </ThemedText>
                     </>
                   )}
-                </TouchableOpacity>
-              </View>
+                </TouchableScale>
+              </GlassCard>
 
-              {/* Milestones Stepper */}
+              {/* Milestones Stepper Timeline */}
               {path.milestones.map((milestone) => (
                 <View key={milestone.id} style={{ gap: Spacing.two }}>
                   <View style={styles.milestoneHeader}>
-                    <View style={[styles.milestoneBadge, { backgroundColor: colors.secondaryLight }]}>
-                      <ThemedText style={[styles.milestoneBadgeText, { color: colors.secondary }]}>
-                        Cột Mốc #{milestone.sortOrder}
-                      </ThemedText>
+                    <View style={[styles.milestoneIconRing, { backgroundColor: colors.secondaryLight }]}>
+                      <Ionicons name="flag" size={16} color={colors.secondary} />
                     </View>
-                    <ThemedText type="subtitle" style={styles.milestoneTitle}>{milestone.title}</ThemedText>
+                    <ThemedText type="subtitle" style={styles.milestoneTitle}>
+                      Cột Mốc #{milestone.sortOrder}: {milestone.title}
+                    </ThemedText>
                   </View>
 
-                  <View style={{ gap: Spacing.two }}>
-                    {milestone.activities.map((activity) => (
-                      <View
-                        key={activity.id}
-                        style={[
-                          styles.card,
-                          { backgroundColor: colors.card, borderColor: colors.cardBorder },
-                          activity.status === 'completed' && { opacity: 0.75, backgroundColor: colors.backgroundElement }
-                        ]}
-                      >
-                        <View style={styles.cardHeaderRow}>
-                          <View style={[styles.typeBadge, { backgroundColor: colors.primaryLight }]}>
-                            <ThemedText style={[styles.typeBadgeText, { color: colors.primary }]}>
-                              {activity.type.toUpperCase().replace('_', ' ')}
-                            </ThemedText>
+                  <View style={styles.timelineList}>
+                    {milestone.activities.map((activity, aIdx) => (
+                      <View key={activity.id} style={styles.timelineRow}>
+                        {/* Timeline Node Line Connector */}
+                        <View style={styles.timelineNodeCol}>
+                          <View
+                            style={[
+                              styles.timelineDot,
+                              activity.status === 'completed'
+                                ? { backgroundColor: colors.accent, borderColor: colors.accentLight }
+                                : { backgroundColor: colors.warning, borderColor: colors.warningLight },
+                            ]}
+                          />
+                          {aIdx < milestone.activities.length - 1 && (
+                            <View style={[styles.timelineLine, { backgroundColor: colors.cardBorder }]} />
+                          )}
+                        </View>
+
+                        {/* Activity Glass Card */}
+                        <GlassCard
+                          style={[
+                            styles.activityCard,
+                            activity.status === 'completed' && { opacity: 0.8 },
+                          ]}
+                        >
+                          <View style={styles.cardHeaderRow}>
+                            <View style={[styles.typeBadge, { backgroundColor: colors.primaryLight }]}>
+                              <ThemedText style={[styles.typeBadgeText, { color: colors.primary }]}>
+                                {activity.type.toUpperCase().replace('_', ' ')}
+                              </ThemedText>
+                            </View>
+                            {activity.status === 'completed' ? (
+                              <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
+                                <Ionicons name="checkmark-circle" size={14} color={colors.accent} style={{ marginRight: 4 }} />
+                                <ThemedText style={[styles.statusText, { color: colors.accent }]}>Đã hoàn thành</ThemedText>
+                              </View>
+                            ) : (
+                              <View style={[styles.statusBadge, { backgroundColor: colors.warningLight }]}>
+                                <ThemedText style={[styles.statusText, { color: colors.warning }]}>Đang chờ</ThemedText>
+                              </View>
+                            )}
                           </View>
-                          {activity.status === 'completed' ? (
-                            <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
-                              <Ionicons name="checkmark-circle" size={14} color={colors.accent} style={{ marginRight: 4 }} />
-                              <ThemedText style={[styles.statusText, { color: colors.accent }]}>Đã hoàn thành</ThemedText>
-                            </View>
-                          ) : (
-                            <View style={[styles.statusBadge, { backgroundColor: colors.warningLight }]}>
-                              <ThemedText style={[styles.statusText, { color: colors.warning }]}>Đang chờ</ThemedText>
-                            </View>
-                          )}
-                        </View>
 
-                        <ThemedText type="subtitle" style={styles.activityTitle}>{activity.title}</ThemedText>
-                        <ThemedText style={styles.activityDesc}>{activity.description}</ThemedText>
+                          <ThemedText type="subtitle" style={styles.activityTitle}>{activity.title}</ThemedText>
+                          <ThemedText style={styles.activityDesc}>{activity.description}</ThemedText>
 
-                        <View style={styles.activityFooterRow}>
-                          <TouchableOpacity
-                            style={[styles.actionButton, { backgroundColor: colors.primary }]}
-                            onPress={() => handleActivityAction(activity.type, activity.resourceId)}
-                          >
-                            <ThemedText style={styles.actionButtonText}>Luyện Tập ngay</ThemedText>
-                            <Ionicons name="arrow-forward" size={16} color="#fff" />
-                          </TouchableOpacity>
-
-                          {activity.status !== 'completed' && (
-                            <TouchableOpacity
-                              style={[styles.completeButton, { borderColor: colors.accent }]}
-                              onPress={() => completeActivityMutation.mutate(activity.id)}
-                              disabled={completeActivityMutation.isPending}
+                          <View style={styles.activityFooterRow}>
+                            <TouchableScale
+                              style={[styles.actionButton, { backgroundColor: colors.primary }]}
+                              onPress={() => handleActivityAction(activity.type, activity.resourceId)}
                             >
-                              <Ionicons name="checkmark" size={16} color={colors.accent} style={{ marginRight: 4 }} />
-                              <ThemedText style={[styles.completeButtonText, { color: colors.accent }]}>Đánh dấu Xong</ThemedText>
-                            </TouchableOpacity>
-                          )}
-                        </View>
+                              <ThemedText style={styles.actionButtonText}>Luyện Tập Ngay</ThemedText>
+                              <Ionicons name="arrow-forward" size={16} color="#fff" />
+                            </TouchableScale>
+
+                            {activity.status !== 'completed' && (
+                              <TouchableScale
+                                style={[styles.completeButton, { borderColor: colors.accent }]}
+                                onPress={() => completeActivityMutation.mutate(activity.id)}
+                                disabled={completeActivityMutation.isPending}
+                              >
+                                <Ionicons name="checkmark" size={16} color={colors.accent} style={{ marginRight: 4 }} />
+                                <ThemedText style={[styles.completeButtonText, { color: colors.accent }]}>Đánh Dấu Xong</ThemedText>
+                              </TouchableScale>
+                            )}
+                          </View>
+                        </GlassCard>
                       </View>
                     ))}
                   </View>
@@ -265,23 +285,14 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.four,
+    padding: Spacing.three,
     borderBottomWidth: 1,
   },
-  backButton: { marginRight: Spacing.three },
-  title: { fontSize: 20, fontWeight: '700' },
-  scrollContent: { padding: Spacing.four, gap: Spacing.four },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  backButton: { padding: Spacing.one, marginRight: Spacing.two },
+  title: { fontSize: 18, fontWeight: '800' },
+  scrollContent: { padding: Spacing.three, gap: Spacing.three },
+  progressCard: {
     padding: Spacing.four,
-  },
-  card: {
-    borderRadius: Radius.lg,
-    padding: Spacing.four,
-    borderWidth: 1,
-    ...Shadows.sm,
     gap: Spacing.two,
   },
   cardHeaderRow: {
@@ -291,7 +302,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   progressSub: {
     fontSize: 12,
@@ -299,14 +310,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   percentageText: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
+    letterSpacing: -0.5,
   },
   progressTrack: {
     height: 8,
     borderRadius: Radius.full,
     overflow: 'hidden',
-    marginVertical: 4,
+    marginVertical: 6,
   },
   progressFill: {
     height: '100%',
@@ -317,7 +329,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     borderWidth: 1,
     marginTop: Spacing.one,
   },
@@ -330,8 +342,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     marginTop: Spacing.two,
+    width: '100%',
   },
   primaryButtonText: {
     color: '#fff',
@@ -344,37 +357,63 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     marginTop: Spacing.two,
   },
-  milestoneBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-  },
-  milestoneBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
+  milestoneIconRing: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   milestoneTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
+  },
+  timelineList: {
+    gap: Spacing.two,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  timelineNodeCol: {
+    alignItems: 'center',
+    width: 20,
+    paddingTop: 12,
+  },
+  timelineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    marginTop: 4,
+  },
+  activityCard: {
+    flex: 1,
+    padding: Spacing.three,
+    gap: Spacing.two,
   },
   typeBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: Radius.sm,
+    borderRadius: Radius.xs,
   },
   typeBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 10,
+    fontWeight: '800',
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: Radius.sm,
+    borderRadius: Radius.xs,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
   activityTitle: {
@@ -382,8 +421,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   activityDesc: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
     opacity: 0.8,
   },
   activityFooterRow: {
@@ -397,7 +436,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     gap: 6,
   },
   actionButtonText: {
@@ -411,11 +450,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     borderWidth: 1,
   },
   completeButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
 });

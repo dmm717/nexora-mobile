@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, RefreshControl } from 'react-native';
+import { StyleSheet, ScrollView, View, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -8,8 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { growthApi } from '@/api/growth.api';
-import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { GlassCard } from '@/components/ui/glass-card';
+import { SkeletonCard } from '@/components/ui/skeleton-loader';
+import { TouchableScale } from '@/components/ui/touchable-scale';
 
 export default function ProgressDashboardScreen() {
   const router = useRouter();
@@ -30,9 +33,9 @@ export default function ProgressDashboardScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableScale onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
+          </TouchableScale>
           <ThemedText type="title" style={styles.title}>Tổng Quan Tiến Độ & Readiness</ThemedText>
         </View>
 
@@ -42,20 +45,24 @@ export default function ProgressDashboardScreen() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
         >
           {isLoading ? (
-            <ThemedView style={styles.centerContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </ThemedView>
+            <View style={{ gap: 16 }}>
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </View>
           ) : isError || !dashboard ? (
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder, alignItems: 'center' }]}>
+            <GlassCard style={{ alignItems: 'center', padding: Spacing.four }}>
               <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
               <ThemedText style={{ marginTop: Spacing.two, opacity: 0.8 }}>Không thể tải bảng tổng quan tiến độ.</ThemedText>
-            </View>
+            </GlassCard>
           ) : (
             <>
               {/* Readiness Score Card */}
-              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+              <GlassCard hasGlow glowColor={colors.glowPrimary} style={styles.card}>
                 <View style={styles.cardHeaderRow}>
-                  <Ionicons name="speedometer-outline" size={24} color={colors.primary} />
+                  <View style={[styles.iconBadge, { backgroundColor: colors.primaryLight }]}>
+                    <Ionicons name="speedometer-outline" size={22} color={colors.primary} />
+                  </View>
                   <ThemedText type="subtitle" style={styles.cardTitle}>Chỉ Số Sẵn Sàng Phỏng Vấn (Readiness)</ThemedText>
                 </View>
 
@@ -67,7 +74,7 @@ export default function ProgressDashboardScreen() {
                     </View>
                   ) : (
                     <View style={styles.nullScoreBox}>
-                      <Ionicons name="sparkles" size={32} color={colors.warning} />
+                      <Ionicons name="sparkles" size={36} color={colors.warning} />
                       <ThemedText style={[styles.nullScoreText, { color: colors.warning }]}>
                         Chưa đủ dữ liệu đánh giá
                       </ThemedText>
@@ -93,13 +100,15 @@ export default function ProgressDashboardScreen() {
                     </View>
                   </View>
                 )}
-              </View>
+              </GlassCard>
 
               {/* Weekly Completed Activities Card */}
               {dashboard.weeklyCompletedActivities && (
-                <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                <GlassCard style={styles.card}>
                   <View style={styles.cardHeaderRow}>
-                    <Ionicons name="calendar-outline" size={22} color={colors.secondary} />
+                    <View style={[styles.iconBadge, { backgroundColor: colors.secondaryLight }]}>
+                      <Ionicons name="calendar-outline" size={20} color={colors.secondary} />
+                    </View>
                     <ThemedText type="subtitle" style={styles.cardTitle}>
                       Hoạt Động Tuần Này ({dashboard.weeklyCompletedActivities.total})
                     </ThemedText>
@@ -134,45 +143,60 @@ export default function ProgressDashboardScreen() {
                       <ThemedText style={styles.weeklyLabel}>Phân tích CV</ThemedText>
                     </View>
                   </View>
-                </View>
+                </GlassCard>
               )}
 
-              {/* Weakest Competencies Card */}
+              {/* Weakest Competencies Card with Progress Visualizers */}
               {dashboard.weakestCompetencies && dashboard.weakestCompetencies.length > 0 && (
-                <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                <GlassCard style={styles.card}>
                   <View style={styles.cardHeaderRow}>
-                    <Ionicons name="trending-down-outline" size={22} color={colors.warning} />
+                    <View style={[styles.iconBadge, { backgroundColor: colors.warningLight }]}>
+                      <Ionicons name="trending-down-outline" size={20} color={colors.warning} />
+                    </View>
                     <ThemedText type="subtitle" style={styles.cardTitle}>Năng Lực Cần Cải Thiện Nhất</ThemedText>
                   </View>
 
-                  <View style={{ gap: Spacing.two }}>
+                  <View style={{ gap: Spacing.three }}>
                     {dashboard.weakestCompetencies.map((comp) => (
                       <View key={comp.code} style={[styles.weakRow, { backgroundColor: colors.backgroundElement }]}>
-                        <View style={{ flex: 1 }}>
-                          <ThemedText style={styles.weakName}>{comp.name}</ThemedText>
-                          <ThemedText style={styles.weakMeta}>{comp.category} • {comp.evidenceCount} minh chứng</ThemedText>
+                        <View style={styles.weakTopRow}>
+                          <View style={{ flex: 1 }}>
+                            <ThemedText style={styles.weakName}>{comp.name}</ThemedText>
+                            <ThemedText style={styles.weakMeta}>{comp.category} • {comp.evidenceCount} minh chứng</ThemedText>
+                          </View>
+                          <View style={[styles.scoreBadge, { backgroundColor: colors.warningLight }]}>
+                            <ThemedText style={[styles.scoreText, { color: colors.warning }]}>{comp.score}/100</ThemedText>
+                          </View>
                         </View>
-                        <View style={[styles.scoreBadge, { backgroundColor: colors.warningLight }]}>
-                          <ThemedText style={[styles.scoreText, { color: colors.warning }]}>{comp.score}/100</ThemedText>
+                        {/* Progress visualizer bar */}
+                        <View style={styles.progressTrack}>
+                          <View
+                            style={[
+                              styles.progressFill,
+                              { width: `${Math.min(100, Math.max(5, comp.score))}%`, backgroundColor: colors.warning },
+                            ]}
+                          />
                         </View>
                       </View>
                     ))}
                   </View>
-                </View>
+                </GlassCard>
               )}
 
               {/* Recent Improvements Card */}
               {dashboard.recentImprovements && dashboard.recentImprovements.length > 0 && (
-                <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                <GlassCard style={styles.card}>
                   <View style={styles.cardHeaderRow}>
-                    <Ionicons name="trending-up-outline" size={22} color={colors.accent} />
+                    <View style={[styles.iconBadge, { backgroundColor: colors.accentLight }]}>
+                      <Ionicons name="trending-up-outline" size={20} color={colors.accent} />
+                    </View>
                     <ThemedText type="subtitle" style={styles.cardTitle}>Tiến Bộ Điểm Số Gần Đây</ThemedText>
                   </View>
 
                   <View style={{ gap: Spacing.two }}>
                     {dashboard.recentImprovements.map((imp, idx) => (
                       <View key={idx} style={[styles.impRow, { backgroundColor: colors.accentLight }]}>
-                        <Ionicons name="arrow-up-circle" size={22} color={colors.accent} />
+                        <Ionicons name="arrow-up-circle" size={24} color={colors.accent} />
                         <View style={{ flex: 1 }}>
                           <ThemedText style={[styles.impTitle, { color: colors.accent }]}>
                             +{imp.delta} Điểm (Từ {imp.previousScore} lên {imp.currentScore})
@@ -182,7 +206,7 @@ export default function ProgressDashboardScreen() {
                       </View>
                     ))}
                   </View>
-                </View>
+                </GlassCard>
               )}
             </>
           )}
@@ -198,23 +222,14 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.four,
+    padding: Spacing.three,
     borderBottomWidth: 1,
   },
-  backButton: { marginRight: Spacing.three },
-  title: { fontSize: 20, fontWeight: '700' },
-  scrollContent: { padding: Spacing.four, gap: Spacing.four },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.four,
-  },
+  backButton: { padding: Spacing.one, marginRight: Spacing.two },
+  title: { fontSize: 18, fontWeight: '800' },
+  scrollContent: { padding: Spacing.three, gap: Spacing.three },
   card: {
-    borderRadius: Radius.lg,
     padding: Spacing.four,
-    borderWidth: 1,
-    ...Shadows.sm,
     gap: Spacing.two,
   },
   cardHeaderRow: {
@@ -222,9 +237,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
   },
+  iconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   readinessBox: {
     alignItems: 'center',
@@ -235,8 +257,9 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   scoreNumber: {
-    fontSize: 48,
+    fontSize: 52,
     fontWeight: '800',
+    letterSpacing: -1,
   },
   scoreMax: {
     fontSize: 18,
@@ -246,10 +269,10 @@ const styles = StyleSheet.create({
   nullScoreBox: {
     alignItems: 'center',
     paddingVertical: Spacing.two,
-    gap: 6,
+    gap: 8,
   },
   nullScoreText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
   readinessGrid: {
@@ -261,7 +284,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: Spacing.three,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
   },
   gridNumber: {
     fontSize: 18,
@@ -282,7 +305,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: Spacing.two,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
   },
   weeklyNum: {
     fontSize: 18,
@@ -294,10 +317,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   weakRow: {
+    padding: Spacing.three,
+    borderRadius: Radius.sm,
+    gap: Spacing.two,
+  },
+  weakTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.three,
-    borderRadius: Radius.md,
   },
   weakName: {
     fontSize: 14,
@@ -311,17 +337,27 @@ const styles = StyleSheet.create({
   scoreBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: Radius.sm,
+    borderRadius: Radius.xs,
   },
   scoreText: {
     fontSize: 12,
     fontWeight: '800',
   },
+  progressTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
   impRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.three,
-    borderRadius: Radius.md,
+    borderRadius: Radius.sm,
     gap: Spacing.two,
   },
   impTitle: {

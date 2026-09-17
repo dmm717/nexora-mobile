@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View, Image } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
-import Animated, { FadeInUp, FadeInDown, withSpring, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeInDown, Easing } from 'react-native-reanimated';
 import { AppError } from '@/api/types';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { MaterialInput } from '@/components/material-input';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import { TouchableScale } from '@/components/ui/touchable-scale';
+import { GlassCard } from '@/components/ui/glass-card';
+import { AmbientBackground } from '@/components/ui/ambient-background';
 
 export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
@@ -24,14 +24,6 @@ export default function RegisterScreen() {
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
-
-  // Button Scale Animation
-  const buttonScale = useSharedValue(1);
-  const buttonAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: buttonScale.value }],
-    };
-  });
 
   const handleRegister = async () => {
     if (!email.trim() || !password.trim()) {
@@ -67,141 +59,157 @@ export default function RegisterScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
-        
-        <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.header}>
-          <ThemedText type="title" style={styles.title}>
-            Tạo tài khoản mới
-          </ThemedText>
-          <ThemedText style={styles.subtitle}>
-            Bắt đầu trải nghiệm phỏng vấn và huấn luyện AI
-          </ThemedText>
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.delay(200).duration(600).springify()} style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#ffffff' }]}>
-          <View style={styles.form}>
-            
-            <MaterialInput
-              label="Họ và tên"
-              value={fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <Animated.View entering={FadeInDown.duration(800).easing(Easing.out(Easing.cubic))} style={styles.brandHeader}>
+            <Image 
+              source={require('@/assets/images/logo.png')} 
+              style={styles.logoImage} 
+              resizeMode="contain" 
             />
+            <ThemedText type="title" style={styles.title}>
+              Tạo Tài Khoản Mới
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Bắt đầu hành trình luyện phỏng vấn & phát triển sự nghiệp cùng AI
+            </ThemedText>
+          </Animated.View>
 
-            <MaterialInput
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
+          {/* Form Card */}
+          <Animated.View entering={FadeInUp.delay(200).duration(800).easing(Easing.out(Easing.cubic))}>
+            <GlassCard hasGlow glowColor={colors.glowSecondary} style={styles.card}>
+              <ThemedText type="subtitle" style={styles.cardTitle}>
+                Thông Tin Đăng Ký
+              </ThemedText>
 
-            <MaterialInput
-              label="Mật khẩu"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoComplete="password"
-            />
+              <View style={styles.formStack}>
+                <MaterialInput
+                  label="Họ và tên"
+                  leftIcon="person-outline"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  autoCapitalize="words"
+                />
 
-            <AnimatedPressable
-              style={[styles.button, buttonAnimatedStyle, { opacity: loading ? 0.7 : 1 }]}
-              onPressIn={() => (buttonScale.value = withSpring(0.95))}
-              onPressOut={() => (buttonScale.value = withSpring(1))}
-              onPress={handleRegister}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <ThemedText style={styles.buttonText}>Tạo Tài Khoản</ThemedText>
-              )}
-            </AnimatedPressable>
+                <MaterialInput
+                  label="Địa chỉ Email"
+                  leftIcon="mail-outline"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                />
 
-            <View style={styles.footer}>
-              <ThemedText style={styles.footerText}>Đã có tài khoản? </ThemedText>
-              <Link href="/(auth)/login" asChild>
-                <Pressable>
-                  <ThemedText style={styles.linkText}>Đăng nhập ngay</ThemedText>
-                </Pressable>
-              </Link>
-            </View>
+                <MaterialInput
+                  label="Mật khẩu (ít nhất 6 ký tự)"
+                  leftIcon="lock-closed-outline"
+                  isPassword
+                  value={password}
+                  onChangeText={setPassword}
+                  autoComplete="password"
+                />
 
-          </View>
-        </Animated.View>
+                <TouchableScale
+                  style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                  onPress={handleRegister}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <ThemedText style={styles.submitButtonText}>Tạo Tài Khoản</ThemedText>
+                  )}
+                </TouchableScale>
+              </View>
+
+              <View style={styles.footerRow}>
+                <ThemedText style={styles.footerText}>Đã có tài khoản? </ThemedText>
+                <Link href="/(auth)/login" asChild>
+                  <Pressable hitSlop={8}>
+                    <ThemedText style={[styles.linkText, { color: colors.primary }]}>Đăng nhập ngay</ThemedText>
+                  </Pressable>
+                </Link>
+              </View>
+            </GlassCard>
+          </Animated.View>
+        </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </AmbientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+  safeArea: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
+    padding: Spacing.four,
     justifyContent: 'center',
   },
-  header: {
-    marginBottom: Spacing.five,
+  brandHeader: {
     alignItems: 'center',
-    gap: Spacing.one,
+    marginBottom: Spacing.four,
+  },
+  logoImage: {
+    width: 60,
+    height: 60,
+    marginBottom: Spacing.two,
   },
   title: {
-    fontSize: 28,
-    marginTop: Spacing.two,
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: -0.5,
     textAlign: 'center',
   },
   subtitle: {
     opacity: 0.7,
     textAlign: 'center',
-    fontSize: 15,
+    fontSize: 14,
+    marginTop: 4,
+    maxWidth: 320,
+    lineHeight: 19,
   },
   card: {
-    borderRadius: 24,
     padding: Spacing.four,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 5,
+    gap: Spacing.three,
   },
-  form: {
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: Spacing.one,
+  },
+  formStack: {
     gap: Spacing.two,
   },
-  button: {
-    height: 56,
-    backgroundColor: '#3525CD',
-    borderRadius: 16,
+  submitButton: {
+    height: 52,
+    borderRadius: Radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.three,
-    shadowColor: '#3525CD',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    marginTop: Spacing.two,
   },
-  buttonText: {
+  submitButtonText: {
     color: '#ffffff',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 16,
   },
-  footer: {
+  footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: Spacing.four,
+    marginTop: Spacing.three,
   },
   footerText: {
     opacity: 0.7,
     fontSize: 14,
   },
   linkText: {
-    color: '#3525CD',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 14,
   },
 });
