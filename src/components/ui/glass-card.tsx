@@ -16,30 +16,24 @@ export function GlassCard({
   children,
   style,
   withBorder = true,
-  intensity = 'medium',
-  hasGlow,
-  glowColor,
-  borderColor,
   ...props
 }: GlassCardProps) {
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
   const colors = useTheme();
 
   return (
     <View
       style={[
-        {
-          shadowColor: hasGlow && glowColor ? glowColor : colors.text,
-          shadowOffset: { width: 0, height: hasGlow ? 8 : 2 },
-          shadowOpacity: hasGlow ? 0.3 : (isDark ? 0.2 : 0.04),
-          shadowRadius: hasGlow ? 16 : 8,
-          elevation: hasGlow ? 10 : 2,
-          backgroundColor: colors.card,
-          borderColor: borderColor || (withBorder ? colors.cardBorder : 'transparent'),
-          borderWidth: withBorder || borderColor ? 1 : 0,
-        },
         styles.container,
+        {
+          backgroundColor: colors.card,
+          borderColor: withBorder ? colors.cardBorder : 'transparent',
+          borderWidth: withBorder ? 1 : 0,
+          shadowColor: '#131b2e',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.08,
+          shadowRadius: 26,
+          elevation: 5,
+        },
         style,
       ]}
       {...props}

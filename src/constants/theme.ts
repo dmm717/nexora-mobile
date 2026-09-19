@@ -11,60 +11,66 @@ export const Colors = {
     primary: '#1b33c7',
     primaryLight: '#dfe0ff',
     secondary: '#006c49',
-    secondaryLight: '#6ffbbe',
-    accent: '#694100',
-    accentLight: '#ffddb8',
-    warning: '#F59E0B',
-    warningLight: 'rgba(245, 158, 11, 0.1)',
+    secondaryLight: '#6cf8bb',
+    accent: '#384ddc',
+    accentLight: '#dae2fd',
+    background: '#faf8ff',
+    surface: '#ffffff',
+    text: '#131b2e',
+    textPrimary: '#131b2e',
+    textSecondary: '#444655',
+    border: '#c5c5d7',
+    error: '#ba1a1a',
+    errorLight: '#ffdad6',
+    warning: '#694100',
+    warningLight: '#ffddb8',
+    success: '#006c49',
+    
+    // Web alignment
+    backgroundElement: '#eaedff', // surface-container
+    backgroundSelected: '#dfe0ff', // primaryLight
+    card: '#ffffff',
+    cardBorder: '#e2e7ff', // surface-container-high
+    glassBackground: '#ffffff', // No glass on web
+    glassBorder: '#c5c5d7', // outline-variant
+    textMuted: '#757686',
+    glowPrimary: 'rgba(27, 51, 199, 0.4)',
+    glowSecondary: 'rgba(0, 108, 73, 0.4)',
     danger: '#ba1a1a',
     dangerLight: '#ffdad6',
-
-    text: '#131b2e',
-    textSecondary: '#444655',
-    textMuted: '#757686',
-
-    background: '#faf8ff',
-    backgroundElement: '#eaedff',
-    backgroundSelected: '#e2e7ff',
-
-    card: '#ffffff',
-    cardBorder: '#c5c5d7',
-    glowPrimary: 'rgba(27, 51, 199, 0.15)',
-    glowSecondary: 'rgba(0, 108, 73, 0.15)',
-    glassBackground: 'rgba(255, 255, 255, 0.25)', // More transparent for GlassCard
-    glassBorder: 'rgba(255, 255, 255, 0.6)',
-    inputBackground: '#ffffff',
     inputBorder: '#c5c5d7',
   },
-  // Dark mode is identical to Light mode to lock the theme
   dark: {
-    primary: '#1b33c7',
-    primaryLight: '#dfe0ff',
-    secondary: '#006c49',
-    secondaryLight: '#6ffbbe',
-    accent: '#694100',
-    accentLight: '#ffddb8',
-    warning: '#F59E0B',
-    warningLight: 'rgba(245, 158, 11, 0.1)',
-    danger: '#ba1a1a',
-    dangerLight: '#ffdad6',
-
-    text: '#131b2e',
-    textSecondary: '#444655',
-    textMuted: '#757686',
-
-    background: '#faf8ff',
-    backgroundElement: '#eaedff',
-    backgroundSelected: '#e2e7ff',
-
-    card: '#ffffff',
-    cardBorder: '#c5c5d7',
-    glowPrimary: 'rgba(27, 51, 199, 0.15)',
-    glowSecondary: 'rgba(0, 108, 73, 0.15)',
-    glassBackground: 'rgba(255, 255, 255, 0.25)',
-    glassBorder: 'rgba(255, 255, 255, 0.6)',
-    inputBackground: '#ffffff',
-    inputBorder: '#c5c5d7',
+    primary: '#bcc3ff',
+    primaryLight: '#3b50df',
+    secondary: '#4edea3',
+    secondaryLight: '#005236',
+    accent: '#bcc3ff',
+    accentLight: '#384ddc',
+    background: '#131b2e',
+    surface: '#283044',
+    text: '#eef0ff',
+    textPrimary: '#eef0ff',
+    textSecondary: '#c5c5d7',
+    border: '#757686',
+    error: '#ffdad6',
+    errorLight: '#93000a',
+    warning: '#ffb95f',
+    warningLight: '#653e00',
+    success: '#4edea3',
+    
+    backgroundElement: '#283044',
+    backgroundSelected: '#3b50df', // primaryLight
+    card: '#283044',
+    cardBorder: '#444655',
+    glassBackground: '#283044',
+    glassBorder: '#757686',
+    textMuted: '#c5c5d7',
+    glowPrimary: 'rgba(188, 195, 255, 0.4)',
+    glowSecondary: 'rgba(78, 222, 163, 0.4)',
+    danger: '#ffdad6',
+    dangerLight: '#93000a',
+    inputBorder: '#757686',
   },
 } as const;
 
@@ -79,43 +85,52 @@ export const Radius = {
   full: 9999,
 } as const;
 
+export const Typography = {
+  fontFamily: {
+    regular: 'PlusJakartaSans_400Regular',
+    medium: 'PlusJakartaSans_500Medium',
+    semibold: 'PlusJakartaSans_600SemiBold',
+    bold: 'PlusJakartaSans_700Bold',
+    extrabold: 'PlusJakartaSans_800ExtraBold',
+  },
+  sizes: {
+    xs: 11,
+    sm: 13,
+    base: 15,
+    md: 16,
+    lg: 18,
+    xl: 22,
+    xxl: 28,
+  },
+  lineHeights: {
+    tight: 1.2,
+    normal: 1.5,
+    relaxed: 1.7,
+  }
+};
+
 export const Shadows = {
-  sm: Platform.select({
-    ios: {
-      shadowColor: '#131b2e',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-    },
-    android: { elevation: 2 },
-    default: {
-      boxShadow: '0 4px 12px rgba(19, 27, 46, 0.08)',
-    },
-  }),
-  md: Platform.select({
-    ios: {
-      shadowColor: '#131b2e',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.15,
-      shadowRadius: 24,
-    },
-    android: { elevation: 4 },
-    default: {
-      boxShadow: '0 10px 24px rgba(19, 27, 46, 0.15)',
-    },
-  }),
-  lg: Platform.select({
-    ios: {
-      shadowColor: '#131b2e',
-      shadowOffset: { width: 0, height: 16 },
-      shadowOpacity: 0.22,
-      shadowRadius: 32,
-    },
-    android: { elevation: 8 },
-    default: {
-      boxShadow: '0 16px 32px rgba(19, 27, 46, 0.22)',
-    },
-  }),
+  sm: {
+    shadowColor: '#131b2e',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  md: { // Matches --shadow-card on web
+    shadowColor: '#131b2e',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 26,
+    elevation: 5,
+  },
+  lg: { // Matches --shadow-floating on web
+    shadowColor: '#131b2e',
+    shadowOffset: { width: 0, height: 22 },
+    shadowOpacity: 0.12,
+    shadowRadius: 48,
+    elevation: 10,
+  }
 };
 
 export const Fonts = Platform.select({

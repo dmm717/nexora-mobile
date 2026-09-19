@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
+import { Typography } from '@/constants/theme';
 
 export type BadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
 export type BadgeSize = 'sm' | 'md' | 'lg';
@@ -36,7 +37,7 @@ export function Badge({
       case 'warning':
         return { bg: '#fef3c7', text: '#b45309' }; // amber-100 / amber-700
       case 'error':
-        return { bg: colors.dangerLight || '#ffdad6', text: colors.danger || '#ba1a1a' };
+        return { bg: colors.errorLight || '#ffdad6', text: colors.error || '#ba1a1a' };
       case 'info':
         return { bg: '#e0e7ff', text: '#4338ca' }; // indigo-100 / indigo-700
       case 'neutral':
@@ -103,7 +104,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   text: {
-    fontFamily: 'PlusJakartaSans-SemiBold',
+    fontFamily: Typography.fontFamily.semibold,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,

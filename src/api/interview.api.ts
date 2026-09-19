@@ -26,10 +26,12 @@ export const interviewApi = {
     return 'data' in res.data && res.data.data ? res.data.data : (res.data as InterviewView);
   },
 
-  list: async (page = 1, pageSize = 20): Promise<InterviewHistoryResponse> => {
-    const res = await apiClient.get<{ data?: InterviewHistoryResponse } | InterviewHistoryResponse>(
-      `/interviews?page=${page}&pageSize=${pageSize}`
-    );
+  list: async (page = 1, pageSize = 20, status?: string): Promise<InterviewHistoryResponse> => {
+    let url = `/interviews?page=${page}&pageSize=${pageSize}`;
+    if (status && status !== 'all') {
+      url += `&status=${encodeURIComponent(status)}`;
+    }
+    const res = await apiClient.get<{ data?: InterviewHistoryResponse } | InterviewHistoryResponse>(url);
     return 'data' in res.data && res.data.data ? res.data.data : (res.data as InterviewHistoryResponse);
   },
 

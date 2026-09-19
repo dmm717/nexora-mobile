@@ -27,13 +27,15 @@ export default function ProfileScreen() {
     enabled: !!user,
   });
 
+  const rawData = data as any;
+  const userProfileInfo = rawData?.identity || rawData?.profile || {};
   const identity = data?.identity;
   const activeGoal = data?.activeCareerGoal;
   const primaryResume = data?.primaryResume;
 
-  const email = identity?.email || user?.email || '';
-  const displayName = identity?.displayName || user?.displayName || user?.fullName || 'Người dùng Nexora';
-  const yearsOfExperience = identity?.yearsOfExperience ?? 0;
+  const email = userProfileInfo?.email || identity?.email || user?.email || '';
+  const displayName = userProfileInfo?.displayName || identity?.displayName || user?.displayName || user?.fullName || 'Người dùng Nexora';
+  const yearsOfExperience = userProfileInfo?.yearsOfExperience ?? identity?.yearsOfExperience ?? null;
   const avatarLetter = (displayName || email || 'N').charAt(0).toUpperCase();
 
   return (
@@ -65,7 +67,7 @@ export default function ProfileScreen() {
                 <View style={[styles.xpBadgeCenter, { backgroundColor: colors.primaryLight }]}>
                   <Ionicons name="briefcase" size={14} color={colors.primary} style={{ marginRight: 4 }} />
                   <ThemedText style={[styles.xpTextCenter, { color: colors.primary }]}>
-                    {yearsOfExperience} năm kinh nghiệm
+                    {yearsOfExperience != null ? `${yearsOfExperience} năm kinh nghiệm` : 'Chưa khai báo kinh nghiệm'}
                   </ThemedText>
                 </View>
               </View>

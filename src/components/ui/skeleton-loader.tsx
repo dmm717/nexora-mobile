@@ -24,10 +24,14 @@ export const SkeletonLoader: React.FC<SkeletonProps> = ({
   style,
 }) => {
   const colorScheme = useColorScheme();
-  const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
+  const isDark = colorScheme === 'dark';
+  const themeKey = isDark ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  const opacity = useSharedValue(0.4);
+  // Use surface-container-highest for skeleton base
+  const backgroundColor = isDark ? '#444655' : '#e2e7ff';
+
+  const opacity = useSharedValue(0.5);
 
   useEffect(() => {
     opacity.value = withRepeat(
@@ -43,8 +47,6 @@ export const SkeletonLoader: React.FC<SkeletonProps> = ({
     };
   });
 
-  const baseColor = colorScheme === 'dark' ? '#1E293B' : '#E2E8F0';
-
   return (
     <Animated.View
       style={[
@@ -52,7 +54,7 @@ export const SkeletonLoader: React.FC<SkeletonProps> = ({
           width: width as any,
           height,
           borderRadius,
-          backgroundColor: baseColor,
+          backgroundColor,
         },
         animatedStyle,
         style,

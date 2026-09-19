@@ -63,7 +63,7 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
   const animatedLabelStyle = useAnimatedStyle(() => {
     const textColor = interpolateColor(focusAnim.value, [0, 1], [
       colors.textSecondary,
-      error ? colors.danger : (isFocused ? colors.primary : colors.textSecondary)
+      error ? colors.error : (isFocused ? colors.primary : colors.textSecondary)
     ]);
     
     return {
@@ -79,8 +79,8 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
   // Border animation style
   const animatedContainerStyle = useAnimatedStyle(() => {
     const borderColor = interpolateColor(focusAnim.value, [0, 1], [
-      colors.inputBorder,
-      error ? colors.danger : (isFocused ? colors.primary : colors.inputBorder)
+      colors.border,
+      error ? colors.error : (isFocused ? colors.primary : colors.border)
     ]);
     return {
       borderColor,
@@ -90,59 +90,57 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={handleContainerPress}>
-        <Animated.View style={[styles.inputContainer, animatedContainerStyle, { backgroundColor: colors.inputBackground }]}>
-          {leftIcon && (
-            <Ionicons
-              name={leftIcon}
-              size={20}
-              color={isFocused ? colors.primary : colors.textMuted}
-              style={styles.leftIcon}
-            />
-          )}
-
-          <Animated.Text
-            pointerEvents="none"
-            style={[
-              styles.label,
-              animatedLabelStyle,
-              {
-                backgroundColor: colors.inputBackground,
-                left: leftIcon ? 42 : 14,
-              },
-            ]}
-          >
-            {label}
-          </Animated.Text>
-
-          <TextInput
-            ref={inputRef}
-            style={[styles.input, { color: colors.text }]}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            value={value}
-            secureTextEntry={isPassword ? !showPassword : secureTextEntry}
-            placeholderTextColor="transparent"
-            {...props}
+      <Animated.View style={[styles.inputContainer, animatedContainerStyle, { backgroundColor: colors.surface }]}>
+        {leftIcon && (
+          <Ionicons
+            name={leftIcon}
+            size={20}
+            color={isFocused ? colors.primary : colors.textSecondary}
+            style={styles.leftIcon}
           />
+        )}
 
-          {isPassword && (
-            <Pressable
-              onPress={() => setShowPassword(!showPassword)}
-              hitSlop={12}
-              style={styles.eyeButton}
-            >
-              <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={22}
-                color={colors.textSecondary}
-              />
-            </Pressable>
-          )}
-        </Animated.View>
-      </Pressable>
+        <Animated.Text
+          pointerEvents="none"
+          style={[
+            styles.label,
+            animatedLabelStyle,
+            {
+              backgroundColor: colors.surface,
+              left: leftIcon ? 42 : 14,
+            },
+          ]}
+        >
+          {label}
+        </Animated.Text>
+
+        <TextInput
+          ref={inputRef}
+          style={[styles.input, { color: colors.text }]}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          value={value}
+          secureTextEntry={isPassword ? !showPassword : secureTextEntry}
+          placeholderTextColor="transparent"
+          {...props}
+        />
+
+        {isPassword && (
+          <Pressable
+            onPress={() => setShowPassword(!showPassword)}
+            hitSlop={12}
+            style={styles.eyeButton}
+          >
+            <Ionicons
+              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+              size={22}
+              color={colors.textSecondary}
+            />
+          </Pressable>
+        )}
+      </Animated.View>
       {error ? (
-        <Animated.Text style={[styles.errorText, { color: colors.danger }]}>{error}</Animated.Text>
+        <Animated.Text style={[styles.errorText, { color: colors.error }]}>{error}</Animated.Text>
       ) : null}
     </View>
   );

@@ -47,12 +47,12 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   title: {
-    fontFamily: 'Lexend_700Bold',
+    fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 28, // Adjusted from 48 for mobile titles
     lineHeight: 34,
   },
   subtitle: {
-    fontFamily: 'Lexend_600SemiBold',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     fontSize: 22, // Adjusted from 32 for mobile subtitles
     lineHeight: 28,
   },

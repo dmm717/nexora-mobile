@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, ScrollView, View, Image } from 'react-native';
+import React, { useMemo } from 'react';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,16 +7,110 @@ import { useQuery } from '@tanstack/react-query';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
+import { Badge } from '@/components/ui/badge';
 import { profileApi } from '@/api/profile.api';
 import { growthApi } from '@/api/growth.api';
-import { Colors, Spacing } from '@/constants/theme';
+import { dashboardApi } from '@/api/dashboard.api';
+import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { TouchableScale } from '@/components/ui/touchable-scale';
-import { GlassCard } from '@/components/ui/glass-card';
-import { AmbientBackground } from '@/components/ui/ambient-background';
-import { AvatarGlow } from '@/components/ui/avatar-glow';
+import { GlassCard as SurfaceCard } from '@/components/ui/glass-card';
+import { AmbientBackground as SolidBackground } from '@/components/ui/ambient-background';
 import { SkeletonLoader } from '@/components/ui/skeleton-loader';
+import { RadialScoreRing } from '@/components/ui/radial-score';
+
+function renderStatusBadge(status: string) {
+  const normalized = (status || '').toLowerCase().trim();
+
+  let variant: 'success' | 'warning' | 'error' | 'info' | 'primary' | 'neutral' = 'neutral';
+  let label = status;
+
+  if (normalized === 'completed' || normalized === 'hoàn thành') {
+    variant = 'success';
+    label = 'Hoàn thành';
+  } else if (normalized === 'in_progress' || normalized === 'inprogress' || normalized === 'đang diễn ra') {
+    variant = 'info';
+    label = 'Đang làm';
+  } else if (normalized === 'pending' || normalized === 'đang chờ') {
+    variant = 'warning';
+    label = 'Đang chờ';
+  } else if (normalized === 'failed' || normalized === 'thất bại') {
+    variant = 'error';
+    label = 'Lỗi';
+  } else if (normalized === 'draft') {
+    variant = 'neutral';
+    label = 'Nháp';
+  }
+
+  return (
+    <Badge variant={variant} size="sm">
+      {label}
+    </Badge>
+  );
+}
+
+function resolveNextBestAction({
+  recommendation,
+  targetRole,
+  hasInsufficientEvidence,
+}: {
+  recommendation?: any;
+  targetRole?: string;
+  hasInsufficientEvidence: boolean;
+}) {
+  if (recommendation) {
+    const type = (recommendation.activityType || '').toLowerCase();
+    let dest = '/(app)/growth/progress-dashboard';
+    let label = 'Bắt đầu bài luyện tập đề xuất';
+
+    if (type === 'star' || type === 'star_drill') {
+      dest = '/(app)/star-builder';
+      label = 'Luyện phản xạ STAR';
+    } else if (type === 'scenario') {
+      dest = recommendation.resourceId ? `/(app)/scenarios/${recommendation.resourceId}` : '/(app)/scenarios';
+      label = 'Luyện kịch bản tình huống';
+    } else if (type === 'interview') {
+      dest = '/(app)/interview/preflight';
+      label = 'Luyện phỏng vấn AI';
+    } else if (type === 'resume' || type === 'resume_improvement') {
+      dest = '/(app)/cv-analysis';
+      label = 'Cải thiện & Phân tích CV';
+    }
+
+    return {
+      label,
+      description: recommendation.reason || 'Chọn bài luyện phù hợp với điều bạn muốn cải thiện tiếp theo.',
+      destination: dest,
+      estimatedMinutes: recommendation.estimatedMinutes,
+    };
+  }
+
+  if (hasInsufficientEvidence) {
+    return {
+      label: targetRole ? `Phân tích CV theo mục tiêu ${targetRole}` : 'Thiết lập mục tiêu & phân tích CV',
+      description: 'Chọn vị trí bạn hướng tới và tải CV lên để hệ thống bắt đầu tích lũy bằng chứng năng lực.',
+      destination: '/(app)/cv-analysis',
+      estimatedMinutes: undefined,
+    };
+  }
+
+  if (!targetRole) {
+    return {
+      label: 'Thiết lập mục tiêu nghề nghiệp',
+      description: 'Chọn vị trí mục tiêu để các đề xuất bài tập tiếp theo có bối cảnh cá nhân hóa chính xác.',
+      destination: '/(app)/career-goals',
+      estimatedMinutes: undefined,
+    };
+  }
+
+  return {
+    label: 'Bắt đầu phỏng vấn AI',
+    description: 'Thực hiện bài phỏng vấn đầu tiên để bắt đầu tích lũy bằng chứng năng lực thực tế.',
+    destination: '/(app)/interview/preflight',
+    estimatedMinutes: undefined,
+  };
+}
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -25,221 +119,496 @@ export default function HomeScreen() {
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
+  // 1. Career Profile
   const { data: profileData, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['career-profile'],
     queryFn: profileApi.getCareerProfile,
     enabled: !!user,
   });
 
+  // 2. Next Recommendation
   const { data: recommendation, isLoading: isLoadingRec } = useQuery({
     queryKey: ['next-recommendation'],
     queryFn: growthApi.getNextRecommendation,
     enabled: !!user,
   });
 
-  const activeGoal = profileData?.activeCareerGoal;
+  // 3. Dashboard Summary (Interviews & Reports)
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: dashboardApi.getDashboardSummary,
+    enabled: !!user,
+  });
 
-  const handleNextActionClick = () => {
-    if (!recommendation) {
-      router.push('/(app)/growth/progress-dashboard' as any);
-      return;
-    }
+  // 4. Progress Dashboard (Readiness Score & Gaps)
+  const { data: progressData, isLoading: isLoadingProgress } = useQuery({
+    queryKey: ['progress-dashboard'],
+    queryFn: growthApi.getProgressDashboard,
+    enabled: !!user,
+  });
 
-    const type = (recommendation.activityType || '').toLowerCase();
-    switch (type) {
-      case 'star':
-        router.push('/(app)/star-builder' as any);
-        break;
-      case 'scenario':
-        if (recommendation.resourceId) {
-          router.push(`/(app)/scenarios/${recommendation.resourceId}` as any);
-        } else {
-          router.push('/(app)/scenarios' as any);
+  // 5. Learning Path
+  const { data: learningPathData, isLoading: isLoadingLearningPath } = useQuery({
+    queryKey: ['learning-path'],
+    queryFn: growthApi.getLearningPath,
+    enabled: !!user,
+  });
+
+  const {
+    activeGoal,
+    primaryResume,
+    userProfileInfo,
+    yearsOfExperience,
+  } = useMemo(() => {
+    const rawProfileObj = profileData as any;
+    const info = rawProfileObj?.profile || rawProfileObj?.identity || {};
+    return {
+      activeGoal: profileData?.activeCareerGoal,
+      primaryResume: profileData?.primaryResume,
+      userProfileInfo: info,
+      yearsOfExperience: info?.yearsOfExperience ?? null,
+    };
+  }, [profileData]);
+
+  const {
+    readinessScore,
+    evidenceCount,
+    priorityGapCount,
+    hasInsufficientEvidence,
+  } = useMemo(() => {
+    const score = progressData?.readiness?.score;
+    return {
+      readinessScore: score,
+      evidenceCount: progressData?.readiness?.evidenceCount || 0,
+      priorityGapCount: progressData?.readiness?.priorityGapCount || 0,
+      hasInsufficientEvidence: score === null || score === undefined,
+    };
+  }, [progressData]);
+
+  const nextAction = useMemo(() => resolveNextBestAction({
+    recommendation,
+    targetRole: activeGoal?.targetRole,
+    hasInsufficientEvidence,
+  }), [recommendation, activeGoal?.targetRole, hasInsufficientEvidence]);
+
+  const recentActivities = useMemo(() => {
+    const activities: Array<{
+      id: string;
+      interviewId: string;
+      role: string;
+      status: string;
+      updatedAt: string;
+      score: number | null;
+      fullTimestamp: string;
+    }> = [];
+
+    if (dashboardData?.interviews) {
+      dashboardData.interviews.slice(0, 4).forEach((iv) => {
+        const matchedReport = dashboardData.reports?.find((r) => r.interviewId === iv.id);
+        const timestamp = matchedReport?.createdAt || iv.updatedAt;
+        
+        let fullTimestamp = '';
+        if (timestamp) {
+          const dateObj = new Date(timestamp);
+          const timeStr = dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          const dateStr = dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+          fullTimestamp = `${timeStr} · ${dateStr}`;
         }
-        break;
-      case 'interview':
-        router.push('/(app)/interview/preflight' as any);
-        break;
-      case 'resume':
-        router.push('/(app)/cv-analysis' as any);
-        break;
-      default:
-        router.push('/(app)/growth/progress-dashboard' as any);
-        break;
+
+        activities.push({
+          id: `iv-${iv.id}`,
+          interviewId: iv.id,
+          role: iv.role,
+          status: iv.status,
+          updatedAt: timestamp,
+          score: matchedReport?.overallScore ?? null,
+          fullTimestamp,
+        });
+      });
     }
-  };
+    return activities;
+  }, [dashboardData]);
+
+  const { learningProgress, nextMilestone } = useMemo(() => {
+    return {
+      learningProgress: learningPathData?.progress,
+      nextMilestone: learningPathData?.milestones?.find(
+        (m) => m.status === 'in_progress' || m.status === 'pending'
+      ),
+    };
+  }, [learningPathData]);
 
   return (
-    <AmbientBackground>
+    <SolidBackground>
       <SafeAreaView style={styles.safeArea}>
-        {/* Sleek Top Header - High-End Premium layout */}
-        <Animated.View entering={FadeInDown.duration(600).springify()} style={[styles.topBar, { borderBottomColor: 'transparent' }]}>
-          <View style={styles.brandGroup}>
-            <View>
-              <ThemedText style={styles.greetingText}>
-                Hi, {user?.displayName || user?.fullName?.split(' ')[0] || 'Friend'}
-              </ThemedText>
-              <ThemedText style={styles.appName}>Ready to level up?</ThemedText>
-            </View>
+        {/* TOP BAR */}
+        <View style={[styles.topBar, { borderBottomColor: colors.cardBorder }]}>
+          <View style={styles.brandHeaderGroup}>
+            <ThemedText style={[styles.greetingText, { color: colors.textSecondary }]}>
+              Xin chào,
+            </ThemedText>
+            <ThemedText style={styles.appName} numberOfLines={1}>
+              {user?.displayName || user?.fullName || 'Ứng viên'}
+            </ThemedText>
           </View>
 
-          <TouchableScale onPress={() => router.push('/(tabs)/profile' as any)}>
-            <AvatarGlow 
-               source={{ uri: user?.avatarUrl || 'https://ui-avatars.com/api/?name=' + (user?.displayName || 'N') + '&background=random' }} 
-               size={46} 
-               glowColor={colors.primary} 
-            />
-          </TouchableScale>
-        </Animated.View>
+          <View style={styles.headerBtnGroupRight}>
+            <TouchableScale
+              style={[styles.headerBtnPrimaryCompact, { backgroundColor: colors.primary }]}
+              onPress={() => router.push('/(app)/cv-analysis' as any)}
+            >
+              <Ionicons name="document-text" size={12} color="#ffffff" />
+              <ThemedText style={styles.headerBtnPrimaryText}>Cải thiện CV</ThemedText>
+            </TouchableScale>
+
+            <TouchableScale
+              style={[styles.headerBtnSecondaryCompact, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}
+              onPress={() => router.push('/(tabs)/profile' as any)}
+            >
+              <Ionicons name="person" size={12} color={colors.textPrimary} />
+              <ThemedText style={[styles.headerBtnSecondaryText, { color: colors.textPrimary }]} numberOfLines={1}>
+                Hồ sơ
+              </ThemedText>
+            </TouchableScale>
+          </View>
+        </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-          {/* Top Status Cards - Matches Web EvidenceCard */}
-          <Animated.View entering={FadeInDown.duration(800).delay(100).springify()}>
-            <View style={{ flexDirection: 'row', gap: Spacing.three, marginBottom: Spacing.four }}>
-              <GlassCard style={{ flex: 1, padding: Spacing.three, paddingVertical: Spacing.four }}>
-                <ThemedText style={styles.overviewLabel}>Mục tiêu hiện tại</ThemedText>
-                {isLoadingProfile ? (
-                  <SkeletonLoader width={100} height={16} style={{ marginTop: 8 }} />
-                ) : (
-                  <>
-                    <ThemedText style={[styles.overviewVal, { fontSize: 14 }]} numberOfLines={1}>
+          {/* KHỐI 1: COMBINED HERO CONTEXT CARD */}
+          <Animated.View entering={FadeInDown.duration(400).springify()}>
+            <SurfaceCard style={styles.combinedHeroCard}>
+              <View style={styles.combinedHeroRow}>
+                {/* Column 1: Mục tiêu hiện tại */}
+                <TouchableScale
+                  onPress={() => router.push('/(app)/career-goals' as any)}
+                  style={styles.heroCol}
+                >
+                  <View style={styles.contextHeader}>
+                    <View style={[styles.miniIconBox, { backgroundColor: colors.primaryLight }]}>
+                      <Ionicons name="flag" size={12} color={colors.primary} />
+                    </View>
+                    <ThemedText style={[styles.contextLabel, { color: colors.textSecondary }]}>MỤC TIÊU</ThemedText>
+                  </View>
+                  {isLoadingProfile ? (
+                    <SkeletonLoader width="80%" height={14} style={{ marginTop: 4 }} />
+                  ) : (
+                    <ThemedText style={styles.contextValue} numberOfLines={1}>
                       {activeGoal ? activeGoal.targetRole : 'Chưa thiết lập'}
                     </ThemedText>
-                    <ThemedText style={{ fontSize: 11, color: colors.textSecondary, marginTop: 4 }} numberOfLines={1}>
-                      {activeGoal ? activeGoal.industry : 'Thiết lập để bắt đầu'}
-                    </ThemedText>
-                  </>
-                )}
-              </GlassCard>
+                  )}
+                  <View style={styles.badgeSubRow}>
+                    {activeGoal ? (
+                      <Badge variant="primary" size="sm">{activeGoal.seniority}</Badge>
+                    ) : (
+                      <Badge variant="neutral" size="sm">Cần cài đặt</Badge>
+                    )}
+                  </View>
+                </TouchableScale>
 
-              <GlassCard style={{ flex: 1, padding: Spacing.three, paddingVertical: Spacing.four }}>
-                <ThemedText style={styles.overviewLabel}>CV Chính</ThemedText>
-                {isLoadingProfile ? (
-                  <SkeletonLoader width={100} height={16} style={{ marginTop: 8 }} />
-                ) : (
-                  <>
-                    <ThemedText style={[styles.overviewVal, { fontSize: 14 }]} numberOfLines={1}>
-                      {profileData?.primaryResume?.fileName || 'Chưa tải lên'}
+                {/* Vertical Divider */}
+                <View style={[styles.verticalDivider, { backgroundColor: colors.cardBorder }]} />
+
+                {/* Column 2: CV Chính */}
+                <TouchableScale
+                  onPress={() => router.push('/(app)/cv-analysis' as any)}
+                  style={styles.heroCol}
+                >
+                  <View style={styles.contextHeader}>
+                    <View style={[styles.miniIconBox, { backgroundColor: colors.accentLight }]}>
+                      <Ionicons name="document-text" size={12} color={colors.accent} />
+                    </View>
+                    <ThemedText style={[styles.contextLabel, { color: colors.textSecondary }]}>CV CHÍNH</ThemedText>
+                  </View>
+                  {isLoadingProfile ? (
+                    <SkeletonLoader width="80%" height={14} style={{ marginTop: 4 }} />
+                  ) : (
+                    <ThemedText style={styles.contextValue} numberOfLines={1}>
+                      {primaryResume ? primaryResume.fileName : 'Chưa chọn'}
                     </ThemedText>
-                    <ThemedText style={{ fontSize: 11, color: colors.textSecondary, marginTop: 4 }} numberOfLines={1}>
-                      {profileData?.primaryResume ? 'Sẵn sàng phân tích' : 'Thêm CV ngay'}
-                    </ThemedText>
-                  </>
-                )}
-              </GlassCard>
-            </View>
+                  )}
+                  <View style={styles.badgeSubRow}>
+                    {primaryResume ? (
+                      <Badge variant="success" size="sm">Đã đối chiếu</Badge>
+                    ) : (
+                      <Badge variant="warning" size="sm">Chưa có CV</Badge>
+                    )}
+                  </View>
+                </TouchableScale>
+              </View>
+            </SurfaceCard>
           </Animated.View>
 
-          {/* AI Spotlight Recommendation Banner */}
-          {isLoadingRec ? (
-             <View style={styles.recBanner}>
-                <SkeletonLoader width="100%" height={160} style={{ borderRadius: 16 }} />
-             </View>
-          ) : recommendation && (
-            <Animated.View entering={FadeInDown.duration(800).delay(200).springify()}>
-              <TouchableScale onPress={handleNextActionClick}>
-                <GlassCard
-                  style={[styles.recBanner, { borderColor: colors.secondary, borderWidth: 1 }]}
-                >
-                  <View style={styles.recHeaderRow}>
-                    <View style={[styles.recSparkleBox, { backgroundColor: colors.secondaryLight }]}>
-                      <Ionicons name="sparkles" size={16} color={colors.secondary} />
-                    </View>
-                    <ThemedText style={[styles.recBadgeText, { color: colors.secondary }]}>
-                      NEXT BEST ACTION
-                    </ThemedText>
-                    <View style={[styles.timeChip, { backgroundColor: colors.backgroundElement }]}>
-                      <Ionicons name="time" size={12} color={colors.textSecondary} />
-                      <ThemedText style={styles.timeChipText}>{recommendation.estimatedMinutes}m</ThemedText>
-                    </View>
-                  </View>
+          {/* KHỐI 2: UNIFIED EXECUTIVE DASHBOARD CARD */}
+          <Animated.View entering={FadeInDown.duration(400).delay(100).springify()}>
+            <SurfaceCard style={styles.unifiedDashboardCard}>
 
-                  <ThemedText type="title" style={styles.recReason}>
-                    {recommendation.reason}
+              {/* TẦNG 1: CHỈ SỐ SẴN SÀNG ÚNG TUYỂN */}
+              <View style={styles.cardHeaderBetween}>
+                <ThemedText style={[styles.cardHeaderTitle, { color: colors.textSecondary }]}>
+                  CHỈ SỐ SẴN SÀNG ÚNG TUYỂN
+                </ThemedText>
+                <TouchableScale
+                  onPress={() => router.push('/(app)/growth/progress-dashboard' as any)}
+                  style={styles.detailLinkBtn}
+                >
+                  <ThemedText style={[styles.detailLinkText, { color: colors.primary }]}>Chi tiết</ThemedText>
+                  <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+                </TouchableScale>
+              </View>
+
+              {isLoadingProgress ? (
+                <SkeletonLoader width="100%" height={140} style={{ borderRadius: 12, marginTop: 4 }} />
+              ) : readinessScore != null ? (
+                <View style={styles.centeredReadinessBody}>
+                  <ThemedText style={styles.centeredScoreTitle}>Chỉ số hiện tại</ThemedText>
+
+                  <RadialScoreRing score={readinessScore} size={110} strokeWidth={8} />
+
+                  <ThemedText style={[styles.centeredScoreSub, { color: colors.textSecondary }]}>
+                    Dựa trên {evidenceCount} bằng chứng do máy chủ tổng hợp.
                   </ThemedText>
-                  
-                  <View style={[styles.recButton, { backgroundColor: colors.secondary }]}>
-                    <ThemedText style={styles.recButtonText}>Thực Hiện Ngay</ThemedText>
-                    <Ionicons name="arrow-forward" size={16} color="#ffffff" />
-                  </View>
-                </GlassCard>
-              </TouchableScale>
-            </Animated.View>
-          )}
 
-          {/* Practice Hub Shortcuts - Bento Grid */}
-          <Animated.View entering={FadeInDown.duration(800).delay(300).springify()}>
-            <ThemedText type="subtitle" style={styles.sectionHeader}>
-              Luyện Tập
-            </ThemedText>
-
-            <View style={styles.bentoGrid}>
-              {/* Tile 1: Preflight Room */}
-              <TouchableScale
-                style={[styles.bentoHeroTile, { backgroundColor: colors.primary }]}
-                onPress={() => router.push('/(app)/interview/preflight' as any)}
-              >
-                <View style={styles.bentoTileHeader}>
-                  <View style={[styles.bentoIconBox, { backgroundColor: 'rgba(255, 255, 255, 0.25)' }]}>
-                    <Ionicons name="mic" size={24} color="#ffffff" />
-                  </View>
-                  <View style={[styles.liveBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                    <View style={styles.liveDot} />
-                    <ThemedText style={styles.liveText}>LIVE</ThemedText>
-                  </View>
-                </View>
-                <View style={styles.bentoHeroBottom}>
-                  <ThemedText style={styles.bentoHeroTitle}>Phòng Phỏng Vấn AI</ThemedText>
-                  <ThemedText style={styles.bentoHeroSub}>Giọng nói real-time & feedback</ThemedText>
-                </View>
-              </TouchableScale>
-
-              <View style={styles.bentoColumn}>
-                {/* Tile 2: Scenarios */}
-                <TouchableScale
-                  style={styles.bentoTileItem}
-                  onPress={() => router.push('/(app)/scenarios' as any)}
-                >
-                  <GlassCard style={styles.bentoInnerCard}>
-                    <View style={styles.bentoTileHeader}>
-                       <View style={[styles.bentoIconBox, { backgroundColor: colors.accentLight }]}>
-                         <Ionicons name="layers" size={20} color={colors.accent} />
-                       </View>
-                       <Ionicons name="arrow-forward" size={16} color={colors.textSecondary} />
-                    </View>
-                    <View>
-                      <ThemedText style={styles.bentoTileTitle}>Kịch Bản</ThemedText>
-                      <ThemedText style={styles.bentoTileSub}>Tình huống khó</ThemedText>
-                    </View>
-                  </GlassCard>
-                </TouchableScale>
-
-                {/* Tile 3: STAR Builder */}
-                <TouchableScale
-                  style={styles.bentoTileItem}
-                  onPress={() => router.push('/(app)/star-builder' as any)}
-                >
-                  <GlassCard style={styles.bentoInnerCard}>
-                    <View style={styles.bentoTileHeader}>
-                      <View style={[styles.bentoIconBox, { backgroundColor: colors.warningLight }]}>
-                        <Ionicons name="star" size={20} color={colors.warning} />
+                  {priorityGapCount > 0 && (
+                    <TouchableScale
+                      onPress={() => router.push('/(app)/growth/progress-dashboard' as any)}
+                      style={[
+                        styles.gapAlertBanner,
+                        {
+                          backgroundColor: colors.warningLight || '#ffddb8',
+                          borderColor: (colors.warning || '#694100') + '35',
+                        },
+                      ]}
+                    >
+                      <View style={[styles.gapIconBadge, { backgroundColor: colors.surface }]}>
+                        <Ionicons name="warning" size={13} color={colors.warning || '#694100'} />
                       </View>
-                      <Ionicons name="arrow-forward" size={16} color={colors.textSecondary} />
+                      <ThemedText style={[styles.gapAlertText, { color: colors.warning || '#694100' }]} numberOfLines={1}>
+                        Có <ThemedText style={{ color: colors.warning || '#694100', fontFamily: Typography.fontFamily.bold }}>{priorityGapCount} khoảng trống</ThemedText> năng lực cần bổ sung
+                      </ThemedText>
+                      <Ionicons name="chevron-forward" size={14} color={colors.warning || '#694100'} />
+                    </TouchableScale>
+                  )}
+                </View>
+              ) : (
+                <View style={styles.emptyReadinessBox}>
+                  <ThemedText style={styles.emptyReadinessTitle}>Chưa đủ dữ liệu tính chỉ số</ThemedText>
+                  <ThemedText style={[styles.emptyReadinessSub, { color: colors.textSecondary }]}>
+                    Tải CV hoặc làm bài phỏng vấn để bắt đầu tích lũy bằng chứng.
+                  </ThemedText>
+                </View>
+              )}
+
+              {/* VÁCH NGĂN NGANG CHIA TẦNG */}
+              <View style={[styles.horizontalDivider, { backgroundColor: colors.cardBorder }]} />
+
+              {/* TẦNG 2: ACTION SUB-CARD LỒNG TRONG CÙNG 1 CARD */}
+              <View style={[styles.actionSubCard, { backgroundColor: colors.backgroundElement }]}>
+                <View style={styles.spotlightHeader}>
+                  <View style={[styles.sparkleBox, { backgroundColor: colors.primaryLight }]}>
+                    <Ionicons name="sparkles" size={13} color={colors.primary} />
+                  </View>
+                  <ThemedText style={[styles.spotlightBadge, { color: colors.primary }]}>
+                    GỢI Ý TIẾP THEO
+                  </ThemedText>
+                  {nextAction.estimatedMinutes && (
+                    <View style={[styles.timeBadge, { backgroundColor: colors.surface }]}>
+                      <Ionicons name="time-outline" size={11} color={colors.textSecondary} />
+                      <ThemedText style={styles.timeText}>{nextAction.estimatedMinutes} phút</ThemedText>
                     </View>
-                    <View>
-                      <ThemedText style={styles.bentoTileTitle}>Chuẩn STAR</ThemedText>
-                      <ThemedText style={styles.bentoTileSub}>Story Builder</ThemedText>
-                    </View>
-                  </GlassCard>
+                  )}
+                </View>
+
+                <ThemedText style={styles.spotlightTitle}>
+                  {nextAction.label}
+                </ThemedText>
+                <ThemedText style={[styles.spotlightDesc, { color: colors.textSecondary }]} numberOfLines={2}>
+                  {nextAction.description}
+                </ThemedText>
+
+                <TouchableScale
+                  onPress={() => router.push(nextAction.destination as any)}
+                  style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]}
+                >
+                  <ThemedText style={styles.primaryActionBtnText}>Bắt đầu ngay</ThemedText>
+                  <Ionicons name="arrow-forward" size={16} color="#ffffff" />
                 </TouchableScale>
+
+                <TouchableScale
+                  onPress={() => router.push('/(app)/interview/history' as any)}
+                  style={styles.secondaryLinkBtn}
+                >
+                  <ThemedText style={[styles.secondaryLinkBtnText, { color: colors.textSecondary }]}>
+                    Lịch sử phỏng vấn
+                  </ThemedText>
+                </TouchableScale>
+              </View>
+
+            </SurfaceCard>
+          </Animated.View>
+
+          {/* INSIGHT PANEL BANNER */}
+          <Animated.View entering={FadeInDown.duration(400).delay(150).springify()}>
+            <View style={[styles.insightPanel, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
+              <Ionicons name="bulb-outline" size={18} color={colors.primary} style={{ marginTop: 1 }} />
+              <View style={{ flex: 1 }}>
+                <ThemedText style={styles.insightTitle}>Nexora học gì từ hành trình của bạn?</ThemedText>
+                <ThemedText style={[styles.insightDesc, { color: colors.textSecondary }]}>
+                  Mỗi bài luyện tập và phân tích CV đều tích lũy bằng chứng thực tế giúp AI gợi ý chính xác hơn.
+                </ThemedText>
               </View>
             </View>
           </Animated.View>
 
+          {/* KHỐI 3: HOẠT ĐỘNG GẦN ĐÂY (DẠNG CARD CUỘN NGANG HORIZONTAL MINI CAROUSEL) */}
+          <Animated.View entering={FadeInDown.duration(400).delay(200).springify()}>
+            <View style={styles.sectionHeaderBetween}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="time-outline" size={18} color={colors.primary} />
+                <ThemedText style={styles.sectionTitle}>Hoạt Động Gần Đây</ThemedText>
+              </View>
+              <TouchableScale onPress={() => router.push('/(app)/interview/history' as any)}>
+                <ThemedText style={[styles.seeAllLink, { color: colors.primary }]}>Xem tất cả &gt;</ThemedText>
+              </TouchableScale>
+            </View>
+
+            {isLoadingDashboard ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+                <SkeletonLoader width={210} height={105} style={{ borderRadius: 14 }} />
+                <SkeletonLoader width={210} height={105} style={{ borderRadius: 14 }} />
+              </ScrollView>
+            ) : recentActivities.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalCarouselContainer}
+              >
+                {recentActivities.map((act) => {
+                  return (
+                    <TouchableScale
+                      key={act.id}
+                      onPress={() => router.push(`/(app)/interview/${act.interviewId}` as any)}
+                    >
+                      <SurfaceCard style={styles.miniCarouselCard}>
+                        {/* Top Row: Icon + Score Pill */}
+                        <View style={styles.miniCardTopRow}>
+                          <View style={styles.miniCardHeaderLeft}>
+                            <View style={[styles.miniActIconBox, { backgroundColor: colors.primaryLight }]}>
+                              <Ionicons name="mic" size={14} color={colors.primary} />
+                            </View>
+                            <ThemedText style={[styles.miniActTypeLabel, { color: colors.textSecondary }]}>
+                              Phỏng vấn AI
+                            </ThemedText>
+                          </View>
+
+                          {act.score != null && (
+                            <View style={[styles.actScorePill, { backgroundColor: colors.primaryLight }]}>
+                              <ThemedText style={[styles.actScoreText, { color: colors.primary }]}>
+                                {act.score}/100
+                              </ThemedText>
+                            </View>
+                          )}
+                        </View>
+
+                        {/* Middle: Title */}
+                        <ThemedText style={styles.miniCardTitle} numberOfLines={1}>
+                          {act.role}
+                        </ThemedText>
+
+                        {/* Bottom Row: Status Badge + Time */}
+                        <View style={styles.miniCardBottomRow}>
+                          {renderStatusBadge(act.status)}
+                          <ThemedText style={[styles.miniCardTime, { color: colors.textSecondary }]}>
+                            {act.fullTimestamp}
+                          </ThemedText>
+                        </View>
+                      </SurfaceCard>
+                    </TouchableScale>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <SurfaceCard style={styles.emptyActivityCard}>
+                <Ionicons name="time-outline" size={28} color={colors.textSecondary} />
+                <ThemedText style={styles.emptyActTitle}>Chưa có hoạt động phỏng vấn nào</ThemedText>
+                <ThemedText style={[styles.emptyActSub, { color: colors.textSecondary }]}>
+                  Kết quả phân tích CV và phỏng vấn sẽ lưu vết tại đây.
+                </ThemedText>
+              </SurfaceCard>
+            )}
+          </Animated.View>
+
+          {/* KHỐI 4: GROUPED INSET SURFACE CARD (BẢNG THỐNG KÊ NỀN TẢNG HỢP NHẤT) */}
+          <Animated.View entering={FadeInDown.duration(400).delay(250).springify()}>
+            <SurfaceCard style={styles.groupedInsetCard}>
+              
+              {/* Item 1: Hồ sơ của tôi */}
+              <TouchableScale onPress={() => router.push('/(tabs)/profile' as any)} style={styles.insetItemRow}>
+                <View style={[styles.navIconBox, { backgroundColor: colors.primaryLight }]}>
+                  <Ionicons name="person" size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <ThemedText style={styles.navCardTitle}>1. HỒ SƠ CỦA TÔI</ThemedText>
+                  <ThemedText style={styles.navCardValue} numberOfLines={1}>
+                    {userProfileInfo?.displayName || user?.displayName || user?.fullName || 'Chưa cập nhật tên'}
+                  </ThemedText>
+                  <ThemedText style={[styles.navCardSub, { color: colors.textSecondary }]} numberOfLines={1}>
+                    Kinh nghiệm: {yearsOfExperience != null ? `${yearsOfExperience} năm` : 'Chưa khai báo'} · CV: {primaryResume ? primaryResume.fileName : 'Chưa chọn'}
+                  </ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.border} />
+              </TouchableScale>
+
+              <View style={[styles.horizontalDivider, { backgroundColor: colors.cardBorder }]} />
+
+              {/* Item 2: Mục tiêu nghề nghiệp */}
+              <TouchableScale onPress={() => router.push('/(app)/career-goals' as any)} style={styles.insetItemRow}>
+                <View style={[styles.navIconBox, { backgroundColor: colors.secondaryLight }]}>
+                  <Ionicons name="flag" size={18} color={colors.secondary} />
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <ThemedText style={styles.navCardTitle}>2. MỤC TIÊU NGHỀ NGHIỆP</ThemedText>
+                  <ThemedText style={styles.navCardValue} numberOfLines={1}>
+                    {activeGoal ? `${activeGoal.targetRole} (${activeGoal.seniority})` : 'Chưa thiết lập mục tiêu'}
+                  </ThemedText>
+                  <ThemedText style={[styles.navCardSub, { color: colors.textSecondary }]} numberOfLines={1}>
+                    Ngành: {activeGoal?.industry || 'Chưa chọn'} · Công ty: {activeGoal?.targetCompany || 'Chưa chọn'}
+                  </ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.border} />
+              </TouchableScale>
+
+              <View style={[styles.horizontalDivider, { backgroundColor: colors.cardBorder }]} />
+
+              {/* Item 3: Lộ trình học tập */}
+              <TouchableScale onPress={() => router.push('/(app)/growth/learning-path' as any)} style={styles.insetItemRow}>
+                <View style={[styles.navIconBox, { backgroundColor: colors.accentLight }]}>
+                  <Ionicons name="map" size={18} color={colors.accent} />
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <ThemedText style={styles.navCardTitle}>3. LỘ TRÌNH HỌC TẬP</ThemedText>
+                  <ThemedText style={styles.navCardValue} numberOfLines={1}>
+                    {isLoadingLearningPath ? (
+                      'Đang tải lộ trình...'
+                    ) : learningProgress ? (
+                      `Hoàn thành ${learningProgress.completedActivityCount}/${learningProgress.totalActivityCount} bài (${learningProgress.percentage}%)`
+                    ) : (
+                      'Chưa có lộ trình học tập'
+                    )}
+                  </ThemedText>
+                  <ThemedText style={[styles.navCardSub, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {nextMilestone ? `Tiếp theo: ${nextMilestone.title}` : 'Chạm để xem chi tiết lộ trình'}
+                  </ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.border} />
+              </TouchableScale>
+
+            </SurfaceCard>
+          </Animated.View>
+
         </ScrollView>
       </SafeAreaView>
-    </AmbientBackground>
+    </SolidBackground>
   );
 }
 
@@ -250,199 +619,391 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.two,
+    paddingVertical: Spacing.two,
+    borderBottomWidth: 1,
   },
-  brandGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
+  brandHeaderGroup: {
+    flex: 1,
+    marginRight: Spacing.two,
   },
   appName: {
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    marginTop: 2,
+    fontSize: Typography.sizes.md,
+    fontFamily: Typography.fontFamily.bold,
   },
   greetingText: {
-    fontSize: 14,
-    fontWeight: '600',
-    opacity: 0.6,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.medium,
+  },
+  headerBtnGroupRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  headerBtnPrimaryCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    gap: 4,
+  },
+  headerBtnPrimaryText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  headerBtnSecondaryCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 4,
+  },
+  headerBtnSecondaryText: {
+    fontSize: 11,
+    fontFamily: Typography.fontFamily.semibold,
   },
   scrollContent: {
     padding: Spacing.four,
     paddingBottom: Spacing.six,
     gap: Spacing.four,
   },
-  recBanner: {
-    padding: Spacing.five,
-    gap: Spacing.four,
+  // COMBINED HERO CARD
+  combinedHeroCard: {
+    padding: Spacing.three,
+    borderRadius: 14,
   },
-  recHeaderRow: {
+  combinedHeroRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
   },
-  recSparkleBox: {
-    width: 32,
-    height: 32,
+  heroCol: {
+    flex: 1,
+    paddingHorizontal: 4,
+    gap: 2,
+  },
+  verticalDivider: {
+    width: 1,
+    height: '80%',
+    marginHorizontal: Spacing.two,
+  },
+  contextHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  miniIconBox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contextLabel: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.bold,
+    letterSpacing: 0.5,
+  },
+  contextValue: {
+    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.fontFamily.bold,
+    marginTop: 2,
+  },
+  badgeSubRow: {
+    marginTop: 2,
+  },
+  // UNIFIED DASHBOARD CARD
+  unifiedDashboardCard: {
+    padding: Spacing.four,
+    borderRadius: 16,
+    gap: Spacing.three,
+  },
+  horizontalDivider: {
+    height: 1,
+    width: '100%',
+    marginVertical: 2,
+  },
+  actionSubCard: {
+    padding: Spacing.three,
+    borderRadius: 12,
+    gap: Spacing.two,
+  },
+  cardHeaderBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cardHeaderTitle: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.bold,
+    letterSpacing: 0.5,
+  },
+  detailLinkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  detailLinkText: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  readinessBody: {
+    gap: Spacing.two,
+  },
+  centeredReadinessBody: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.two,
+    gap: 4,
+  },
+  centeredScoreTitle: {
+    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.fontFamily.bold,
+    textAlign: 'center',
+  },
+  centeredScoreSub: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.regular,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  gapAlertBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 6,
+    gap: 8,
+    width: '100%',
+  },
+  gapIconBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gapAlertText: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.medium,
+    flex: 1,
+  },
+  emptyReadinessBox: {
+    paddingVertical: Spacing.two,
+    gap: 2,
+  },
+  emptyReadinessTitle: {
+    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  emptyReadinessSub: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.regular,
+  },
+  // SPOTLIGHT INSIDE DASHBOARD CARD
+  spotlightHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sparkleBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  spotlightBadge: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.bold,
+    flex: 1,
+    letterSpacing: 0.5,
+  },
+  timeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  timeText: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.medium,
+  },
+  spotlightTitle: {
+    fontSize: Typography.sizes.base,
+    fontFamily: Typography.fontFamily.bold,
+    marginTop: 2,
+  },
+  spotlightDesc: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.regular,
+    lineHeight: 18,
+  },
+  primaryActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 44,
+    borderRadius: 10,
+    gap: 8,
+    marginTop: 4,
+  },
+  primaryActionBtnText: {
+    color: '#ffffff',
+    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  secondaryLinkBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+  },
+  secondaryLinkBtnText: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.medium,
+  },
+  // INSIGHT PANEL
+  insightPanel: {
+    flexDirection: 'row',
+    padding: Spacing.three,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: Spacing.three,
+    alignItems: 'flex-start',
+  },
+  insightTitle: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  insightDesc: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.regular,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  // RECENT ACTIVITIES (HORIZONTAL MINI CAROUSEL)
+  sectionHeaderBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.two,
+  },
+  sectionTitle: {
+    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  seeAllLink: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  horizontalCarouselContainer: {
+    gap: Spacing.three,
+    paddingRight: Spacing.two,
+  },
+  miniCarouselCard: {
+    width: 215,
+    padding: Spacing.three,
+    borderRadius: 14,
+    gap: Spacing.two,
+    justifyContent: 'space-between',
+  },
+  miniCardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  miniCardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  miniActIconBox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  miniActTypeLabel: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.medium,
+  },
+  miniCardTitle: {
+    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  miniCardBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  miniCardTime: {
+    fontSize: 10,
+    fontFamily: Typography.fontFamily.regular,
+  },
+  actScorePill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  actScoreText: {
+    fontSize: 10,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  emptyActivityCard: {
+    padding: Spacing.four,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    gap: 2,
+  },
+  emptyActTitle: {
+    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.fontFamily.bold,
+    marginTop: 4,
+  },
+  emptyActSub: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.regular,
+    textAlign: 'center',
+  },
+  // GROUPED INSET SURFACE CARD FOR 3 BOTTOM ITEMS
+  groupedInsetCard: {
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 16,
+  },
+  insetItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.two,
+    gap: Spacing.three,
+  },
+  navIconBox: {
+    width: 38,
+    height: 38,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  recBadgeText: {
-    fontSize: 12,
-    fontWeight: '900',
-    flex: 1,
-    letterSpacing: 1,
-  },
-  timeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  timeChipText: {
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  recReason: {
-    fontSize: 20,
-    fontWeight: '800',
-    lineHeight: 28,
-    letterSpacing: -0.5,
-  },
-  recButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    marginTop: 8,
-  },
-  recButtonText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '800',
+  navCardTitle: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.bold,
     letterSpacing: 0.5,
   },
-  overviewCard: {
-    padding: Spacing.four,
+  navCardValue: {
+    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.fontFamily.bold,
   },
-  overviewRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.four,
-  },
-  overviewIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  overviewLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    opacity: 0.6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  overviewVal: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginTop: 4,
-  },
-  sectionHeader: {
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: Spacing.two,
-    marginTop: Spacing.two,
-    letterSpacing: -0.5,
-  },
-  bentoGrid: {
-    flexDirection: 'row',
-    gap: Spacing.three,
-    height: 220,
-  },
-  bentoHeroTile: {
-    flex: 1,
-    borderRadius: 16,
-    padding: Spacing.four,
-    justifyContent: 'space-between',
-  },
-  bentoTileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  bentoIconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#FF3B30',
-  },
-  liveText: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  bentoHeroBottom: {
-    gap: 4,
-  },
-  bentoHeroTitle: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  bentoHeroSub: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  bentoColumn: {
-    flex: 1,
-    gap: Spacing.three,
-  },
-  bentoTileItem: {
-    flex: 1,
-  },
-  bentoInnerCard: {
-    flex: 1,
-    padding: Spacing.three,
-    justifyContent: 'space-between',
-  },
-  bentoTileTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  bentoTileSub: {
-    fontSize: 12,
-    opacity: 0.6,
-    fontWeight: '500',
-    marginTop: 2,
+  navCardSub: {
+    fontSize: Typography.sizes.xs,
+    fontFamily: Typography.fontFamily.regular,
   },
 });
