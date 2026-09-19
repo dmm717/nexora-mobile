@@ -83,6 +83,35 @@ export default function ResumesScreen() {
     }
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await resumesApi.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['resumes'] });
+      queryClient.invalidateQueries({ queryKey: ['career-profile'] });
+      Alert.alert('Thành công', 'Đã xóa CV thành công');
+    },
+    onError: (error: any) => {
+      Alert.alert('Lỗi', error.message || 'Không thể xóa CV. Vui lòng thử lại.');
+    }
+  });
+
+  const handleDelete = (id: string, fileName: string) => {
+    Alert.alert(
+      'Xóa CV',
+      `Bạn có chắc chắn muốn xóa CV "${fileName}" không? Hành động này không thể hoàn tác.`,
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Xóa', 
+          style: 'destructive', 
+          onPress: () => deleteMutation.mutate(id) 
+        }
+      ]
+    );
+  };
+
   const handleUpload = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -175,7 +204,7 @@ export default function ResumesScreen() {
                   <View style={styles.cardHeader}>
                     <View style={styles.resumeTitleRow}>
                       <Ionicons name="document-text" size={24} color={isPrimary ? colors.accent : colors.primary} />
-                      <ThemedText style={styles.resumeName}>{resume.fileName}</ThemedText>
+                      <ThemedText style={styles.resumeName} numberOfLines={1}>{resume.fileName}</ThemedText>
                     </View>
                     {isPrimary && (
                       <View style={[styles.primaryBadge, { backgroundColor: colors.accent }]}>
@@ -195,17 +224,29 @@ export default function ResumesScreen() {
                     </ThemedText>
                   </View>
                   
-                  {!isPrimary && resume.status === 'ready' && (
+                  <View style={styles.actionsRow}>
+                    {(!isPrimary && resume.status === 'ready') ? (
+                      <TouchableScale 
+                        style={[styles.setPrimaryBtn, { backgroundColor: colors.accentLight }]}
+                        onPress={() => setPrimaryMutation.mutate(resume.id)}
+                        disabled={setPrimaryMutation.isPending}
+                      >
+                        <ThemedText style={[styles.setPrimaryText, { color: colors.accent }]}>
+                          {setPrimaryMutation.isPending ? 'Đang đặt...' : 'Đặt làm CV chính'}
+                        </ThemedText>
+                      </TouchableScale>
+                    ) : (
+                      <View style={{ flex: 1 }} />
+                    )}
+
                     <TouchableScale 
-                      style={[styles.setPrimaryBtn, { backgroundColor: colors.accentLight }]}
-                      onPress={() => setPrimaryMutation.mutate(resume.id)}
-                      disabled={setPrimaryMutation.isPending}
+                      style={[styles.deleteBtn, { backgroundColor: colors.danger + '20' }]}
+                      onPress={() => handleDelete(resume.id, resume.fileName)}
+                      disabled={deleteMutation.isPending}
                     >
-                      <ThemedText style={[styles.setPrimaryText, { color: colors.accent }]}>
-                        {setPrimaryMutation.isPending ? 'Đang đặt...' : 'Đặt làm CV chính'}
-                      </ThemedText>
+                      <Ionicons name="trash-outline" size={18} color={colors.danger} />
                     </TouchableScale>
-                  )}
+                  </View>
                 </GlassCard>
               );
             })
@@ -280,5 +321,17 @@ const styles = StyleSheet.create({
   setPrimaryText: {
     fontWeight: '700',
     fontSize: 13,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.one,
+  },
+  deleteBtn: {
+    padding: Spacing.two,
+    borderRadius: Radius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });

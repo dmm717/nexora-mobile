@@ -110,6 +110,15 @@ export interface StarEvaluation {
   missingElements?: string[];
 }
 
+export interface SampleInterviewAnswer {
+  framework: string;
+  situation?: string | null;
+  task?: string | null;
+  action?: string | null;
+  result?: string | null;
+  fullAnswer: string;
+}
+
 export interface InterviewQuestionReviewView {
   questionId: string;
   sequence: number;
@@ -124,6 +133,7 @@ export interface InterviewQuestionReviewView {
   strengths: string[];
   improvements: string[];
   suggestedImprovedAnswer?: string | null;
+  sampleAnswer?: SampleInterviewAnswer | null;
 }
 
 export interface SuggestedImprovedAnswerView {

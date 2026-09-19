@@ -97,7 +97,7 @@ export default function ProfileScreen() {
                         <Ionicons name="briefcase" size={20} color={colors.primary} />
                       </View>
                       <View style={styles.settingTextContent}>
-                        <ThemedText style={styles.settingTitle}>Mục Tiêu Nghề Nghiệp</ThemedText>
+                        <ThemedText style={styles.settingTitle}>Mục Tiêu</ThemedText>
                         <ThemedText style={styles.settingSub} numberOfLines={1}>
                           {activeGoal ? `${activeGoal.targetRole}` : 'Chưa thiết lập'}
                         </ThemedText>
@@ -115,9 +115,9 @@ export default function ProfileScreen() {
                         <Ionicons name="document-text" size={20} color={colors.accent} />
                       </View>
                       <View style={styles.settingTextContent}>
-                        <ThemedText style={styles.settingTitle}>CV Phân Tích Chính</ThemedText>
+                        <ThemedText style={styles.settingTitle}>CV Chính</ThemedText>
                         <ThemedText style={styles.settingSub} numberOfLines={1}>
-                          {primaryResume ? primaryResume.fileName : 'Chưa có CV nào'}
+                          {primaryResume ? primaryResume.fileName : 'Chưa có'}
                         </ThemedText>
                       </View>
                       <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
@@ -234,15 +234,19 @@ const styles = StyleSheet.create({
   },
   settingTextContent: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   settingTitle: {
     fontSize: 16,
     fontWeight: '600',
   },
   settingSub: {
-    fontSize: 13,
-    opacity: 0.5,
-    marginTop: 2,
+    fontSize: 14,
+    opacity: 0.6,
+    maxWidth: '50%',
+    textAlign: 'right',
   },
   divider: {
     height: 1,

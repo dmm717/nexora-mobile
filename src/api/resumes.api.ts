@@ -56,12 +56,16 @@ export const resumesApi = {
     }
   },
 
-  /**
-   * Lấy chi tiết resume
-   */
   get: async (id: string): Promise<ResumeView> => {
     const res = await apiClient.get<any>(`/resumes/${id}`);
     const data = res.data?.data ?? res.data;
     return data as ResumeView;
+  },
+
+  /**
+   * Xóa một resume
+   */
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(`/resumes/${id}`);
   }
 };

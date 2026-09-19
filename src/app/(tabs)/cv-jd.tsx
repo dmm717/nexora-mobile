@@ -1,17 +1,17 @@
-import React from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/themed-text';
 import { profileApi } from '@/api/profile.api';
+import { ThemedText } from '@/components/themed-text';
+import { AmbientBackground } from '@/components/ui/ambient-background';
+import { Badge } from '@/components/ui/badge';
+import { GlassCard } from '@/components/ui/glass-card';
+import { TouchableScale } from '@/components/ui/touchable-scale';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { TouchableScale } from '@/components/ui/touchable-scale';
-import { GlassCard } from '@/components/ui/glass-card';
-import { AmbientBackground } from '@/components/ui/ambient-background';
 
 export default function CvJdTabScreen() {
   const router = useRouter();
@@ -27,6 +27,120 @@ export default function CvJdTabScreen() {
   const activeGoal = profileData?.activeCareerGoal;
   const primaryResume = profileData?.primaryResume;
 
+  const listData = [
+    {
+      id: 'goals',
+      title: 'Mục tiêu nghề nghiệp',
+      type: 'goal',
+    },
+    {
+      id: 'primary_resume',
+      title: 'CV Phân tích chính',
+      type: 'resume',
+    },
+    {
+      id: 'tools',
+      title: 'Công cụ phân tích',
+      type: 'tool',
+    }
+  ];
+
+  const renderItem = ({ item }: ListRenderItemInfo<typeof listData[0]>) => {
+    if (item.type === 'goal') {
+      return (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>{item.title}</ThemedText>
+          </View>
+          <TouchableScale onPress={() => router.push('/(app)/career-goals' as any)}>
+            <GlassCard style={styles.dashboardCard}>
+              {activeGoal ? (
+                <View style={styles.goalActiveContainer}>
+                  <View style={[styles.bigIconBadge, { backgroundColor: colors.primaryLight }]}>
+                    <Ionicons name="briefcase" size={28} color={colors.primary} />
+                  </View>
+                  <View style={styles.goalInfo}>
+                    <ThemedText style={styles.goalRoleText}>{activeGoal.targetRole}</ThemedText>
+                    <View style={styles.goalTagsRow}>
+                      <Badge variant="neutral" size="sm">{activeGoal.seniority}</Badge>
+                      {activeGoal.industry && (
+                        <Badge variant="neutral" size="sm">{activeGoal.industry}</Badge>
+                      )}
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </View>
+              ) : (
+                <View style={styles.goalEmptyContainer}>
+                  <Ionicons name="flag-outline" size={32} color={colors.textMuted} />
+                  <ThemedText style={styles.emptyText}>Chưa thiết lập mục tiêu.</ThemedText>
+                  <ThemedText style={[styles.actionLinkText, { color: colors.primary }]}>Thiết lập ngay</ThemedText>
+                </View>
+              )}
+            </GlassCard>
+          </TouchableScale>
+        </View>
+      );
+    }
+
+    if (item.type === 'resume') {
+      return (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>{item.title}</ThemedText>
+          </View>
+          <TouchableScale onPress={() => router.push('/(app)/resumes' as any)}>
+            <GlassCard style={styles.dashboardCard}>
+              {primaryResume ? (
+                <View style={styles.resumeActiveContainer}>
+                  <View style={[styles.bigIconBadge, { backgroundColor: colors.accentLight }]}>
+                    <Ionicons name="document-text" size={28} color={colors.accent} />
+                  </View>
+                  <View style={styles.goalInfo}>
+                    <ThemedText style={styles.resumeNameText} numberOfLines={1}>{primaryResume.fileName}</ThemedText>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                      <Badge variant="success" size="sm">CV Chính</Badge>
+                      <ThemedText style={[styles.resumeDateText, { marginLeft: 8 }]}>
+                        {new Date(primaryResume.createdAt).toLocaleDateString('vi-VN')}
+                      </ThemedText>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </View>
+              ) : (
+                <View style={styles.goalEmptyContainer}>
+                  <Ionicons name="cloud-upload-outline" size={32} color={colors.textMuted} />
+                  <ThemedText style={styles.emptyText}>Chưa có CV nào được chọn.</ThemedText>
+                  <ThemedText style={[styles.actionLinkText, { color: colors.accent }]}>Tải lên CV mới</ThemedText>
+                </View>
+              )}
+            </GlassCard>
+          </TouchableScale>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.section}>
+        <ThemedText type="subtitle" style={styles.sectionTitle}>{item.title}</ThemedText>
+        <View style={styles.listGroup}>
+          <TouchableScale onPress={() => router.push('/(app)/cv-analysis' as any)}>
+            <GlassCard style={styles.listCard}>
+              <View style={[styles.iconBadge, { backgroundColor: colors.warningLight }]}>
+                <Ionicons name="analytics" size={22} color={colors.warning} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <ThemedText style={styles.listTitle}>Đánh giá & Bóc tách CV</ThemedText>
+                <ThemedText style={styles.listSub}>Phân tích độ phù hợp với JD mục tiêu</ThemedText>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            </GlassCard>
+          </TouchableScale>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
@@ -36,97 +150,13 @@ export default function CvJdTabScreen() {
           <ThemedText style={styles.headerSub}>Quản lý dữ liệu phân tích phỏng vấn</ThemedText>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          
-          {/* Dashboard Summary: Active Goal */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <ThemedText type="subtitle" style={styles.sectionTitle}>Mục tiêu nghề nghiệp</ThemedText>
-            </View>
-            <TouchableScale onPress={() => router.push('/(app)/career-goals' as any)}>
-              <GlassCard hasGlow glowColor={colors.glowPrimary} style={styles.dashboardCard}>
-                {activeGoal ? (
-                  <View style={styles.goalActiveContainer}>
-                    <View style={[styles.bigIconBadge, { backgroundColor: colors.primaryLight }]}>
-                      <Ionicons name="briefcase" size={28} color={colors.primary} />
-                    </View>
-                    <View style={styles.goalInfo}>
-                      <ThemedText style={styles.goalRoleText}>{activeGoal.targetRole}</ThemedText>
-                      <View style={styles.goalTagsRow}>
-                        <View style={[styles.tagBadge, { backgroundColor: colors.cardBorder }]}>
-                          <ThemedText style={styles.tagText}>{activeGoal.seniority}</ThemedText>
-                        </View>
-                        {activeGoal.industry && (
-                          <View style={[styles.tagBadge, { backgroundColor: colors.cardBorder }]}>
-                            <ThemedText style={styles.tagText}>{activeGoal.industry}</ThemedText>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                  </View>
-                ) : (
-                  <View style={styles.goalEmptyContainer}>
-                    <Ionicons name="flag-outline" size={32} color={colors.textMuted} />
-                    <ThemedText style={styles.emptyText}>Chưa thiết lập mục tiêu.</ThemedText>
-                    <ThemedText style={[styles.actionLinkText, { color: colors.primary }]}>Thiết lập ngay</ThemedText>
-                  </View>
-                )}
-              </GlassCard>
-            </TouchableScale>
-          </View>
-
-          {/* Primary Resume Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <ThemedText type="subtitle" style={styles.sectionTitle}>CV Phân tích chính</ThemedText>
-            </View>
-            <TouchableScale onPress={() => router.push('/(app)/resumes' as any)}>
-              <GlassCard hasGlow={!!primaryResume} glowColor={colors.glowSecondary} style={styles.dashboardCard}>
-                {primaryResume ? (
-                  <View style={styles.resumeActiveContainer}>
-                    <View style={[styles.bigIconBadge, { backgroundColor: colors.accentLight }]}>
-                      <Ionicons name="document-text" size={28} color={colors.accent} />
-                    </View>
-                    <View style={styles.goalInfo}>
-                      <ThemedText style={styles.resumeNameText} numberOfLines={1}>{primaryResume.fileName}</ThemedText>
-                      <ThemedText style={styles.resumeDateText}>
-                        Đã tải lên: {new Date(primaryResume.createdAt).toLocaleDateString('vi-VN')}
-                      </ThemedText>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                  </View>
-                ) : (
-                  <View style={styles.goalEmptyContainer}>
-                    <Ionicons name="cloud-upload-outline" size={32} color={colors.textMuted} />
-                    <ThemedText style={styles.emptyText}>Chưa có CV nào được chọn.</ThemedText>
-                    <ThemedText style={[styles.actionLinkText, { color: colors.accent }]}>Tải lên CV mới</ThemedText>
-                  </View>
-                )}
-              </GlassCard>
-            </TouchableScale>
-          </View>
-
-          {/* Action List Section */}
-          <View style={styles.section}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>Công cụ phân tích</ThemedText>
-            <View style={styles.listGroup}>
-              <TouchableScale onPress={() => router.push('/(app)/cv-analysis' as any)}>
-                <GlassCard style={styles.listCard}>
-                  <View style={[styles.iconBadge, { backgroundColor: colors.warningLight }]}>
-                    <Ionicons name="analytics" size={22} color={colors.warning} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <ThemedText style={styles.listTitle}>Đánh giá & Bóc tách CV</ThemedText>
-                    <ThemedText style={styles.listSub}>Phân tích độ phù hợp với JD mục tiêu</ThemedText>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                </GlassCard>
-              </TouchableScale>
-            </View>
-          </View>
-
-        </ScrollView>
+        <FlatList
+          data={listData}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        />
       </SafeAreaView>
     </AmbientBackground>
   );
@@ -212,6 +242,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: Spacing.four,
     gap: Spacing.two,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    borderStyle: 'dashed',
+    borderRadius: Radius.md,
   },
   emptyText: {
     fontSize: 14,
@@ -234,7 +268,6 @@ const styles = StyleSheet.create({
   resumeDateText: {
     fontSize: 12,
     opacity: 0.6,
-    marginTop: 2,
   },
   listGroup: {
     gap: Spacing.three,

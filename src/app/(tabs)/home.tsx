@@ -94,16 +94,52 @@ export default function HomeScreen() {
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
+          {/* Top Status Cards - Matches Web EvidenceCard */}
+          <Animated.View entering={FadeInDown.duration(800).delay(100).springify()}>
+            <View style={{ flexDirection: 'row', gap: Spacing.three, marginBottom: Spacing.four }}>
+              <GlassCard style={{ flex: 1, padding: Spacing.three, paddingVertical: Spacing.four }}>
+                <ThemedText style={styles.overviewLabel}>Mục tiêu hiện tại</ThemedText>
+                {isLoadingProfile ? (
+                  <SkeletonLoader width={100} height={16} style={{ marginTop: 8 }} />
+                ) : (
+                  <>
+                    <ThemedText style={[styles.overviewVal, { fontSize: 14 }]} numberOfLines={1}>
+                      {activeGoal ? activeGoal.targetRole : 'Chưa thiết lập'}
+                    </ThemedText>
+                    <ThemedText style={{ fontSize: 11, color: colors.textSecondary, marginTop: 4 }} numberOfLines={1}>
+                      {activeGoal ? activeGoal.industry : 'Thiết lập để bắt đầu'}
+                    </ThemedText>
+                  </>
+                )}
+              </GlassCard>
+
+              <GlassCard style={{ flex: 1, padding: Spacing.three, paddingVertical: Spacing.four }}>
+                <ThemedText style={styles.overviewLabel}>CV Chính</ThemedText>
+                {isLoadingProfile ? (
+                  <SkeletonLoader width={100} height={16} style={{ marginTop: 8 }} />
+                ) : (
+                  <>
+                    <ThemedText style={[styles.overviewVal, { fontSize: 14 }]} numberOfLines={1}>
+                      {profileData?.primaryResume?.fileName || 'Chưa tải lên'}
+                    </ThemedText>
+                    <ThemedText style={{ fontSize: 11, color: colors.textSecondary, marginTop: 4 }} numberOfLines={1}>
+                      {profileData?.primaryResume ? 'Sẵn sàng phân tích' : 'Thêm CV ngay'}
+                    </ThemedText>
+                  </>
+                )}
+              </GlassCard>
+            </View>
+          </Animated.View>
+
           {/* AI Spotlight Recommendation Banner */}
           {isLoadingRec ? (
              <View style={styles.recBanner}>
-                <SkeletonLoader width="100%" height={200} style={{ borderRadius: 24 }} />
+                <SkeletonLoader width="100%" height={160} style={{ borderRadius: 16 }} />
              </View>
           ) : recommendation && (
-            <Animated.View entering={FadeInDown.duration(800).delay(100).springify()}>
+            <Animated.View entering={FadeInDown.duration(800).delay(200).springify()}>
               <TouchableScale onPress={handleNextActionClick}>
                 <GlassCard
-                  intensity="heavy"
                   style={[styles.recBanner, { borderColor: colors.secondary, borderWidth: 1 }]}
                 >
                   <View style={styles.recHeaderRow}>
@@ -113,7 +149,7 @@ export default function HomeScreen() {
                     <ThemedText style={[styles.recBadgeText, { color: colors.secondary }]}>
                       NEXT BEST ACTION
                     </ThemedText>
-                    <View style={[styles.timeChip, { backgroundColor: 'rgba(0,0,0,0.05)' }]}>
+                    <View style={[styles.timeChip, { backgroundColor: colors.backgroundElement }]}>
                       <Ionicons name="time" size={12} color={colors.textSecondary} />
                       <ThemedText style={styles.timeChipText}>{recommendation.estimatedMinutes}m</ThemedText>
                     </View>
@@ -133,7 +169,7 @@ export default function HomeScreen() {
           )}
 
           {/* Practice Hub Shortcuts - Bento Grid */}
-          <Animated.View entering={FadeInDown.duration(800).delay(200).springify()}>
+          <Animated.View entering={FadeInDown.duration(800).delay(300).springify()}>
             <ThemedText type="subtitle" style={styles.sectionHeader}>
               Luyện Tập
             </ThemedText>
@@ -199,28 +235,6 @@ export default function HomeScreen() {
                 </TouchableScale>
               </View>
             </View>
-          </Animated.View>
-
-          {/* Status Overview Card */}
-          <Animated.View entering={FadeInDown.duration(800).delay(300).springify()}>
-            <GlassCard style={styles.overviewCard}>
-              <View style={styles.overviewRow}>
-                <View style={[styles.overviewIcon, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="briefcase" size={24} color={colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <ThemedText style={styles.overviewLabel}>Mục tiêu hiện tại</ThemedText>
-                  {isLoadingProfile ? (
-                     <SkeletonLoader width={150} height={18} style={{ marginTop: 6 }} />
-                  ) : (
-                     <ThemedText style={styles.overviewVal}>
-                       {activeGoal ? `${activeGoal.targetRole} · ${activeGoal.seniority}` : 'Chưa thiết lập mục tiêu'}
-                     </ThemedText>
-                  )}
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </View>
-            </GlassCard>
           </Animated.View>
 
         </ScrollView>
@@ -358,7 +372,7 @@ const styles = StyleSheet.create({
   },
   bentoHeroTile: {
     flex: 1,
-    borderRadius: 24,
+    borderRadius: 16,
     padding: Spacing.four,
     justifyContent: 'space-between',
   },
