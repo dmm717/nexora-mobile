@@ -105,7 +105,7 @@ export function useCvJdTabState() {
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
-    const shouldShow = offsetY > 400;
+    const shouldShow = offsetY > 1050;
     setShowFloatingNav((prev) => (prev !== shouldShow ? shouldShow : prev));
   }, []);
 

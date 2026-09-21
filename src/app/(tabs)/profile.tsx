@@ -13,7 +13,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AmbientBackground } from '@/components/ui/ambient-background';
-import { styles } from './profile.styles';
+import { styles } from '@/styles/profile.styles';
 
 function useUserProfileData() {
   const { user, logout } = useAuth();

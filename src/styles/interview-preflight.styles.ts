@@ -7,11 +7,12 @@ export const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
     borderBottomWidth: 1,
   },
   backButton: { marginRight: Spacing.three },
-  title: { fontSize: 20, fontWeight: '700' },
+  title: { fontSize: 18, fontWeight: '700' },
   scrollContent: { padding: Spacing.four, gap: Spacing.four },
   centerContainer: {
     flex: 1,
@@ -20,7 +21,7 @@ export const styles = StyleSheet.create({
     padding: Spacing.four,
   },
   card: {
-    borderRadius: Radius.lg,
+    borderRadius: 16,
     padding: Spacing.four,
     borderWidth: 1,
     ...Shadows.sm,
@@ -32,7 +33,7 @@ export const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   cardTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
   },
   inputLabel: {
@@ -41,9 +42,9 @@ export const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderRadius: Radius.md,
+    borderRadius: 12,
     paddingHorizontal: Spacing.three,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 14,
   },
   chipGroup: {
@@ -51,12 +52,12 @@ export const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   chip: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: Radius.md,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ccc',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   chipText: {
     fontSize: 13,
@@ -69,19 +70,19 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.three,
-    borderRadius: Radius.md,
+    borderRadius: 14,
     borderWidth: 1,
     gap: Spacing.two,
   },
   typeCardText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   selectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.three,
-    borderRadius: Radius.md,
+    borderRadius: 12,
     borderWidth: 1,
     gap: Spacing.two,
   },
@@ -99,7 +100,7 @@ export const styles = StyleSheet.create({
     opacity: 0.6,
   },
   primaryButton: {
-    borderRadius: Radius.md,
+    borderRadius: 14,
     paddingVertical: 16,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -108,5 +109,6 @@ export const styles = StyleSheet.create({
     ...Shadows.md,
   },
   disabledButton: { opacity: 0.5 },
-  primaryButtonText: { color: '#fff', fontWeight: '700', fontSize: 17 },
+  primaryButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });
+

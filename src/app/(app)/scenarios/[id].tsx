@@ -11,7 +11,7 @@ import { scenariosApi } from '@/api/scenarios.api';
 import { speechService } from '@/services/speech';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { styles } from './[id].styles';
+import { styles } from '@/styles/scenarios-detail.styles';
 
 export default function ScenarioDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>(); // slug or id

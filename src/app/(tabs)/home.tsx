@@ -16,7 +16,7 @@ import {
   HomeHeroSection,
   RecentActivitiesSection,
 } from '@/components/home/HomeSubComponents';
-import { styles } from './home.styles';
+import { styles } from '@/styles/home.styles';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();

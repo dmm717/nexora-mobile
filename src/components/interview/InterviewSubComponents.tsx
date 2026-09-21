@@ -2,7 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Modal, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { styles } from '@/app/(app)/interview/[id].styles';
+import { styles } from '@/styles/interview-room.styles';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { ttsService } from '@/services/tts';
@@ -241,3 +241,128 @@ export const AnswerInputCard = React.memo(({
     </View>
   </View>
 ));
+
+export const QuestionCoachTipCard = React.memo(({
+  sequence,
+  colors,
+}: {
+  sequence: number;
+  colors: any;
+}) => {
+  const tipText =
+    sequence === 1
+      ? 'Nêu bật kinh nghiệm thực chiến gần nhất, nhấn mạnh công nghệ chủ đạo và đóng góp cá nhân nổi bật.'
+      : sequence === 2
+      ? 'Trình bày có cấu trúc: 1) Cô lập và chẩn đoán sự cố; 2) Giải pháp ứng phó; 3) Thiết kế phòng ngừa lâu dài.'
+      : 'Áp dụng cấu trúc STAR: Nêu rõ Bối cảnh (S), Mục tiêu (T), Hành động cụ thể (A), và Kết quả định lượng (R).';
+
+  return (
+    <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
+      <View style={styles.cardHeaderRow}>
+        <Ionicons name="bulb-outline" size={18} color={colors.warning} />
+        <ThemedText style={{ fontSize: 13, fontWeight: '700', color: colors.warning }}>
+          Mẹo trả lời AI (Coach Tip)
+        </ThemedText>
+      </View>
+      <ThemedText style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 17 }}>
+        {tipText}
+      </ThemedText>
+    </View>
+  );
+});
+
+export const SessionTranscriptAccordion = React.memo(({
+  answers,
+  questions,
+  colors,
+}: {
+  answers?: any[];
+  questions?: any[];
+  colors: any;
+}) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  if (!answers || answers.length === 0) return null;
+
+  return (
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+      <TouchableOpacity
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+        onPress={() => setIsOpen(!isOpen)}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flex: 1 }}>
+          <Ionicons name="receipt-outline" size={18} color={colors.primary} />
+          <ThemedText style={{ fontSize: 13, fontWeight: '700' }}>
+            Xem Transcript ({answers.length} câu đã trả lời)
+          </ThemedText>
+        </View>
+        <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textMuted} />
+      </TouchableOpacity>
+
+      {isOpen && (
+        <View style={{ gap: Spacing.two, marginTop: Spacing.two, paddingTop: Spacing.two, borderTopWidth: 1, borderTopColor: colors.cardBorder }}>
+          {answers.map((ans, idx) => {
+            const qObj = questions?.find((q) => q.id === ans.questionId);
+            return (
+              <View key={ans.id || `ans-${ans.questionId}-${idx}`} style={{ padding: Spacing.two, backgroundColor: colors.backgroundElement, borderRadius: 8, gap: 4 }}>
+                <ThemedText style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>
+                  Q#{qObj?.sequence || idx + 1}: {qObj?.content || 'Câu hỏi phỏng vấn'}
+                </ThemedText>
+                <ThemedText style={{ fontSize: 12, color: colors.text }}>
+                  A: {ans.content}
+                </ThemedText>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+});
+
+export const ExitConfirmationModal = React.memo(({
+  visible,
+  colors,
+  onStay,
+  onLeave,
+}: {
+  visible: boolean;
+  colors: any;
+  onStay: () => void;
+  onLeave: () => void;
+}) => (
+  <Modal visible={visible} transparent animationType="fade">
+    <View style={styles.modalOverlay}>
+      <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: Spacing.one }}>
+          <ThemedText type="subtitle" style={{ fontSize: 18, fontWeight: '700' }}>Rời phòng phỏng vấn?</ThemedText>
+          <TouchableOpacity onPress={onStay} style={{ padding: 4 }}>
+            <Ionicons name="close" size={22} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        <ThemedText style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 18, marginBottom: Spacing.three }}>
+          Bạn đang trong phiên luyện tập tập trung. Tiến trình câu trả lời của các câu trước đã được lưu an toàn. Bạn có muốn quay về màn hình chính?
+        </ThemedText>
+
+        <View style={{ flexDirection: 'row', gap: Spacing.two, width: '100%' }}>
+          <TouchableOpacity
+            style={[styles.secondaryButton, { flex: 1, borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement }]}
+            onPress={onStay}
+          >
+            <ThemedText style={[styles.secondaryButtonText, { color: colors.text }]}>Ở lại luyện tập</ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.primaryButton, { flex: 1, backgroundColor: colors.danger || '#dc2626' }]}
+            onPress={onLeave}
+          >
+            <ThemedText style={styles.primaryButtonText}>Xác nhận rời phòng</ThemedText>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+));
+
+

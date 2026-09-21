@@ -3,7 +3,7 @@ import { FlatList, ScrollView, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { styles } from '@/app/(tabs)/home.styles';
+import { styles } from '@/styles/home.styles';
 import { ThemedText } from '@/components/themed-text';
 import { AmbientBackground as SolidBackground } from '@/components/ui/ambient-background';
 import { Badge } from '@/components/ui/badge';

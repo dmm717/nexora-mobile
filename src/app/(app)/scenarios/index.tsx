@@ -10,7 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { scenariosApi } from '@/api/scenarios.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { styles } from './index.styles';
+import { styles } from '@/styles/scenarios.styles';
 
 const DIFFICULTIES = [
   { id: '', label: 'Tất cả' },

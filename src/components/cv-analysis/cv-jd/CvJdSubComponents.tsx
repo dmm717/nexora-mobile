@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { GlassCard as SurfaceCard } from '@/components/ui/glass-card';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { Spacing, Typography } from '@/constants/theme';
-import { styles } from '@/app/(tabs)/cv-jd.styles';
+import { styles } from '@/styles/cv-jd.styles';
 import { getFileIconProps, useCvJdTabState } from './useCvJdTabState';
 
 export const PrimaryCvSpotlightCard = React.memo(({

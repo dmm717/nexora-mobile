@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, Modal } from 'react-native';
+import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, Modal, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -10,7 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { interviewApi } from '@/api/interview.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { styles } from './[id].styles';
+import { styles } from '@/styles/interview-report.styles';
 
 const PRACTICE_REASONS = [
   { id: 'repeat_question', label: 'Luyện lại câu hỏi này (Repeat Question)' },
@@ -36,6 +36,18 @@ export default function ReportScreen() {
     queryFn: () => interviewApi.getReport(id!),
     enabled: !!id,
   });
+
+  const handleShareReport = async () => {
+    if (!report) return;
+    try {
+      await Share.share({
+        title: 'Báo Cáo Phỏng Vấn Nexora AI',
+        message: `Báo Cáo Phỏng Vấn AI của tôi đạt ${report.overallScore}/100 điểm trên Nexora.`,
+      });
+    } catch {
+      // Ignore share cancellation
+    }
+  };
 
   // Practice Again mutation
   const practiceAgainMutation = useMutation({
@@ -107,6 +119,7 @@ export default function ReportScreen() {
   }
 
   const scoreColor = report.overallScore >= 80 ? colors.accent : report.overallScore >= 60 ? colors.warning : colors.danger;
+  const isPartial = report.sample?.isPartial ?? false;
 
   return (
     <ThemedView style={styles.container}>
@@ -116,12 +129,25 @@ export default function ReportScreen() {
           <TouchableOpacity onPress={() => router.push('/(tabs)/home' as any)} style={styles.backButton}>
             <Ionicons name="home-outline" size={24} color={colors.text} />
           </TouchableOpacity>
-          <ThemedText type="title" style={styles.title}>Báo Cáo Phỏng Vấn AI</ThemedText>
+          <View style={{ flex: 1 }}>
+            <ThemedText type="title" style={styles.title}>Báo Cáo Phỏng Vấn AI</ThemedText>
+          </View>
+          <TouchableOpacity onPress={handleShareReport} style={{ padding: 6 }}>
+            <Ionicons name="share-outline" size={22} color={colors.primary} />
+          </TouchableOpacity>
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Overall Score Badge Card */}
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder, alignItems: 'center' }]}>
+            {isPartial && (
+              <View style={{ backgroundColor: colors.warningLight || '#fef3c7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginBottom: Spacing.two }}>
+                <ThemedText style={{ fontSize: 12, fontWeight: '700', color: colors.warning }}>
+                  ⚡ Báo Cáo Thu Gọn (Nộp bài sớm)
+                </ThemedText>
+              </View>
+            )}
+
             <View style={[styles.scoreBadge, { backgroundColor: `${scoreColor}15` }]}>
               <ThemedText style={[styles.scoreNumber, { color: scoreColor }]}>
                 {report.overallScore}
@@ -133,6 +159,27 @@ export default function ReportScreen() {
             </ThemedText>
             <ThemedText style={styles.disclaimerText}>{report.disclaimer}</ThemedText>
           </View>
+
+          {/* Action Plan Section */}
+          {report.actionPlan && Array.isArray(report.actionPlan) && report.actionPlan.length > 0 && (
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
+                <Ionicons name="flag-outline" size={20} color={colors.primary} />
+                <ThemedText type="subtitle" style={{ fontSize: 16, fontWeight: '700' }}>Kế Hoạch Hành Động Đề Xuất (Action Plan)</ThemedText>
+              </View>
+
+              <View style={{ gap: Spacing.two, marginTop: Spacing.one }}>
+                {report.actionPlan.map((step: string, idx: number) => (
+                  <View key={`step-${idx}-${step.substring(0, 10)}`} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two, backgroundColor: colors.backgroundElement, padding: Spacing.two, borderRadius: Radius.md }}>
+                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+                      <ThemedText style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>{idx + 1}</ThemedText>
+                    </View>
+                    <ThemedText style={{ flex: 1, fontSize: 13, lineHeight: 18 }}>{step}</ThemedText>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
 
           {/* Detailed Question Reviews */}
           {report.questionReviews && report.questionReviews.length > 0 && (

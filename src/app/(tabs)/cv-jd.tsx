@@ -14,7 +14,7 @@ import {
   CvJdFormContent,
   LatestAnalysisModal,
 } from '@/components/cv-analysis/cv-jd/CvJdSubComponents';
-import { styles } from './cv-jd.styles';
+import { styles } from '@/styles/cv-jd.styles';
 
 export default function CvJdTabScreen() {
   const colorScheme = useColorScheme();

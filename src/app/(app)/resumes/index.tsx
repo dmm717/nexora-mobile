@@ -16,7 +16,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { SkeletonCard } from '@/components/ui/skeleton-loader';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { AmbientBackground } from '@/components/ui/ambient-background';
-import { styles } from './index.styles';
+import { styles } from '@/styles/resumes.styles';
 
 export default function ResumesScreen() {
   const router = useRouter();

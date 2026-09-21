@@ -10,7 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { careerGoalsApi } from '@/api/career-goals.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { styles } from './index.styles';
+import { styles } from '@/styles/career-goals.styles';
 
 export default function CareerGoalsScreen() {
   const router = useRouter();

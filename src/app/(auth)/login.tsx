@@ -14,7 +14,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AmbientBackground } from '@/components/ui/ambient-background';
-import { styles } from './login.styles';
+import { styles } from '@/styles/login.styles';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');

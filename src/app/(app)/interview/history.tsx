@@ -4,9 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  FadeInDown,
-} from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { interviewApi } from '@/api/interview.api';
@@ -16,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard as SurfaceCard } from '@/components/ui/glass-card';
 import { AmbientBackground as SolidBackground } from '@/components/ui/ambient-background';
-import { styles } from './history.styles';
+import { styles } from '@/styles/interview-history.styles';
 
 type FilterType = 'all' | 'active' | 'completed';
 
@@ -60,6 +58,24 @@ function useFilteredInterviewHistory(rawData: any, filter: FilterType, page: num
     };
   }, [rawData, filter, page]);
 }
+
+const HistoryHeroHeader = React.memo(({ colors }: { colors: any }) => (
+  <SurfaceCard style={{ padding: Spacing.four, borderRadius: 16, backgroundColor: colors.primary }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <View style={{ flex: 1, marginRight: Spacing.two }}>
+        <ThemedText style={{ color: '#ffffff', fontSize: 18, fontWeight: '800' }}>
+          Lịch sử Phỏng vấn Giả lập
+        </ThemedText>
+        <ThemedText style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: 12, lineHeight: 17, marginTop: 4 }}>
+          Theo dõi toàn bộ các phiên phỏng vấn đã thực hiện, trạng thái hoàn tất và báo cáo đánh giá chi tiết theo từng năng lực.
+        </ThemedText>
+      </View>
+      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255, 0.2)', justifyContent: 'center', alignItems: 'center' }}>
+        <Ionicons name="mic-outline" size={24} color="#ffffff" />
+      </View>
+    </View>
+  </SurfaceCard>
+));
 
 const HistoryEmptyOrErrorStateCard = React.memo(({
   isLoading,
@@ -146,7 +162,7 @@ export default function InterviewHistoryScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         {/* Header Navigation */}
         <View style={[styles.header, { borderColor: colors.cardBorder }]}>
-          <TouchableScale style={styles.backButton} onPress={() => router.back()}>
+          <TouchableScale style={styles.backButton} onPress={() => router.replace('/(tabs)/practice' as any)}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableScale>
           <ThemedText style={styles.headerTitle}>Lịch Sử Phỏng Vấn</ThemedText>
@@ -163,6 +179,26 @@ export default function InterviewHistoryScreen() {
             />
           }
         >
+          {/* Header Hero */}
+          <HistoryHeroHeader colors={colors} />
+
+          {/* Action Row */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: Spacing.one }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <ThemedText style={{ fontSize: 15, fontWeight: '700' }}>Danh sách phiên phỏng vấn</ThemedText>
+              <ThemedText style={{ fontSize: 11, color: colors.textSecondary, marginTop: 2 }}>
+                Hệ thống lưu giữ đầy đủ biên bản âm thanh & chấm điểm.
+              </ThemedText>
+            </View>
+            <TouchableScale
+              style={{ backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              onPress={() => router.push('/(app)/interview/preflight' as any)}
+            >
+              <Ionicons name="add" size={16} color="#fff" />
+              <ThemedText style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>+ Bắt đầu mới</ThemedText>
+            </TouchableScale>
+          </View>
+
           {/* Header Filter Options */}
           <HistoryFilterHeader
             filter={filter}
@@ -179,7 +215,7 @@ export default function InterviewHistoryScreen() {
             error={error}
             paginatedLength={paginatedItems.length}
             colors={colors}
-            onStartNewInterview={() => router.push('/(tabs)/cv-jd' as any)}
+            onStartNewInterview={() => router.push('/(app)/interview/preflight' as any)}
           />
 
           {!isLoading && !error && paginatedItems.length > 0 && (
@@ -294,11 +330,43 @@ const HistoryListItemCard = React.memo(({
   colors: any;
   onPress: () => void;
 }) => {
-  const isCompleted = item.status === 'completed' || item.reportAvailable;
+  const isCompleted = item.status === 'completed' || Boolean(item.reportAvailable);
+  const statusNorm = (item.status || '').toLowerCase();
+
+  let statusLabel = 'Đang diễn ra';
+  let statusVariant = 'info';
+
+  if (isCompleted) {
+    statusLabel = 'Đã hoàn thành';
+    statusVariant = 'success';
+  } else if (statusNorm === 'starting') {
+    statusLabel = 'Đang khởi tạo';
+    statusVariant = 'info';
+  } else if (statusNorm === 'completing' || statusNorm === 'processing') {
+    statusLabel = 'Đang chấm điểm';
+    statusVariant = 'warning';
+  } else if (statusNorm === 'failed') {
+    statusLabel = 'Thất bại';
+    statusVariant = 'danger';
+  } else if (statusNorm === 'abandoned') {
+    statusLabel = 'Đã hủy';
+    statusVariant = 'neutral';
+  } else {
+    statusLabel = 'Đang diễn ra';
+    statusVariant = 'info';
+  }
+
   const dateObj = new Date(item.createdAt);
   const timeStr = dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
   const dateStr = dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const fullTimestamp = `${timeStr}  •  ${dateStr}`;
+  const fullTimestamp = `${timeStr} • ${dateStr}`;
+  
+  const answeredCount = item.answeredQuestionCount ?? 0;
+  const issuedCount = item.issuedQuestionCount ?? 3;
+  const questionCountStr = `${answeredCount}/${issuedCount} câu hỏi`;
+
+  const actionText = isCompleted ? 'Xem báo cáo' : 'Tiếp tục phỏng vấn';
+  const actionIcon = isCompleted ? 'arrow-forward' : 'play-circle-outline';
 
   return (
     <TouchableScale
@@ -307,26 +375,21 @@ const HistoryListItemCard = React.memo(({
     >
       <View style={styles.cardHeaderRow}>
         <ThemedText style={styles.cardTitle} numberOfLines={1}>
-          {item.role || 'Phỏng Vấn AI'}
+          {item.role || 'Business Analyst'} <ThemedText style={{ fontSize: 13, opacity: 0.7 }}>({item.seniority || 'intern'})</ThemedText>
         </ThemedText>
-        <Badge variant={isCompleted ? 'success' : 'warning'} size="sm">
-          {isCompleted ? 'Hoàn thành' : 'Đang làm'}
+        <Badge variant={statusVariant as any} size="sm">
+          {statusLabel}
         </Badge>
       </View>
 
       <View style={styles.metaBadgesRow}>
-        {item.seniority && (
-          <Badge variant="neutral" size="sm">
-            {item.seniority}
-          </Badge>
-        )}
         {item.interviewType && (
           <Badge variant="info" size="sm">
-            {item.interviewType}
+            {item.interviewType === 'technical' ? 'Kỹ thuật' : item.interviewType}
           </Badge>
         )}
-        <Badge variant={isCompleted ? 'success' : 'primary'} size="sm">
-          Đã trả lời: {item.answeredQuestionCount} câu
+        <Badge variant="neutral" size="sm">
+          {questionCountStr}
         </Badge>
       </View>
 
@@ -337,9 +400,9 @@ const HistoryListItemCard = React.memo(({
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <ThemedText style={[styles.actionText, { color: colors.primary }]}>
-            {isCompleted ? 'Xem Báo Cáo' : 'Tiếp Tục'}
+            {actionText}
           </ThemedText>
-          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          <Ionicons name={actionIcon as any} size={14} color={colors.primary} />
         </View>
       </View>
     </TouchableScale>
@@ -398,3 +461,4 @@ const HistoryPaginationBar = React.memo(({
     </View>
   </View>
 ));
+

@@ -10,7 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { growthApi } from '@/api/growth.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { styles } from './skill-profile.styles';
+import { styles } from '@/styles/skill-profile.styles';
 
 export default function SkillProfileScreen() {
   const router = useRouter();

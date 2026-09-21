@@ -1,6 +1,7 @@
-import React from 'react';
-import { StyleSheet, FlatList, View, ListRenderItemInfo } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { StyleSheet, FlatList, View, ListRenderItemInfo, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -10,7 +11,12 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AmbientBackground } from '@/components/ui/ambient-background';
-import { styles } from './practice.styles';
+import { scenariosApi } from '@/api/scenarios.api';
+import { starApi } from '@/api/star.api';
+import { growthApi } from '@/api/growth.api';
+import { styles } from '@/styles/practice.styles';
+
+type HistoryFilter = 'all' | 'scenario' | 'star';
 
 export default function PracticeTabScreen() {
   const router = useRouter();
@@ -18,46 +24,83 @@ export default function PracticeTabScreen() {
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
+
+  // Fetch Learning Path summary
+  const { data: learningPath } = useQuery({
+    queryKey: ['learning-path'],
+    queryFn: growthApi.getLearningPath,
+  });
+
+  // Fetch practice histories
+  const { data: scenarioAttempts, isLoading: isScenariosLoading } = useQuery({
+    queryKey: ['scenario-attempts'],
+    queryFn: () => scenariosApi.listAttempts(),
+  });
+
+  const { data: starAttempts, isLoading: isStarsLoading } = useQuery({
+    queryKey: ['star-attempts'],
+    queryFn: () => starApi.list(),
+  });
+
+  const isHistoryLoading = isScenariosLoading || isStarsLoading;
+
+  // Combine practice history items (Scenarios & STAR)
+  const unifiedHistory = useMemo(() => {
+    const list: Array<{
+      id: string;
+      type: 'scenario' | 'star';
+      title: string;
+      subtitle: string;
+      date: string;
+      score?: number | null;
+      actionUrl: string;
+      actionLabel: string;
+    }> = [];
+
+    // 1. Scenarios
+    (scenarioAttempts || []).forEach((sc) => {
+      list.push({
+        id: `sc-${sc.id}`,
+        type: 'scenario',
+        title: `Tình huống: ${sc.scenarioTitle || 'Kịch bản'}`,
+        subtitle: sc.status === 'completed' ? 'Hoàn thành' : 'Đang thực hiện',
+        date: sc.createdAt,
+        score: sc.evaluation?.overallScore ?? null,
+        actionUrl: `/(app)/scenarios/${sc.scenarioId || sc.id}`,
+        actionLabel: 'Xem bài',
+      });
+    });
+
+    // 2. STAR Attempts
+    (starAttempts || []).forEach((st) => {
+      list.push({
+        id: `star-${st.id}`,
+        type: 'star',
+        title: 'Luyện phản xạ STAR',
+        subtitle: st.question || 'Câu hỏi STAR',
+        date: st.createdAt,
+        score: st.evaluation?.overallScore ?? null,
+        actionUrl: '/(app)/star-builder',
+        actionLabel: 'Chi tiết',
+      });
+    });
+
+    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [scenarioAttempts, starAttempts]);
+
+  const filteredHistory = useMemo(() => {
+    if (historyFilter === 'all') return unifiedHistory;
+    return unifiedHistory.filter((item) => item.type === historyFilter);
+  }, [unifiedHistory, historyFilter]);
+
   const listData = [
-    {
-      id: 'hero',
-      type: 'hero',
-    },
-    {
-      id: 'tools',
-      type: 'tools',
-    },
-    {
-      id: 'history',
-      type: 'history',
-    }
+    { id: 'tools', type: 'tools' },
+    { id: 'learning_path', type: 'learning_path' },
+    { id: 'history', type: 'history' },
   ];
 
-  const renderItem = ({ item }: ListRenderItemInfo<typeof listData[0]>) => {
-    if (item.type === 'hero') {
-      return (
-        <TouchableScale onPress={() => router.push('/(app)/interview/preflight' as any)}>
-          <GlassCard hasGlow glowColor={colors.glowPrimary} style={[styles.heroCard, { backgroundColor: colors.primary }]}>
-            <View style={styles.heroContent}>
-              <View style={styles.heroIconCircle}>
-                <Ionicons name="mic" size={32} color={colors.primary} />
-              </View>
-              <View style={styles.heroTextContainer}>
-                <ThemedText style={styles.heroTitle}>Phòng Phỏng Vấn Real-Time</ThemedText>
-                <ThemedText style={styles.heroSub}>
-                  Mô phỏng phỏng vấn trực tiếp bằng giọng nói, bóc tách câu trả lời & nhận báo cáo ngay.
-                </ThemedText>
-              </View>
-              <View style={styles.heroActionRow}>
-                <ThemedText style={styles.heroActionText}>Bắt đầu ngay</ThemedText>
-                <Ionicons name="arrow-forward" size={16} color="#ffffff" />
-              </View>
-            </View>
-          </GlassCard>
-        </TouchableScale>
-      );
-    }
-
+  const renderItem = ({ item }: ListRenderItemInfo<(typeof listData)[0]>) => {
     if (item.type === 'tools') {
       return (
         <View style={styles.section}>
@@ -71,9 +114,9 @@ export default function PracticeTabScreen() {
                 <View style={[styles.gridIconBadge, { backgroundColor: colors.accentLight }]}>
                   <Ionicons name="construct" size={24} color={colors.accent} />
                 </View>
-                <ThemedText style={styles.gridTitle}>Kịch Bản</ThemedText>
+                <ThemedText style={styles.gridTitle}>Kho Kịch Bản</ThemedText>
                 <ThemedText style={styles.gridSub} numberOfLines={2}>
-                  Giải quyết tình huống thực tế
+                  Giải quyết tình huống thực tế theo vị trí & cấp bậc
                 </ThemedText>
               </GlassCard>
             </TouchableScale>
@@ -88,7 +131,7 @@ export default function PracticeTabScreen() {
                 </View>
                 <ThemedText style={styles.gridTitle}>Mô hình STAR</ThemedText>
                 <ThemedText style={styles.gridSub} numberOfLines={2}>
-                  Chuẩn hóa câu trả lời
+                  Bẻ gãy thói quen lan man, chuẩn hóa 4 thành phần S-T-A-R
                 </ThemedText>
               </GlassCard>
             </TouchableScale>
@@ -97,21 +140,104 @@ export default function PracticeTabScreen() {
       );
     }
 
-    return (
-      <View style={styles.section}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>Quản lý dữ liệu</ThemedText>
-        <TouchableScale onPress={() => router.push('/(app)/interview/history' as any)}>
-          <GlassCard style={styles.listCard}>
-            <View style={[styles.iconBadge, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="journal" size={22} color={colors.primary} />
+    if (item.type === 'learning_path') {
+      const percentage = learningPath?.progress?.percentage ?? 0;
+      return (
+        <TouchableScale onPress={() => router.push('/(app)/growth/learning-path' as any)}>
+          <GlassCard style={{ padding: Spacing.four, borderRadius: Radius.lg, backgroundColor: colors.card, borderColor: colors.cardBorder }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three }}>
+              <View style={{ width: 44, height: 44, borderRadius: Radius.md, backgroundColor: colors.secondaryLight, justifyContent: 'center', alignItems: 'center' }}>
+                <Ionicons name="map-outline" size={24} color={colors.secondary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <ThemedText style={{ fontSize: 15, fontWeight: '700' }}>Lộ Trình Phát Triển</ThemedText>
+                  {percentage > 0 && (
+                    <View style={{ backgroundColor: colors.primaryLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                      <ThemedText style={{ fontSize: 10, fontWeight: '700', color: colors.primary }}>{percentage}%</ThemedText>
+                    </View>
+                  )}
+                </View>
+                <ThemedText style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+                  Theo dõi lộ trình kỹ năng cá nhân hóa
+                </ThemedText>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </View>
-            <View style={{ flex: 1 }}>
-              <ThemedText style={styles.listTitle}>Lịch Sử Phiên Phỏng Vấn</ThemedText>
-              <ThemedText style={styles.listSub}>Xem lại báo cáo đánh giá chi tiết</ThemedText>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
           </GlassCard>
         </TouchableScale>
+      );
+    }
+
+    return (
+      <View style={styles.section}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.two }}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>Lịch sử luyện tập chuyên sâu</ThemedText>
+        </View>
+
+        {/* Filter Chips */}
+        <View style={{ flexDirection: 'row', gap: 6, marginBottom: Spacing.two, flexWrap: 'wrap' }}>
+          {(
+            [
+              { id: 'all', label: 'Tất cả' },
+              { id: 'scenario', label: 'Tình huống' },
+              { id: 'star', label: 'Luyện STAR' },
+            ] as const
+          ).map((tab) => {
+            const isSelected = historyFilter === tab.id;
+            return (
+              <TouchableOpacity
+                key={tab.id}
+                style={[
+                  { paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.full, backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.cardBorder },
+                  isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                ]}
+                onPress={() => setHistoryFilter(tab.id)}
+              >
+                <ThemedText style={[{ fontSize: 12, fontWeight: '600', color: colors.textSecondary }, isSelected && { color: '#fff' }]}>
+                  {tab.label}
+                </ThemedText>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* History items */}
+        {isHistoryLoading ? (
+          <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 20 }} />
+        ) : filteredHistory.length > 0 ? (
+          <View style={{ gap: Spacing.two }}>
+            {filteredHistory.slice(0, 5).map((h) => {
+              const iconName = h.type === 'scenario' ? 'construct-outline' : 'star-outline';
+              const iconColor = h.type === 'scenario' ? colors.accent : colors.warning;
+              const dateStr = new Date(h.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+
+              return (
+                <TouchableScale key={h.id} onPress={() => router.push(h.actionUrl as any)}>
+                  <GlassCard style={styles.listCard}>
+                    <View style={[styles.iconBadge, { backgroundColor: `${iconColor}15` }]}>
+                      <Ionicons name={iconName} size={22} color={iconColor} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <ThemedText style={styles.listTitle} numberOfLines={1}>{h.title}</ThemedText>
+                      <ThemedText style={styles.listSub} numberOfLines={1}>{h.subtitle} • {dateStr}</ThemedText>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      {h.score != null && (
+                        <ThemedText style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>{h.score}đ</ThemedText>
+                      )}
+                      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                    </View>
+                  </GlassCard>
+                </TouchableScale>
+              );
+            })}
+          </View>
+        ) : (
+          <ThemedText style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', marginVertical: 12 }}>
+            Chưa có lịch sử luyện tập ở mục này.
+          </ThemedText>
+        )}
       </View>
     );
   };
@@ -121,8 +247,8 @@ export default function PracticeTabScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Top Header */}
         <View style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>Huấn Luyện AI</ThemedText>
-          <ThemedText style={styles.headerSub}>Nâng cao kỹ năng phỏng vấn thực chiến</ThemedText>
+          <ThemedText type="title" style={styles.headerTitle}>Trung Tâm Luyện Tập</ThemedText>
+          <ThemedText style={styles.headerSub}>Rèn luyện kỹ năng xử lý tình huống thực tế & phản xạ STAR</ThemedText>
         </View>
 
         <FlatList
@@ -136,3 +262,5 @@ export default function PracticeTabScreen() {
     </AmbientBackground>
   );
 }
+
+

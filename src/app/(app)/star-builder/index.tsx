@@ -11,7 +11,7 @@ import { starApi } from '@/api/star.api';
 import { speechService } from '@/services/speech';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { styles } from './index.styles';
+import { styles } from '@/styles/star-builder.styles';
 
 const SAMPLE_QUESTIONS = [
   'Kể về một lần bạn gặp xung đột ý kiến trong nhóm và cách bạn xử lý.',

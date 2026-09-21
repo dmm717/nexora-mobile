@@ -13,7 +13,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlassCard } from '@/components/ui/glass-card';
 import { SkeletonCard } from '@/components/ui/skeleton-loader';
 import { TouchableScale } from '@/components/ui/touchable-scale';
-import { styles } from './progress-dashboard.styles';
+import { styles } from '@/styles/progress-dashboard.styles';
 
 export default function ProgressDashboardScreen() {
   const router = useRouter();

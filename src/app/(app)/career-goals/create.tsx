@@ -11,7 +11,7 @@ import { careerGoalsApi } from '@/api/career-goals.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { CreateCareerGoalRequest } from '@/api/types';
-import { styles } from './create.styles';
+import { styles } from '@/styles/career-goals-create.styles';
 
 export default function CreateCareerGoalScreen() {
   const router = useRouter();

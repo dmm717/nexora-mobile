@@ -13,7 +13,7 @@ import { authApi } from '@/api/auth.api';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AmbientBackground } from '@/components/ui/ambient-background';
-import { styles } from './forgot-password.styles';
+import { styles } from '@/styles/forgot-password.styles';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');

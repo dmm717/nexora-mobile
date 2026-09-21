@@ -13,7 +13,7 @@ import { authApi } from '@/api/auth.api';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AmbientBackground } from '@/components/ui/ambient-background';
-import { styles } from './verify-email.styles';
+import { styles } from '@/styles/verify-email.styles';
 
 export default function VerifyEmailScreen() {
   const { email: emailParam } = useLocalSearchParams<{ email: string }>();

@@ -10,7 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { pricingApi } from '@/api/pricing.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { styles } from './index.styles';
+import { styles } from '@/styles/pricing.styles';
 
 export default function PricingScreen() {
   const router = useRouter();
