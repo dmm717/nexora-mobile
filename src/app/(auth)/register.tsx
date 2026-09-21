@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View, Image, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Link, useRouter } from 'expo-router';
 import Animated, { FadeInUp, FadeInDown, Easing } from 'react-native-reanimated';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AppError } from '@/api/types';
 import { ThemedText } from '@/components/themed-text';
 import { MaterialInput } from '@/components/material-input';
@@ -17,45 +18,47 @@ export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const { register: registerApi } = useAuth();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  const handleRegister = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ Email và Mật khẩu');
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await registerApi({
+  const registerMutation = useMutation({
+    mutationFn: () =>
+      registerApi({
         email: email.trim(),
         password,
         fullName: fullName.trim() || undefined,
-      });
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
       router.push({
         pathname: '/(auth)/verify-email',
-        params: { email: email.trim() }
+        params: { email: email.trim() },
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       if (error instanceof AppError) {
         Alert.alert('Đăng ký thất bại', `[${error.code}] ${error.message}`);
       } else {
         Alert.alert('Đăng ký thất bại', 'Có lỗi xảy ra khi tạo tài khoản');
       }
-    } finally {
-      setLoading(false);
+    },
+  });
+
+  const handleRegister = () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ Email và Mật khẩu');
+      return;
     }
+    if (password.length < 6) {
+      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
+    registerMutation.mutate();
   };
 
   return (
@@ -68,10 +71,10 @@ export default function RegisterScreen() {
         >
           {/* Header */}
           <Animated.View entering={FadeInDown.duration(800).easing(Easing.out(Easing.cubic))} style={styles.brandHeader}>
-            <Image 
-              source={require('@/assets/images/logo.png')} 
-              style={styles.logoImage} 
-              resizeMode="contain" 
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
             />
             <ThemedText type="title" style={styles.title}>
               Tạo Tài Khoản Mới
@@ -119,9 +122,9 @@ export default function RegisterScreen() {
                 <TouchableScale
                   style={[styles.submitButton, { backgroundColor: colors.primary }]}
                   onPress={handleRegister}
-                  disabled={loading}
+                  disabled={registerMutation.isPending}
                 >
-                  {loading ? (
+                  {registerMutation.isPending ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
                     <ThemedText style={styles.submitButtonText}>Tạo Tài Khoản</ThemedText>

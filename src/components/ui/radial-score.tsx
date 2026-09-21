@@ -27,14 +27,11 @@ export function RadialScoreRing({
   const circumference = 2 * Math.PI * radius;
 
   // Animated display score (starts at 0 on mount and animates smoothly to target score)
-  const [displayScore, setDisplayScore] = useState<number>(0);
+  const [displayScore, setDisplayScore] = useState(0);
   const targetScore = score != null ? Math.min(Math.max(score, 0), 100) : 0;
 
   useEffect(() => {
-    if (score == null) {
-      setDisplayScore(0);
-      return;
-    }
+    if (score == null) return;
 
     let startTime: number | null = null;
     const duration = 1000; // 1 second duration
@@ -60,7 +57,8 @@ export function RadialScoreRing({
     return () => cancelAnimationFrame(frameId);
   }, [score, targetScore]);
 
-  const strokeDashoffset = circumference - (displayScore / 100) * circumference;
+  const effectiveScore = score == null ? 0 : displayScore;
+  const strokeDashoffset = circumference - (effectiveScore / 100) * circumference;
 
   if (Platform.OS === 'web') {
     return (
@@ -101,7 +99,7 @@ export function RadialScoreRing({
           {score != null ? (
             <View style={styles.scoreRow}>
               <ThemedText style={[styles.scoreNumber, { color: colors.textPrimary }]}>
-                {displayScore}
+                {effectiveScore}
               </ThemedText>
               <ThemedText style={[styles.scoreTotal, { color: colors.textSecondary }]}>
                 /100
@@ -118,7 +116,7 @@ export function RadialScoreRing({
   }
 
   // Pure React Native fallback (iOS / Android)
-  const percent = displayScore / 100;
+  const percent = effectiveScore / 100;
   return (
     <View
       style={[
@@ -152,7 +150,7 @@ export function RadialScoreRing({
         {score != null ? (
           <View style={styles.scoreRow}>
             <ThemedText style={[styles.scoreNumber, { color: colors.textPrimary }]}>
-              {displayScore}
+              {effectiveScore}
             </ThemedText>
             <ThemedText style={[styles.scoreTotal, { color: colors.textSecondary }]}>
               /100

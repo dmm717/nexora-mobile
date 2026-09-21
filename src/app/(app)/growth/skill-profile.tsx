@@ -120,8 +120,8 @@ export default function SkillProfileScreen() {
                         <View style={[styles.sourcesBox, { backgroundColor: colors.backgroundElement }]}>
                           <ThemedText style={styles.sourcesHeader}>Nguồn minh chứng:</ThemedText>
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                            {comp.sources.map((src, idx) => (
-                              <View key={`${src.sourceType}-${idx}`} style={[styles.sourceChip, { borderColor: colors.cardBorder }]}>
+                            {comp.sources.map((src) => (
+                              <View key={`${src.sourceType}-${src.evidenceCount}-${src.latestEvidenceAt}`} style={[styles.sourceChip, { borderColor: colors.cardBorder }]}>
                                 <ThemedText style={styles.sourceText}>
                                   {src.sourceType.toUpperCase()} ({src.evidenceCount})
                                 </ThemedText>
@@ -146,8 +146,8 @@ export default function SkillProfileScreen() {
                   </View>
 
                   <View style={{ gap: Spacing.two, marginTop: Spacing.one }}>
-                    {profile.weaknessSignals.map((signal, idx) => (
-                      <View key={`${signal.label}-${idx}`} style={[styles.signalRow, { backgroundColor: colors.dangerLight }]}>
+                    {profile.weaknessSignals.map((signal) => (
+                      <View key={`${signal.label}-${signal.sourceType}-${signal.latestEvidenceAt}`} style={[styles.signalRow, { backgroundColor: colors.dangerLight }]}>
                         <Ionicons name="alert-circle" size={18} color={colors.danger} />
                         <View style={{ flex: 1 }}>
                           <ThemedText style={[styles.signalLabel, { color: colors.danger }]}>{signal.label}</ThemedText>

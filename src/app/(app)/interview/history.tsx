@@ -10,8 +10,8 @@ import Animated, {
 
 import { ThemedText } from '@/components/themed-text';
 import { interviewApi } from '@/api/interview.api';
-import { Colors, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Spacing, Typography } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { Badge } from '@/components/ui/badge';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard as SurfaceCard } from '@/components/ui/glass-card';
@@ -60,28 +60,71 @@ function useFilteredInterviewHistory(rawData: any, filter: FilterType, page: num
   }, [rawData, filter, page]);
 }
 
+const HistoryEmptyOrErrorStateCard = React.memo(({
+  isLoading,
+  error,
+  paginatedLength,
+  colors,
+  onStartNewInterview,
+}: {
+  isLoading: boolean;
+  error: any;
+  paginatedLength: number;
+  colors: any;
+  onStartNewInterview: () => void;
+}) => {
+  if (isLoading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (error || paginatedLength === 0) {
+    return (
+      <SurfaceCard style={styles.emptyCard}>
+        <View style={[styles.emptyIconBox, { backgroundColor: colors.backgroundElement }]}>
+          <Ionicons
+            name={error ? 'alert-circle-outline' : 'document-text-outline'}
+            size={28}
+            color={colors.textSecondary}
+          />
+        </View>
+        <ThemedText style={styles.emptyTitle}>
+          {error ? 'Không thể tải lịch sử' : 'Chưa có lịch sử phỏng vấn'}
+        </ThemedText>
+        <ThemedText style={[styles.emptySub, { color: colors.textSecondary }]}>
+          {error
+            ? 'Đã có lỗi xảy ra khi kết nối tới máy chủ.'
+            : 'Hãy bắt đầu tạo buổi phỏng vấn đầu tiên của bạn ngay!'}
+        </ThemedText>
+        <TouchableScale
+          style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]}
+          onPress={onStartNewInterview}
+        >
+          <Ionicons name="add-circle-outline" size={16} color="#ffffff" />
+          <ThemedText style={styles.primaryActionBtnText}>
+            Tạo phỏng vấn mới
+          </ThemedText>
+        </TouchableScale>
+      </SurfaceCard>
+    );
+  }
+
+  return null;
+});
+
 export default function InterviewHistoryScreen() {
+  const colors = useTheme();
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
-  const colors = Colors[themeKey];
-
-  const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<FilterType>('all');
+  const [page, setPage] = useState<number>(1);
 
-  const { data: rawData, isLoading, refetch, isRefetching, error } = useQuery({
+  const { data: rawData, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ['interview-history'],
     queryFn: () => interviewApi.list(1, 50),
   });
-
-  const handleFilterChange = (newFilter: FilterType) => {
-    setFilter(newFilter);
-    setPage(1);
-  };
-
-  const handleRefresh = () => {
-    refetch();
-  };
 
   const {
     totalCountAll,
@@ -92,23 +135,34 @@ export default function InterviewHistoryScreen() {
     hasNextPage,
   } = useFilteredInterviewHistory(rawData, filter, page);
 
+  const handleFilterChange = (newFilter: FilterType) => {
+    setFilter(newFilter);
+    setPage(1);
+  };
+
   return (
-    <SolidBackground>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableScale onPress={() => router.back()} style={styles.backButton}>
+    <SolidBackground style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        {/* Header Navigation */}
+        <View style={[styles.header, { borderColor: colors.cardBorder }]}>
+          <TouchableScale style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableScale>
-          <ThemedText style={styles.headerTitle}>Lịch sử phỏng vấn</ThemedText>
+          <ThemedText style={styles.headerTitle}>Lịch Sử Phỏng Vấn</ThemedText>
         </View>
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={colors.primary} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor={colors.primary}
+            />
+          }
         >
-          {/* TOP CONTROL BAR (Sort Pills) */}
+          {/* Header Filter Options */}
           <HistoryFilterHeader
             filter={filter}
             colors={colors}
@@ -118,51 +172,16 @@ export default function InterviewHistoryScreen() {
             onFilterChange={handleFilterChange}
           />
 
-          {/* LIST CONTENT */}
-          {isLoading ? (
-            <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </View>
-          ) : error ? (
-            <SurfaceCard style={styles.emptyCard}>
-              <View style={[styles.emptyIconBox, { backgroundColor: colors.danger + '20' }]}>
-                <Ionicons name="alert-circle-outline" size={32} color={colors.danger} />
-              </View>
-              <ThemedText style={styles.emptyTitle}>Lỗi tải dữ liệu</ThemedText>
-              <ThemedText style={[styles.emptySub, { color: colors.textSecondary }]}>
-                {String((error as any)?.message || error)}
-              </ThemedText>
-              <TouchableScale
-                style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]}
-                onPress={handleRefresh}
-              >
-                <Ionicons name="refresh" size={18} color="#ffffff" />
-                <ThemedText style={styles.primaryActionBtnText}>Thử Lại</ThemedText>
-              </TouchableScale>
-            </SurfaceCard>
-          ) : paginatedItems.length === 0 ? (
-            <SurfaceCard style={styles.emptyCard}>
-              <View style={[styles.emptyIconBox, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="journal-outline" size={32} color={colors.primary} />
-              </View>
-              <ThemedText style={styles.emptyTitle}>Không tìm thấy phiên phỏng vấn nào</ThemedText>
-              <ThemedText style={[styles.emptySub, { color: colors.textSecondary }]}>
-                {filter === 'completed'
-                  ? 'Bạn chưa có bài phỏng vấn đã hoàn thành.'
-                  : filter === 'active'
-                  ? 'Không có bài phỏng vấn nào đang diễn ra.'
-                  : 'Bắt đầu luyện tập bài phỏng vấn đầu tiên để tích lũy dữ liệu.'}
-              </ThemedText>
+          {/* Render State / Items */}
+          <HistoryEmptyOrErrorStateCard
+            isLoading={isLoading}
+            error={error}
+            paginatedLength={paginatedItems.length}
+            colors={colors}
+            onStartNewInterview={() => router.push('/(tabs)/cv-jd' as any)}
+          />
 
-              <TouchableScale
-                style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]}
-                onPress={() => router.push('/(app)/interview/preflight' as any)}
-              >
-                <Ionicons name="add" size={18} color="#ffffff" />
-                <ThemedText style={styles.primaryActionBtnText}>Tạo Phiên Phỏng Vấn Mới</ThemedText>
-              </TouchableScale>
-            </SurfaceCard>
-          ) : (
+          {!isLoading && !error && paginatedItems.length > 0 && (
             <Animated.View entering={FadeInDown.duration(400).springify()} style={{ gap: Spacing.three }}>
               {paginatedItems.map((item: any) => (
                 <HistoryListItemCard

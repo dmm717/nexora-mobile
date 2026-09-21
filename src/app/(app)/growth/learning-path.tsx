@@ -168,6 +168,56 @@ function executeActivityAction(type: string, resourceId: string | null | undefin
   }
 }
 
+const LearningPathEmptyOrErrorCard = React.memo(({
+  isCareerGoalRequired,
+  isGenerating,
+  colors,
+  onSetupGoal,
+  onGenerate,
+}: {
+  isCareerGoalRequired: boolean;
+  isGenerating: boolean;
+  colors: any;
+  onSetupGoal: () => void;
+  onGenerate: () => void;
+}) => (
+  <GlassCard style={{ padding: Spacing.four, alignItems: 'center' }}>
+    <Ionicons name="map-outline" size={48} color={colors.primary} style={{ alignSelf: 'center' }} />
+    <ThemedText type="subtitle" style={{ textAlign: 'center', marginTop: Spacing.two }}>
+      {isCareerGoalRequired ? 'Yêu Cầu Mục Tiêu Nghề Nghiệp' : 'Chưa Có Lộ Trình Học Tập'}
+    </ThemedText>
+    <ThemedText style={{ textAlign: 'center', opacity: 0.8, marginVertical: Spacing.two }}>
+      {isCareerGoalRequired
+        ? 'Bạn cần thiết lập Mục tiêu Nghề nghiệp (Career Goal) trước khi hệ thống AI có thể tạo lộ trình học tập cá nhân hóa.'
+        : 'Hệ thống AI chưa tạo lộ trình học tập cho bạn. Hãy bấm nút bên dưới để tạo lộ trình tối ưu.'}
+    </ThemedText>
+
+    {isCareerGoalRequired ? (
+      <TouchableScale
+        style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+        onPress={onSetupGoal}
+      >
+        <ThemedText style={styles.primaryButtonText}>Thiết Lập Mục Tiêu Nghề Nghiệp</ThemedText>
+      </TouchableScale>
+    ) : (
+      <TouchableScale
+        style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+        onPress={onGenerate}
+        disabled={isGenerating}
+      >
+        {isGenerating ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <>
+            <Ionicons name="sparkles" size={18} color="#fff" style={{ marginRight: 6 }} />
+            <ThemedText style={styles.primaryButtonText}>Tạo Lộ Trình Mới Ngay</ThemedText>
+          </>
+        )}
+      </TouchableScale>
+    )}
+  </GlassCard>
+));
+
 export default function LearningPathScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -240,41 +290,13 @@ export default function LearningPathScreen() {
               <SkeletonCard />
             </View>
           ) : isError || !path ? (
-            <GlassCard style={{ padding: Spacing.four, alignItems: 'center' }}>
-              <Ionicons name="map-outline" size={48} color={colors.primary} style={{ alignSelf: 'center' }} />
-              <ThemedText type="subtitle" style={{ textAlign: 'center', marginTop: Spacing.two }}>
-                {isCareerGoalRequired ? 'Yêu Cầu Mục Tiêu Nghề Nghiệp' : 'Chưa Có Lộ Trình Học Tập'}
-              </ThemedText>
-              <ThemedText style={{ textAlign: 'center', opacity: 0.8, marginVertical: Spacing.two }}>
-                {isCareerGoalRequired
-                  ? 'Bạn cần thiết lập Mục tiêu Nghề nghiệp (Career Goal) trước khi hệ thống AI có thể tạo lộ trình học tập cá nhân hóa.'
-                  : 'Hệ thống AI chưa tạo lộ trình học tập cho bạn. Hãy bấm nút bên dưới để tạo lộ trình tối ưu.'}
-              </ThemedText>
-
-              {isCareerGoalRequired ? (
-                <TouchableScale
-                  style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-                  onPress={() => router.push('/(app)/profile' as any)}
-                >
-                  <ThemedText style={styles.primaryButtonText}>Thiết Lập Mục Tiêu Nghề Nghiệp</ThemedText>
-                </TouchableScale>
-              ) : (
-                <TouchableScale
-                  style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-                  onPress={() => generateMutation.mutate()}
-                  disabled={generateMutation.isPending}
-                >
-                  {generateMutation.isPending ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Ionicons name="sparkles" size={18} color="#fff" style={{ marginRight: 6 }} />
-                      <ThemedText style={styles.primaryButtonText}>Tạo Lộ Trình Mới Ngay</ThemedText>
-                    </>
-                  )}
-                </TouchableScale>
-              )}
-            </GlassCard>
+            <LearningPathEmptyOrErrorCard
+              isCareerGoalRequired={Boolean(isCareerGoalRequired)}
+              isGenerating={generateMutation.isPending}
+              colors={colors}
+              onSetupGoal={() => router.push('/(app)/profile' as any)}
+              onGenerate={() => generateMutation.mutate()}
+            />
           ) : (
             <>
               {/* Progress Spotlight Card */}

@@ -25,6 +25,72 @@ import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { tokenStorage } from '@/services/storage';
 
+// ---------- Module-level pure helpers (React Compiler can fully optimize these) ----------
+
+type UploadResumeParams = {
+  useCurrentProfile: boolean;
+  queryClient: ReturnType<typeof import('@tanstack/react-query').useQueryClient>;
+  setSelectedResumeId: (id: string) => void;
+  setCurrentFileName: (name: string) => void;
+};
+
+async function uploadResumeFile(params: UploadResumeParams): Promise<void> {
+  const { useCurrentProfile, queryClient, setSelectedResumeId, setCurrentFileName } = params;
+
+  const res = await DocumentPicker.getDocumentAsync({
+    type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    copyToCacheDirectory: true,
+  });
+
+  if (res.canceled || !res.assets || res.assets.length === 0) return;
+  const file = res.assets[0];
+
+  if (file.size && file.size > 10 * 1024 * 1024) {
+    Alert.alert('Lỗi', 'Dung lượng file vượt quá 10MB.');
+    return;
+  }
+
+  const fileUri = file.uri;
+  const fileName = file.name || 'resume.pdf';
+  const contentType = file.mimeType || 'application/pdf';
+
+  let fileData: ArrayBuffer | Blob;
+  let fileSize = file.size || 0;
+
+  if (typeof window !== 'undefined' && 'file' in file && file.file) {
+    fileData = file.file as File;
+    fileSize = (file.file as File).size;
+  } else {
+    fileData = await fetch(fileUri).then((r) => {
+      if (!r.ok) throw new Error(`Không thể đọc file từ thiết bị (status ${r.status})`);
+      return r.blob();
+    });
+    fileSize = (fileData as Blob).size || file.size || 0;
+  }
+
+  if (!fileSize) {
+    Alert.alert('Lỗi', 'Không thể xác định kích thước file.');
+    return;
+  }
+
+  const presignData = await resumesApi.presign({ fileName, contentType, size: fileSize });
+  await resumesApi.uploadRawBytes(presignData.uploadUrl, fileData, contentType);
+  const finalizedResume = await resumesApi.finalize({ uploadToken: presignData.token });
+
+  setSelectedResumeId(finalizedResume.id);
+  setCurrentFileName(finalizedResume.fileName);
+
+  if (useCurrentProfile) {
+    await profileApi.setPrimaryResume({ resumeId: finalizedResume.id });
+    queryClient.invalidateQueries({ queryKey: ['career-profile'] });
+  }
+
+  queryClient.invalidateQueries({ queryKey: ['resumes-list'] });
+  Alert.alert('Thành công', 'Đã tải lên CV thành công.');
+}
+
+// --------------------------------------------------------------------------------------------
+
 const getFileIconProps = (fileName?: string) => {
   if (!fileName) return { color: '#6B7280', label: 'FILE' };
   const ext = fileName.split('.').pop()?.toLowerCase();
@@ -42,7 +108,6 @@ function useCvJdTabState() {
   const [mode, setMode] = useState<'standard' | 'job_targeted' | 'field_benchmark'>('standard');
   const [jdTitle, setJdTitle] = useState('');
   const [jdContent, setJdContent] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
 
   const [industry, setIndustry] = useState('');
   const [targetRole, setTargetRole] = useState('');
@@ -57,10 +122,11 @@ function useCvJdTabState() {
   const itemsPerPage = 6;
   const [showFloatingNav, setShowFloatingNav] = useState(false);
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
-    setShowFloatingNav(offsetY > 400);
-  };
+    const shouldShow = offsetY > 400;
+    setShowFloatingNav((prev) => (prev !== shouldShow ? shouldShow : prev));
+  }, []);
 
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['career-profile'],
@@ -215,73 +281,20 @@ function useCvJdTabState() {
     analyzeMutation.mutate();
   }, [profile, useCurrentProfile, analyzeMutation]);
 
-  const handleUploadResume = async () => {
-    try {
-      const res = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-        copyToCacheDirectory: true,
-      });
-
-      if (res.canceled || !res.assets || res.assets.length === 0) return;
-      const file = res.assets[0];
-
-      if (file.size && file.size > 10 * 1024 * 1024) {
-        Alert.alert('Lỗi', 'Dung lượng file vượt quá 10MB.');
-        return;
-      }
-
-      setIsUploading(true);
-
-      const fileUri = file.uri;
-      const fileName = file.name || 'resume.pdf';
-      const contentType = file.mimeType || 'application/pdf';
-
-      let fileData: ArrayBuffer | Blob;
-      let fileSize = file.size || 0;
-
-      if (typeof window !== 'undefined' && 'file' in file && file.file) {
-        fileData = file.file as File;
-        fileSize = (file.file as File).size;
-      } else {
-        fileData = await fetch(fileUri).then(r => r.blob());
-        fileSize = (fileData as Blob).size || file.size || 0;
-      }
-
-      if (!fileSize) {
-        Alert.alert('Lỗi', 'Không thể xác định kích thước file.');
-        setIsUploading(false);
-        return;
-      }
-
-      const presignData = await resumesApi.presign({
-        fileName,
-        contentType,
-        size: fileSize,
-      });
-
-      await resumesApi.uploadRawBytes(presignData.uploadUrl, fileData, contentType);
-
-      const finalizedResume = await resumesApi.finalize({
-        uploadToken: presignData.token,
-      });
-
-      setSelectedResumeId(finalizedResume.id);
-      setCurrentFileName(finalizedResume.fileName);
-
-      if (useCurrentProfile) {
-        await profileApi.setPrimaryResume({ resumeId: finalizedResume.id });
-        queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['resumes-list'] });
-      Alert.alert('Thành công', 'Đã tải lên CV thành công.');
-    } catch (error: any) {
+  const uploadMutation = useMutation({
+    mutationFn: () =>
+      uploadResumeFile({
+        useCurrentProfile,
+        queryClient,
+        setSelectedResumeId,
+        setCurrentFileName,
+      }),
+    onError: (error: any) => {
       Alert.alert('Lỗi tải lên', error.message || 'Đã xảy ra lỗi khi upload CV.');
-      console.error('Upload Error:', error);
-    } finally {
-      setIsUploading(false);
-    }
-  };
+    },
+  });
+
+  const handleUploadResume = useCallback(() => uploadMutation.mutate(), [uploadMutation]);
 
   return {
     router,
@@ -293,7 +306,7 @@ function useCvJdTabState() {
     setJdTitle,
     jdContent,
     setJdContent,
-    isUploading,
+    isUploading: uploadMutation.isPending,
     industry,
     setIndustry,
     targetRole,
@@ -329,6 +342,326 @@ function useCvJdTabState() {
   };
 }
 
+const CvJdHistorySection = React.memo(({
+  isHistoryLoading,
+  currentHistoryItems,
+  profile,
+  colors,
+  setPrimaryResumeMutation,
+  router,
+}: {
+  isHistoryLoading: boolean;
+  currentHistoryItems: any[];
+  profile: any;
+  colors: any;
+  setPrimaryResumeMutation: any;
+  router: any;
+}) => (
+  <View style={styles.historySection}>
+    <View style={styles.historyHeader}>
+      <Ionicons name="time" size={20} color={colors.text} />
+      <ThemedText style={styles.historyTitle}>Lịch sử phân tích</ThemedText>
+    </View>
+
+    {isHistoryLoading ? (
+      <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 20 }} />
+    ) : currentHistoryItems.length ? (
+      <View style={{ gap: 12 }}>
+        {currentHistoryItems.map((item: any) => (
+          <AnalysisHistoryItemCard
+            key={item.id}
+            item={item}
+            profile={profile}
+            colors={colors}
+            onSetPrimary={(resumeId) => setPrimaryResumeMutation.mutate(resumeId)}
+            isSettingPrimary={setPrimaryResumeMutation.isPending}
+            onViewResult={() => router.push(`/(app)/cv-analysis/${item.id}` as any)}
+          />
+        ))}
+      </View>
+    ) : (
+      <View style={{ alignItems: 'center', marginTop: 24, padding: 24, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: 16 }}>
+        <Ionicons name="analytics-outline" size={48} color={colors.textSecondary} style={{ marginBottom: 12, opacity: 0.5 }} />
+        <ThemedText style={[styles.emptyHistory, { color: colors.textSecondary }]}>
+          Bạn chưa thực hiện bài phân tích nào. Hãy bắt đầu ngay để khám phá tiềm năng hồ sơ của bạn.
+        </ThemedText>
+      </View>
+    )}
+  </View>
+));
+
+const CvJdFloatingPagination = React.memo(({
+  showFloatingNav,
+  totalHistoryPages,
+  historyPage,
+  hasNextPage,
+  colorScheme,
+  colors,
+  onPrev,
+  onNext,
+}: {
+  showFloatingNav: boolean;
+  totalHistoryPages: number;
+  historyPage: number;
+  hasNextPage: boolean;
+  colorScheme: string;
+  colors: any;
+  onPrev: () => void;
+  onNext: () => void;
+}) => {
+  if (!showFloatingNav || totalHistoryPages <= 1) return null;
+  return (
+    <View style={styles.floatingNavContainer}>
+      <View style={[styles.inlineNavContainer, {
+        backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
+        borderColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+      }]}>
+        <TouchableScale
+          style={[styles.miniPageBtn, historyPage === 1 ? styles.disabledButton : null]}
+          disabled={historyPage === 1}
+          onPress={onPrev}
+        >
+          <Ionicons name="chevron-back" size={16} color={historyPage === 1 ? colors.textSecondary : colors.primary} />
+          <ThemedText style={[styles.miniPageBtnText, { color: historyPage === 1 ? colors.textSecondary : colors.text }]}>
+            Trước
+          </ThemedText>
+        </TouchableScale>
+
+        <ThemedText style={[styles.inlinePageIndicator, { color: colors.text, marginHorizontal: 16 }]}>
+          Trang {historyPage}/{totalHistoryPages}
+        </ThemedText>
+
+        <TouchableScale
+          style={[styles.miniPageBtn, (!hasNextPage) ? styles.disabledButton : null]}
+          disabled={!hasNextPage}
+          onPress={onNext}
+        >
+          <ThemedText style={[styles.miniPageBtnText, { color: (!hasNextPage) ? colors.textSecondary : colors.text }]}>
+            Sau
+          </ThemedText>
+          <Ionicons name="chevron-forward" size={16} color={(!hasNextPage) ? colors.textSecondary : colors.primary} />
+        </TouchableScale>
+      </View>
+    </View>
+  );
+});
+
+const CurrentProfileSection = React.memo(({
+  profile, colorScheme, colors, mode, setMode, jdTitle, setJdTitle, jdContent, setJdContent, analyzeMutation, handleStartAnalysis,
+}: any) => (
+  <View style={{ gap: Spacing.four }}>
+    <PrimaryCvSpotlightCard profile={profile} colorScheme={colorScheme} colors={colors} />
+    <AnalysisTypeSelector mode={mode} setMode={setMode} colors={colors} colorScheme={colorScheme} defaultTargetRole={profile?.activeCareerGoal?.targetRole} isCustomProfile={false} />
+    {mode === 'job_targeted' && (
+      <JobDescriptionCard jdTitle={jdTitle} setJdTitle={setJdTitle} jdContent={jdContent} setJdContent={setJdContent} colors={colors} />
+    )}
+    <TouchableScale
+      style={[styles.primaryButtonPremium, (analyzeMutation.isPending || !profile?.primaryResume) && styles.disabledButtonPremium]}
+      onPress={handleStartAnalysis}
+      disabled={analyzeMutation.isPending || !profile?.primaryResume}
+    >
+      {analyzeMutation.isPending ? <ActivityIndicator color="#fff" /> : (
+        <>
+          <ThemedText style={styles.primaryButtonTextPremium}>Phân tích độ phù hợp</ThemedText>
+          <View style={styles.buttonIconWrapPremium}><Ionicons name="rocket" size={16} color="#FFF" /></View>
+        </>
+      )}
+    </TouchableScale>
+  </View>
+));
+
+const CustomProfileSection = React.memo(({
+  isUploading, colors, colorScheme, handleUploadResume, userResumes, selectedResumeId, setSelectedResumeId, currentFileName, setCurrentFileName, mode, setMode, jdTitle, setJdTitle, jdContent, setJdContent, industry, setIndustry, targetRole, setTargetRole, seniority, setSeniority, analyzeMutation, handleStartAnalysis,
+}: any) => (
+  <View style={{ gap: Spacing.four }}>
+    <ResumeUploadCard
+      isUploading={isUploading}
+      colors={colors}
+      colorScheme={colorScheme}
+      onUploadResume={handleUploadResume}
+      existingResumes={userResumes}
+      selectedResumeId={selectedResumeId}
+      onSelectExistingResume={(r: any) => { setSelectedResumeId(r.id); setCurrentFileName(r.fileName); }}
+      onClearSelectedResume={() => { setSelectedResumeId(null); setCurrentFileName(null); }}
+      currentFileName={currentFileName}
+    />
+    <AnalysisTypeSelector mode={mode} setMode={setMode} colors={colors} colorScheme={colorScheme} isCustomProfile={true} />
+    {mode === 'job_targeted' ? (
+      <JobDescriptionCard jdTitle={jdTitle} setJdTitle={setJdTitle} jdContent={jdContent} setJdContent={setJdContent} colors={colors} />
+    ) : (
+      <FieldBenchmarkCard industry={industry} setIndustry={setIndustry} targetRole={targetRole} setTargetRole={setTargetRole} seniority={seniority} setSeniority={setSeniority} colors={colors} />
+    )}
+    <TouchableScale
+      style={[styles.primaryButtonPremium, (analyzeMutation.isPending || !selectedResumeId) && styles.disabledButtonPremium]}
+      onPress={handleStartAnalysis}
+      disabled={analyzeMutation.isPending || !selectedResumeId}
+    >
+      {analyzeMutation.isPending ? <ActivityIndicator color="#fff" /> : (
+        <>
+          <ThemedText style={styles.primaryButtonTextPremium}>Phân tích độ phù hợp</ThemedText>
+          <View style={styles.buttonIconWrapPremium}><Ionicons name="rocket" size={16} color="#FFF" /></View>
+        </>
+      )}
+    </TouchableScale>
+  </View>
+));
+
+const ToggleItem = React.memo(({
+  active,
+  title,
+  subtitle,
+  onPress,
+  colorScheme,
+  colors,
+}: {
+  active: boolean;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+  colorScheme: string;
+  colors: any;
+}) => {
+  const activeBg = colorScheme === 'dark' ? '#374151' : '#FFFFFF';
+  const activeColor = colorScheme === 'dark' ? colors.primaryLight : colors.primary;
+  const textColor = active ? activeColor : colors.text;
+  const subColor = active ? activeColor : colors.textSecondary;
+
+  return (
+    <TouchableScale
+      style={[styles.toggleBtnPremium, active && [styles.toggleBtnActivePremium, { backgroundColor: activeBg }]]}
+      onPress={onPress}
+    >
+      <ThemedText style={[styles.toggleBtnTextPremium, { color: textColor }]}>{title}</ThemedText>
+      <ThemedText style={{ fontSize: 10, color: subColor, marginTop: 2 }}>{subtitle}</ThemedText>
+    </TouchableScale>
+  );
+});
+
+const DataSourceToggleBar = React.memo(({
+  useCurrentProfile,
+  setUseCurrentProfile,
+  mode,
+  setMode,
+  colorScheme,
+  colors,
+}: {
+  useCurrentProfile: boolean;
+  setUseCurrentProfile: (v: boolean) => void;
+  mode: string;
+  setMode: (m: any) => void;
+  colorScheme: string;
+  colors: any;
+}) => {
+  const onSelectCurrent = () => {
+    setUseCurrentProfile(true);
+    if (mode === 'field_benchmark') setMode('standard');
+  };
+
+  const onSelectCustom = () => {
+    setUseCurrentProfile(false);
+    if (mode === 'standard') setMode('field_benchmark');
+  };
+
+  const wrapBg = colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+
+  return (
+    <View style={styles.dataSourceContainerPremium}>
+      <ThemedText style={[styles.dataSourceTitlePremium, { color: colors.textSecondary }]}>NGUỒN DỮ LIỆU PHÂN TÍCH</ThemedText>
+      <View style={[styles.toggleWrapPremium, { backgroundColor: wrapBg }]}>
+        <ToggleItem
+          active={useCurrentProfile}
+          title="Dùng hồ sơ hiện tại"
+          subtitle="CV chính + mục tiêu nghề nghiệp"
+          onPress={onSelectCurrent}
+          colorScheme={colorScheme}
+          colors={colors}
+        />
+        <ToggleItem
+          active={!useCurrentProfile}
+          title="Tùy chỉnh lần phân tích"
+          subtitle="CV+mục tiêu riêng cho lần này"
+          onPress={onSelectCustom}
+          colorScheme={colorScheme}
+          colors={colors}
+        />
+      </View>
+    </View>
+  );
+});
+
+const CvJdFormContent = React.memo(({
+  state,
+  colorScheme,
+  colors,
+}: {
+  state: ReturnType<typeof useCvJdTabState>;
+  colorScheme: string;
+  colors: any;
+}) => (
+  <View>
+    <DataSourceToggleBar
+      useCurrentProfile={state.useCurrentProfile}
+      setUseCurrentProfile={state.setUseCurrentProfile}
+      mode={state.mode}
+      setMode={state.setMode}
+      colorScheme={colorScheme}
+      colors={colors}
+    />
+
+    {state.useCurrentProfile ? (
+      <CurrentProfileSection
+        profile={state.profile}
+        colorScheme={colorScheme}
+        colors={colors}
+        mode={state.mode}
+        setMode={state.setMode}
+        jdTitle={state.jdTitle}
+        setJdTitle={state.setJdTitle}
+        jdContent={state.jdContent}
+        setJdContent={state.setJdContent}
+        analyzeMutation={state.analyzeMutation}
+        handleStartAnalysis={state.handleStartAnalysis}
+      />
+    ) : (
+      <CustomProfileSection
+        isUploading={state.isUploading}
+        colors={colors}
+        colorScheme={colorScheme}
+        handleUploadResume={state.handleUploadResume}
+        userResumes={state.userResumes}
+        selectedResumeId={state.selectedResumeId}
+        setSelectedResumeId={state.setSelectedResumeId}
+        currentFileName={state.currentFileName}
+        setCurrentFileName={state.setCurrentFileName}
+        mode={state.mode}
+        setMode={state.setMode}
+        jdTitle={state.jdTitle}
+        setJdTitle={state.setJdTitle}
+        jdContent={state.jdContent}
+        setJdContent={state.setJdContent}
+        industry={state.industry}
+        setIndustry={state.setIndustry}
+        targetRole={state.targetRole}
+        setTargetRole={state.setTargetRole}
+        seniority={state.seniority}
+        setSeniority={state.setSeniority}
+        analyzeMutation={state.analyzeMutation}
+        handleStartAnalysis={state.handleStartAnalysis}
+      />
+    )}
+
+    <CvJdHistorySection
+      isHistoryLoading={state.isHistoryLoading}
+      currentHistoryItems={state.currentHistoryItems}
+      profile={state.profile}
+      colors={colors}
+      setPrimaryResumeMutation={state.setPrimaryResumeMutation}
+      router={state.router}
+    />
+  </View>
+));
+
 export default function CvJdTabScreen() {
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
@@ -337,49 +670,32 @@ export default function CvJdTabScreen() {
   const state = useCvJdTabState();
   const {
     router,
-    useCurrentProfile,
-    setUseCurrentProfile,
-    mode,
-    setMode,
-    jdTitle,
-    setJdTitle,
-    jdContent,
-    setJdContent,
+    useCurrentProfile, setUseCurrentProfile,
+    mode, setMode,
+    jdTitle, setJdTitle,
+    jdContent, setJdContent,
     isUploading,
-    industry,
-    setIndustry,
-    targetRole,
-    setTargetRole,
-    seniority,
-    setSeniority,
-    selectedResumeId,
-    setSelectedResumeId,
-    currentFileName,
-    setCurrentFileName,
+    industry, setIndustry,
+    targetRole, setTargetRole,
+    seniority, setSeniority,
+    selectedResumeId, setSelectedResumeId,
+    currentFileName, setCurrentFileName,
     showPopup,
-    setShowPopup,
-    doNotShowAgain,
-    setDoNotShowAgain,
-    historyPage,
-    setHistoryPage,
-    showFloatingNav,
-    handleScroll,
-    profile,
-    isProfileLoading,
-    historyData,
+    doNotShowAgain, setDoNotShowAgain,
+    historyPage, setHistoryPage,
+    showFloatingNav, handleScroll,
+    profile, isProfileLoading,
     isHistoryLoading,
     userResumes,
     latestCompletedAnalysis,
     currentHistoryItems,
-    totalHistoryPages,
-    hasNextPage,
+    totalHistoryPages, hasNextPage,
     handleClosePopup,
     setPrimaryResumeMutation,
     analyzeMutation,
     handleStartAnalysis,
     handleUploadResume,
   } = state;
-
 
   return (
     <ThemedView style={styles.container}>
@@ -388,8 +704,8 @@ export default function CvJdTabScreen() {
           <ThemedText type="title" style={styles.title}>Phân tích CV</ThemedText>
         </View>
 
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
           scrollEventThrottle={16}
@@ -399,227 +715,26 @@ export default function CvJdTabScreen() {
               <ActivityIndicator size="large" color={colors.primary} />
             </ThemedView>
           ) : (
-            <View>
-              {/* DATA SOURCE TOGGLE */}
-              <View style={styles.dataSourceContainerPremium}>
-                <ThemedText style={[styles.dataSourceTitlePremium, { color: colors.textSecondary }]}>NGUỒN DỮ LIỆU PHÂN TÍCH</ThemedText>
-
-                <View style={[styles.toggleWrapPremium, { backgroundColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-                  <TouchableScale
-                    style={[styles.toggleBtnPremium, useCurrentProfile && [styles.toggleBtnActivePremium, { backgroundColor: colorScheme === 'dark' ? '#374151' : '#FFFFFF' }]]}
-                    onPress={() => {
-                      setUseCurrentProfile(true);
-                      if (mode === 'field_benchmark') setMode('standard');
-                    }}
-                  >
-                    <ThemedText style={[styles.toggleBtnTextPremium, useCurrentProfile ? { color: colorScheme === 'dark' ? colors.primaryLight : colors.primary } : { color: colors.text }]}>Dùng hồ sơ hiện tại</ThemedText>
-                    <ThemedText style={{ fontSize: 10, color: useCurrentProfile ? (colorScheme === 'dark' ? colors.primaryLight : colors.primary) : colors.textSecondary, marginTop: 2 }}>CV chính + mục tiêu nghề nghiệp</ThemedText>
-                  </TouchableScale>
-
-                  <TouchableScale
-                    style={[styles.toggleBtnPremium, !useCurrentProfile && [styles.toggleBtnActivePremium, { backgroundColor: colorScheme === 'dark' ? '#374151' : '#FFFFFF' }]]}
-                    onPress={() => {
-                      setUseCurrentProfile(false);
-                      if (mode === 'standard') setMode('field_benchmark');
-                    }}
-                  >
-                    <ThemedText style={[styles.toggleBtnTextPremium, !useCurrentProfile ? { color: colorScheme === 'dark' ? colors.primaryLight : colors.primary } : { color: colors.text }]}>Tùy chỉnh lần phân tích</ThemedText>
-                    <ThemedText style={{ fontSize: 10, color: !useCurrentProfile ? (colorScheme === 'dark' ? colors.primaryLight : colors.primary) : colors.textSecondary, marginTop: 2 }}>CV+mục tiêu riêng cho lần này</ThemedText>
-                  </TouchableScale>
-                </View>
-              </View>
-
-              {/* DYNAMIC CONTENT BASED ON TOGGLE */}
-              {useCurrentProfile ? (
-                /* CURRENT PROFILE MODE */
-                <View style={{ gap: Spacing.four }}>
-                  <PrimaryCvSpotlightCard profile={profile} colorScheme={colorScheme} colors={colors} />
-
-                  <AnalysisTypeSelector
-                    mode={mode}
-                    setMode={setMode}
-                    colors={colors}
-                    colorScheme={colorScheme}
-                    defaultTargetRole={profile?.activeCareerGoal?.targetRole}
-                    isCustomProfile={false}
-                  />
-
-                  {mode === 'job_targeted' && (
-                    <JobDescriptionCard
-                      jdTitle={jdTitle}
-                      setJdTitle={setJdTitle}
-                      jdContent={jdContent}
-                      setJdContent={setJdContent}
-                      colors={colors}
-                    />
-                  )}
-
-                  <TouchableScale
-                    style={[
-                      styles.primaryButtonPremium,
-                      (analyzeMutation.isPending || !profile?.primaryResume) && styles.disabledButtonPremium
-                    ]}
-                    onPress={handleStartAnalysis}
-                    disabled={analyzeMutation.isPending || !profile?.primaryResume}
-                  >
-                    {analyzeMutation.isPending ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <>
-                        <ThemedText style={styles.primaryButtonTextPremium}>Phân tích độ phù hợp</ThemedText>
-                        <View style={styles.buttonIconWrapPremium}>
-                          <Ionicons name="rocket" size={16} color="#FFF" />
-                        </View>
-                      </>
-                    )}
-                  </TouchableScale>
-                </View>
-              ) : (
-                /* CUSTOM SETUP MODE */
-                <View style={{ gap: Spacing.four }}>
-                  <ResumeUploadCard
-                    isUploading={isUploading}
-                    colors={colors}
-                    colorScheme={colorScheme}
-                    onUploadResume={handleUploadResume}
-                    existingResumes={userResumes}
-                    selectedResumeId={selectedResumeId}
-                    onSelectExistingResume={(r) => {
-                      setSelectedResumeId(r.id);
-                      setCurrentFileName(r.fileName);
-                    }}
-                    onClearSelectedResume={() => {
-                      setSelectedResumeId(null);
-                      setCurrentFileName(null);
-                    }}
-                    currentFileName={currentFileName}
-                  />
-
-                  <AnalysisTypeSelector
-                    mode={mode}
-                    setMode={setMode}
-                    colors={colors}
-                    colorScheme={colorScheme}
-                    isCustomProfile={true}
-                  />
-
-                  {mode === 'job_targeted' ? (
-                    <JobDescriptionCard
-                      jdTitle={jdTitle}
-                      setJdTitle={setJdTitle}
-                      jdContent={jdContent}
-                      setJdContent={setJdContent}
-                      colors={colors}
-                    />
-                  ) : (
-                    <FieldBenchmarkCard
-                      industry={industry}
-                      setIndustry={setIndustry}
-                      targetRole={targetRole}
-                      setTargetRole={setTargetRole}
-                      seniority={seniority}
-                      setSeniority={setSeniority}
-                      colors={colors}
-                    />
-                  )}
-
-                  <TouchableScale
-                    style={[
-                      styles.primaryButtonPremium,
-                      (analyzeMutation.isPending || !selectedResumeId) && styles.disabledButtonPremium
-                    ]}
-                    onPress={handleStartAnalysis}
-                    disabled={analyzeMutation.isPending || !selectedResumeId}
-                  >
-                    {analyzeMutation.isPending ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <>
-                        <ThemedText style={styles.primaryButtonTextPremium}>Phân tích độ phù hợp</ThemedText>
-                        <View style={styles.buttonIconWrapPremium}>
-                          <Ionicons name="rocket" size={16} color="#FFF" />
-                        </View>
-                      </>
-                    )}
-                  </TouchableScale>
-                </View>
-              )}
-
-              {/* HISTORY SECTION */}
-              <View style={styles.historySection}>
-                <View style={styles.historyHeader}>
-                  <Ionicons name="time" size={20} color={colors.text} />
-                  <ThemedText style={styles.historyTitle}>Lịch sử phân tích</ThemedText>
-                </View>
-
-                {isHistoryLoading ? (
-                  <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 20 }} />
-                ) : currentHistoryItems.length ? (
-                  <View style={{ gap: 12 }}>
-                    {currentHistoryItems.map((item: any) => (
-                      <AnalysisHistoryItemCard
-                        key={item.id}
-                        item={item}
-                        profile={profile}
-                        colors={colors}
-                        onSetPrimary={(resumeId) => setPrimaryResumeMutation.mutate(resumeId)}
-                        isSettingPrimary={setPrimaryResumeMutation.isPending}
-                        onViewResult={() => router.push(`/(app)/cv-analysis/${item.id}` as any)}
-                      />
-                    ))}
-                  </View>
-                ) : (
-                  <View style={{ alignItems: 'center', marginTop: 24, padding: 24, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: 16 }}>
-                    <Ionicons name="analytics-outline" size={48} color={colors.textSecondary} style={{ marginBottom: 12, opacity: 0.5 }} />
-                    <ThemedText style={[styles.emptyHistory, { color: colors.textSecondary }]}>
-                      Bạn chưa thực hiện bài phân tích nào. Hãy bắt đầu ngay để khám phá tiềm năng hồ sơ của bạn.
-                    </ThemedText>
-                  </View>
-                )}
-              </View>
-            </View>
+            <CvJdFormContent
+              state={state}
+              colorScheme={colorScheme}
+              colors={colors}
+            />
           )}
         </ScrollView>
       </SafeAreaView>
 
-      {/* Floating Pagination Bar (Always Visible) */}
-      {(showFloatingNav && totalHistoryPages > 1) && (
-        <View style={styles.floatingNavContainer}>
-          <View style={[styles.inlineNavContainer, { 
-            backgroundColor: colorScheme === 'dark' ? '#1F2937' : '#fff',
-            borderColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-          }]}>
-            <TouchableScale
-              style={[styles.miniPageBtn, historyPage === 1 ? styles.disabledButton : null]}
-              disabled={historyPage === 1}
-              onPress={() => setHistoryPage((p) => Math.max(1, p - 1))}
-            >
-              <Ionicons name="chevron-back" size={16} color={historyPage === 1 ? colors.textSecondary : colors.primary} />
-              <ThemedText style={[styles.miniPageBtnText, { color: historyPage === 1 ? colors.textSecondary : colors.text }]}>
-                Trước
-              </ThemedText>
-            </TouchableScale>
+      <CvJdFloatingPagination
+        showFloatingNav={showFloatingNav}
+        totalHistoryPages={totalHistoryPages}
+        historyPage={historyPage}
+        hasNextPage={hasNextPage}
+        colorScheme={colorScheme}
+        colors={colors}
+        onPrev={() => setHistoryPage((p) => Math.max(1, p - 1))}
+        onNext={() => setHistoryPage((p) => p + 1)}
+      />
 
-            <ThemedText style={[styles.inlinePageIndicator, { color: colors.text, marginHorizontal: 16 }]}>
-              Trang {historyPage}/{totalHistoryPages}
-            </ThemedText>
-
-            <TouchableScale
-              style={[styles.miniPageBtn, (!hasNextPage) ? styles.disabledButton : null]}
-              disabled={!hasNextPage}
-              onPress={() => setHistoryPage((p) => p + 1)}
-            >
-              <ThemedText style={[styles.miniPageBtnText, { color: (!hasNextPage) ? colors.textSecondary : colors.text }]}>
-                Sau
-              </ThemedText>
-              <Ionicons name="chevron-forward" size={16} color={(!hasNextPage) ? colors.textSecondary : colors.primary} />
-            </TouchableScale>
-          </View>
-        </View>
-      )}
-
-      {/* LATEST COMPLETED ANALYSIS MODAL */}
       <LatestAnalysisModal
         visible={showPopup}
         latestCompletedAnalysis={latestCompletedAnalysis}
@@ -634,7 +749,7 @@ export default function CvJdTabScreen() {
         onToggleDoNotShow={async () => {
           setDoNotShowAgain(true);
           await tokenStorage.setHidePopup('true');
-          setShowPopup(false);
+          handleClosePopup();
         }}
       />
     </ThemedView>

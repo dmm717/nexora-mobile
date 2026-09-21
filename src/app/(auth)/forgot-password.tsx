@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, View, TouchableOpacity
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import Animated, { FadeInUp, FadeInDown, Easing } from 'react-native-reanimated';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AppError } from '@/api/types';
 import { ThemedText } from '@/components/themed-text';
 import { MaterialInput } from '@/components/material-input';
@@ -18,59 +19,67 @@ export default function ForgotPasswordScreen() {
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [step, setStep] = useState<'request' | 'reset'>('request');
-  const [loading, setLoading] = useState(false);
   const [resetDone, setResetDone] = useState(false);
 
+  const queryClient = useQueryClient();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  const handleSendRequest = async () => {
-    if (!email.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập Email');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await authApi.forgotPassword({ email: email.trim() });
+  const sendRequestMutation = useMutation({
+    mutationFn: () =>
+      authApi.forgotPassword({ email: email.trim() }),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
       setStep('reset');
       Alert.alert('Thành công', 'Mã xác thực đã được gửi tới email của bạn.');
-    } catch (error) {
+    },
+    onError: (error) => {
       if (error instanceof AppError) {
         Alert.alert('Lỗi', `[${error.code}] ${error.message}`);
       } else {
         Alert.alert('Lỗi', 'Có lỗi xảy ra khi gửi yêu cầu khôi phục mật khẩu.');
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
-  const handleResetPassword = async () => {
-    if (!code.trim() || !newPassword.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập Mã xác thực (OTP) và Mật khẩu mới.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await authApi.resetPassword({
+  const resetPasswordMutation = useMutation({
+    mutationFn: () =>
+      authApi.resetPassword({
         email: email.trim(),
         code: code.trim(),
         newPassword: newPassword.trim(),
-      });
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
       setResetDone(true);
-    } catch (error) {
+    },
+    onError: (error) => {
       if (error instanceof AppError) {
         Alert.alert('Lỗi', `[${error.code}] ${error.message}`);
       } else {
         Alert.alert('Lỗi', 'Đặt lại mật khẩu thất bại. Vui lòng kiểm tra lại mã OTP.');
       }
-    } finally {
-      setLoading(false);
+    },
+  });
+
+  const handleSendRequest = () => {
+    if (!email.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập Email');
+      return;
     }
+    sendRequestMutation.mutate();
   };
+
+  const handleResetPassword = () => {
+    if (!code.trim() || !newPassword.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập Mã xác thực (OTP) và Mật khẩu mới.');
+      return;
+    }
+    resetPasswordMutation.mutate();
+  };
+
+  const loading = sendRequestMutation.isPending || resetPasswordMutation.isPending;
 
   return (
     <AmbientBackground>
@@ -82,10 +91,10 @@ export default function ForgotPasswordScreen() {
         >
           {/* Header */}
           <Animated.View entering={FadeInDown.duration(800).easing(Easing.out(Easing.cubic))} style={styles.brandHeader}>
-            <Image 
-              source={require('@/assets/images/logo.png')} 
-              style={styles.logoImage} 
-              resizeMode="contain" 
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
             />
             <ThemedText type="title" style={styles.title}>
               {resetDone ? 'Khôi Phục Thành Công' : step === 'request' ? 'Quên Mật Khẩu?' : 'Đặt Lại Mật Khẩu'}
@@ -143,7 +152,7 @@ const ResetDoneSuccessCard = React.memo(({ colors }: { colors: any }) => (
     <ThemedText style={styles.successText}>
       Bạn có thể đăng nhập ngay bây giờ bằng mật khẩu mới vừa thiết lập.
     </ThemedText>
-    
+
     <Link href="/(auth)/login" asChild>
       <TouchableScale style={[styles.submitButton, { backgroundColor: colors.primary, marginTop: Spacing.three }]}>
         <ThemedText style={styles.submitButtonText}>Đăng Nhập Ngay</ThemedText>

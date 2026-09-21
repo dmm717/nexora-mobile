@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import Animated, { FadeOut, FadeInUp, FadeInDown, Easing } from 'react-native-reanimated';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AppError } from '@/api/types';
 import { ThemedText } from '@/components/themed-text';
 import { MaterialInput } from '@/components/material-input';
@@ -17,7 +18,6 @@ import { AmbientBackground } from '@/components/ui/ambient-background';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [isSplash, setIsSplash] = useState(true);
 
   useEffect(() => {
@@ -25,35 +25,30 @@ export default function LoginScreen() {
       setIsSplash(false);
       SplashScreen.hideAsync();
     }, 1000);
-
     return () => clearTimeout(timer);
   }, []);
 
   const { login } = useAuth();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  const handleLogin = async () => {
-    const targetEmail = email.trim();
-    const targetPassword = password.trim();
-
-    if (!targetEmail || !targetPassword) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ email và mật khẩu');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await login({ email: targetEmail, password: targetPassword });
+  const loginMutation = useMutation({
+    mutationFn: () =>
+      login({ email: email.trim(), password: password.trim() }),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
       router.replace('/(tabs)/home' as any);
-    } catch (error) {
+    },
+    onError: (error) => {
+      const targetEmail = email.trim();
       if (error instanceof AppError) {
         if (error.code === 'USER_UNVERIFIED' || error.code === 'EMAIL_NOT_VERIFIED') {
           Alert.alert('Chưa xác thực', 'Tài khoản chưa được xác thực. Vui lòng kiểm tra email.', [
             { text: 'Xác thực ngay', onPress: () => router.push({ pathname: '/(auth)/verify-email', params: { email: targetEmail } }) },
-            { text: 'Hủy', style: 'cancel' }
+            { text: 'Hủy', style: 'cancel' },
           ]);
         } else {
           Alert.alert('Đăng nhập thất bại', `[${error.code}] ${error.message}`);
@@ -61,22 +56,28 @@ export default function LoginScreen() {
       } else {
         Alert.alert('Đăng nhập thất bại', 'Có lỗi xảy ra khi kết nối hệ thống. Vui lòng thử lại.');
       }
-    } finally {
-      setLoading(false);
+    },
+  });
+
+  const handleLogin = () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ email và mật khẩu');
+      return;
     }
+    loginMutation.mutate();
   };
 
   return (
     <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
-        
+
         {/* Splash Screen */}
         {isSplash && (
           <Animated.View exiting={FadeOut.duration(600)} style={styles.splashContainer}>
-            <Image 
-              source={require('@/assets/images/logo.png')} 
-              style={styles.splashLogo} 
-              resizeMode="contain" 
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={styles.splashLogo}
+              resizeMode="contain"
             />
           </Animated.View>
         )}
@@ -90,10 +91,10 @@ export default function LoginScreen() {
           >
             {/* Top Brand Header */}
             <Animated.View entering={FadeInDown.duration(800).easing(Easing.out(Easing.cubic))} style={styles.brandHeader}>
-              <Image 
-                source={require('@/assets/images/logo.png')} 
-                style={styles.logoImage} 
-                resizeMode="contain" 
+              <Image
+                source={require('@/assets/images/logo.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
               />
               <ThemedText type="title" style={styles.title}>
                 Nexora AI
@@ -143,9 +144,9 @@ export default function LoginScreen() {
                   <TouchableScale
                     style={[styles.submitButton, { backgroundColor: colors.primary }]}
                     onPress={handleLogin}
-                    disabled={loading}
+                    disabled={loginMutation.isPending}
                   >
-                    {loading ? (
+                    {loginMutation.isPending ? (
                       <ActivityIndicator color="#ffffff" />
                     ) : (
                       <ThemedText style={styles.submitButtonText}>Đăng Nhập</ThemedText>

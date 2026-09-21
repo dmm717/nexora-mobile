@@ -11,24 +11,49 @@ import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AmbientBackground } from '@/components/ui/ambient-background';
 
+const GrowthListItem = React.memo(({
+  title,
+  sub,
+  iconName,
+  iconColor,
+  badgeBg,
+  colors,
+  onPress,
+}: {
+  title: string;
+  sub: string;
+  iconName: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
+  badgeBg: string;
+  colors: any;
+  onPress: () => void;
+}) => (
+  <TouchableScale onPress={onPress}>
+    <View style={styles.listItem}>
+      <View style={[styles.listIconBadge, { backgroundColor: badgeBg }]}>
+        <Ionicons name={iconName} size={22} color={iconColor} />
+      </View>
+      <View style={styles.listTextContent}>
+        <ThemedText style={styles.listTitle}>{title}</ThemedText>
+        <ThemedText style={styles.listSub} numberOfLines={1}>{sub}</ThemedText>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+    </View>
+  </TouchableScale>
+));
+
+const GROWTH_LIST_DATA = [
+  { id: 'readiness', type: 'readiness' as const },
+  { id: 'roadmap', type: 'roadmap' as const },
+];
+
 export default function GrowthTabScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  const listData = [
-    {
-      id: 'readiness',
-      type: 'readiness',
-    },
-    {
-      id: 'roadmap',
-      type: 'roadmap',
-    }
-  ];
-
-  const renderItem = ({ item }: ListRenderItemInfo<typeof listData[0]>) => {
+  const renderItem = ({ item }: ListRenderItemInfo<typeof GROWTH_LIST_DATA[0]>) => {
     if (item.type === 'readiness') {
       return (
         <TouchableScale onPress={() => router.push('/(app)/growth/progress-dashboard' as any)}>
@@ -66,53 +91,47 @@ export default function GrowthTabScreen() {
         
         {/* Grouped List */}
         <GlassCard style={styles.listGroup}>
-          {/* Item: Skill Profile */}
-          <TouchableScale onPress={() => router.push('/(app)/growth/skill-profile' as any)}>
-            <View style={styles.listItem}>
-              <View style={[styles.listIconBadge, { backgroundColor: colors.accentLight }]}>
-                <Ionicons name="ribbon" size={22} color={colors.accent} />
-              </View>
-              <View style={styles.listTextContent}>
-                <ThemedText style={styles.listTitle}>Hồ Sơ Năng Lực (Skill Profile)</ThemedText>
-                <ThemedText style={styles.listSub} numberOfLines={1}>Tổng hợp điểm mạnh & điểm yếu</ThemedText>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-            </View>
-          </TouchableScale>
+          <GrowthListItem
+            title="Hồ Sơ Năng Lực (Skill Profile)"
+            sub="Tổng hợp điểm mạnh & điểm yếu"
+            iconName="ribbon"
+            iconColor={colors.accent}
+            badgeBg={colors.accentLight}
+            colors={colors}
+            onPress={() => router.push('/(app)/growth/skill-profile' as any)}
+          />
 
           <View style={[styles.listDivider, { backgroundColor: colors.cardBorder }]} />
 
-          {/* Item: Learning Path */}
-          <TouchableScale onPress={() => router.push('/(app)/growth/learning-path' as any)}>
-            <View style={styles.listItem}>
-              <View style={[styles.listIconBadge, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="map" size={22} color={colors.primary} />
-              </View>
-              <View style={styles.listTextContent}>
-                <ThemedText style={styles.listTitle}>Lộ Trình Học Tập AI</ThemedText>
-                <ThemedText style={styles.listSub} numberOfLines={1}>Roadmap nhiệm vụ cá nhân hóa</ThemedText>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-            </View>
-          </TouchableScale>
+          <GrowthListItem
+            title="Lộ Trình Học Tập AI"
+            sub="Roadmap nhiệm vụ cá nhân hóa"
+            iconName="map"
+            iconColor={colors.primary}
+            badgeBg={colors.primaryLight}
+            colors={colors}
+            onPress={() => router.push('/(app)/growth/learning-path' as any)}
+          />
         </GlassCard>
       </View>
     );
   };
 
+  const listHeader = (
+    <View style={styles.header}>
+      <ThemedText type="title" style={styles.headerTitle}>Tiến Độ & Phát Triển</ThemedText>
+      <ThemedText style={styles.headerSub}>Theo dõi năng lực và lộ trình cải thiện</ThemedText>
+    </View>
+  );
+
   return (
     <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
-        {/* Top Header */}
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>Tiến Độ & Phát Triển</ThemedText>
-          <ThemedText style={styles.headerSub}>Theo dõi năng lực và lộ trình cải thiện</ThemedText>
-        </View>
-
         <FlatList
-          data={listData}
+          data={GROWTH_LIST_DATA}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          ListHeaderComponent={listHeader}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         />

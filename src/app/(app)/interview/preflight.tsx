@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -28,6 +28,212 @@ const DIFFICULTIES = [
   { id: 'senior', label: 'Senior / Lead' },
 ];
 
+// ---------- Sub-components for lower control-flow complexity ----------
+
+const PreflightRoleCard = memo(({
+  role,
+  setRole,
+  seniority,
+  setSeniority,
+  colors,
+}: {
+  role: string;
+  setRole: (r: string) => void;
+  seniority: string;
+  setSeniority: (s: string) => void;
+  colors: any;
+}) => (
+  <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={styles.cardHeaderRow}>
+      <Ionicons name="person-circle-outline" size={22} color={colors.primary} />
+      <ThemedText type="subtitle" style={styles.cardTitle}>Vị Trí & Cấp Bậc Phỏng Vấn</ThemedText>
+    </View>
+
+    <ThemedText style={styles.inputLabel}>Vị trí mong muốn (Target Role):</ThemedText>
+    <TextInput
+      style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }]}
+      placeholder="Ví dụ: Backend Developer, React Native Engineer"
+      placeholderTextColor={colors.textMuted}
+      value={role}
+      onChangeText={setRole}
+    />
+
+    <ThemedText style={styles.inputLabel}>Cấp bậc mong muốn (Seniority):</ThemedText>
+    <View style={styles.chipGroup}>
+      {DIFFICULTIES.map((diff) => (
+        <TouchableOpacity
+          key={diff.id}
+          style={[
+            styles.chip,
+            seniority === diff.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+          ]}
+          onPress={() => setSeniority(diff.id)}
+        >
+          <ThemedText style={[styles.chipText, seniority === diff.id && { color: '#fff' }]}>
+            {diff.label}
+          </ThemedText>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
+));
+
+const PreflightTypeCard = memo(({
+  interviewType,
+  setInterviewType,
+  colors,
+}: {
+  interviewType: string;
+  setInterviewType: (t: string) => void;
+  colors: any;
+}) => (
+  <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={styles.cardHeaderRow}>
+      <Ionicons name="layers-outline" size={22} color={colors.secondary} />
+      <ThemedText type="subtitle" style={styles.cardTitle}>Loại Hình Phỏng Vấn</ThemedText>
+    </View>
+
+    <View style={styles.typeGrid}>
+      {INTERVIEW_TYPES.map((type) => (
+        <TouchableOpacity
+          key={type.id}
+          style={[
+            styles.typeCard,
+            { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
+            interviewType === type.id && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+          ]}
+          onPress={() => setInterviewType(type.id)}
+        >
+          <Ionicons
+            name={type.icon as any}
+            size={20}
+            color={interviewType === type.id ? colors.primary : colors.textSecondary}
+          />
+          <ThemedText
+            style={[
+              styles.typeCardText,
+              interviewType === type.id && { color: colors.primary, fontWeight: '700' },
+            ]}
+          >
+            {type.label}
+          </ThemedText>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
+));
+
+const PreflightResumeCard = memo(({
+  resumes,
+  selectedResumeId,
+  setSelectedResumeId,
+  colors,
+}: {
+  resumes?: any[];
+  selectedResumeId: string | null;
+  setSelectedResumeId: (id: string | null) => void;
+  colors: any;
+}) => (
+  <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={styles.cardHeaderRow}>
+      <Ionicons name="document-text-outline" size={22} color={colors.accent} />
+      <ThemedText type="subtitle" style={styles.cardTitle}>Hồ Sơ CV Sử Dụng</ThemedText>
+    </View>
+
+    {resumes && resumes.length > 0 ? (
+      <View style={{ gap: Spacing.two }}>
+        {resumes.map((cv) => (
+          <TouchableOpacity
+            key={cv.id}
+            style={[
+              styles.selectionRow,
+              { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
+              selectedResumeId === cv.id && { borderColor: colors.accent, backgroundColor: colors.accentLight },
+            ]}
+            onPress={() => setSelectedResumeId(cv.id)}
+          >
+            <Ionicons
+              name={selectedResumeId === cv.id ? 'radio-button-on' : 'radio-button-off'}
+              size={20}
+              color={selectedResumeId === cv.id ? colors.accent : colors.textMuted}
+            />
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.selectionTitle}>{cv.fileName}</ThemedText>
+              <ThemedText style={styles.selectionSub}>Trạng thái: {cv.status}</ThemedText>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    ) : (
+      <ThemedText style={styles.emptyText}>Chưa có CV nào. Bạn vẫn có thể tiếp tục phỏng vấn theo mục tiêu chung.</ThemedText>
+    )}
+  </View>
+));
+
+const PreflightJdCard = memo(({
+  jobDescriptions,
+  selectedJdId,
+  setSelectedJdId,
+  colors,
+}: {
+  jobDescriptions?: any[];
+  selectedJdId: string | null;
+  setSelectedJdId: (id: string | null) => void;
+  colors: any;
+}) => {
+  if (!jobDescriptions || jobDescriptions.length === 0) return null;
+
+  return (
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+      <View style={styles.cardHeaderRow}>
+        <Ionicons name="briefcase-outline" size={22} color={colors.warning} />
+        <ThemedText type="subtitle" style={styles.cardTitle}>Gắn Mô Tả Công Việc (JD)</ThemedText>
+      </View>
+
+      <View style={{ gap: Spacing.two }}>
+        <TouchableOpacity
+          style={[
+            styles.selectionRow,
+            { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
+            selectedJdId === null && { borderColor: colors.warning, backgroundColor: colors.warningLight },
+          ]}
+          onPress={() => setSelectedJdId(null)}
+        >
+          <Ionicons
+            name={selectedJdId === null ? 'radio-button-on' : 'radio-button-off'}
+            size={20}
+            color={selectedJdId === null ? colors.warning : colors.textMuted}
+          />
+          <ThemedText style={styles.selectionTitle}>Không sử dụng JD cụ thể</ThemedText>
+        </TouchableOpacity>
+
+        {jobDescriptions.map((jd) => (
+          <TouchableOpacity
+            key={jd.id}
+            style={[
+              styles.selectionRow,
+              { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
+              selectedJdId === jd.id && { borderColor: colors.warning, backgroundColor: colors.warningLight },
+            ]}
+            onPress={() => setSelectedJdId(jd.id)}
+          >
+            <Ionicons
+              name={selectedJdId === jd.id ? 'radio-button-on' : 'radio-button-off'}
+              size={20}
+              color={selectedJdId === jd.id ? colors.warning : colors.textMuted}
+            />
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.selectionTitle}>{jd.title}</ThemedText>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+});
+
+// ---------- Main Screen Component ----------
+
 export default function PreflightScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -56,16 +262,19 @@ export default function PreflightScreen() {
     queryFn: jobDescriptionsApi.list,
   });
 
-  // Auto-fill from active goal & primary resume
-  React.useEffect(() => {
-    if (profile) {
-      if (profile.activeCareerGoal) {
-        setRole(profile.activeCareerGoal.targetRole);
-        setSeniority(profile.activeCareerGoal.seniority.toLowerCase());
-      }
-      if (profile.primaryResume?.id) {
-        setSelectedResumeId(profile.primaryResume.id);
-      }
+  // Track whether we've auto-filled so we only seed once when profile first loads
+  const autoFilledGoalId = useRef<string | undefined>(undefined);
+  const autoFilledResumeId = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (profile?.activeCareerGoal?.id && autoFilledGoalId.current !== profile.activeCareerGoal.id) {
+      autoFilledGoalId.current = profile.activeCareerGoal.id;
+      setRole(profile.activeCareerGoal.targetRole);
+      setSeniority(profile.activeCareerGoal.seniority.toLowerCase());
+    }
+    if (profile?.primaryResume?.id && autoFilledResumeId.current !== profile.primaryResume.id) {
+      autoFilledResumeId.current = profile.primaryResume.id;
+      setSelectedResumeId(profile.primaryResume.id);
     }
   }, [profile]);
 
@@ -101,7 +310,7 @@ export default function PreflightScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <ThemedText type="title" style={styles.title}>Thiết Thiết Phiên Phỏng Vấn</ThemedText>
+          <ThemedText type="title" style={styles.title}>Thiết Phiên Phỏng Vấn</ThemedText>
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -111,168 +320,36 @@ export default function PreflightScreen() {
             </ThemedView>
           ) : (
             <>
-              {/* Target Role & Seniority */}
-              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                <View style={styles.cardHeaderRow}>
-                  <Ionicons name="person-circle-outline" size={22} color={colors.primary} />
-                  <ThemedText type="subtitle" style={styles.cardTitle}>Vị Trí & Cấp Bậc Phỏng Vấn</ThemedText>
-                </View>
+              <PreflightRoleCard
+                role={role}
+                setRole={setRole}
+                seniority={seniority}
+                setSeniority={setSeniority}
+                colors={colors}
+              />
+              <PreflightTypeCard
+                interviewType={interviewType}
+                setInterviewType={setInterviewType}
+                colors={colors}
+              />
+              <PreflightResumeCard
+                resumes={resumes}
+                selectedResumeId={selectedResumeId}
+                setSelectedResumeId={setSelectedResumeId}
+                colors={colors}
+              />
+              <PreflightJdCard
+                jobDescriptions={jobDescriptions}
+                selectedJdId={selectedJdId}
+                setSelectedJdId={setSelectedJdId}
+                colors={colors}
+              />
 
-                <ThemedText style={styles.inputLabel}>Vị trí mong muốn (Target Role):</ThemedText>
-                <TextInput
-                  style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }]}
-                  placeholder="Ví dụ: Backend Developer, React Native Engineer"
-                  placeholderTextColor={colors.textMuted}
-                  value={role}
-                  onChangeText={setRole}
-                />
-
-                <ThemedText style={styles.inputLabel}>Cấp bậc mong muốn (Seniority):</ThemedText>
-                <View style={styles.chipGroup}>
-                  {DIFFICULTIES.map((diff) => (
-                    <TouchableOpacity
-                      key={diff.id}
-                      style={[
-                        styles.chip,
-                        seniority === diff.id && { backgroundColor: colors.primary, borderColor: colors.primary }
-                      ]}
-                      onPress={() => setSeniority(diff.id)}
-                    >
-                      <ThemedText style={[styles.chipText, seniority === diff.id && { color: '#fff' }]}>
-                        {diff.label}
-                      </ThemedText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {/* Interview Type Picker */}
-              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                <View style={styles.cardHeaderRow}>
-                  <Ionicons name="layers-outline" size={22} color={colors.secondary} />
-                  <ThemedText type="subtitle" style={styles.cardTitle}>Loại Hình Phỏng Vấn</ThemedText>
-                </View>
-
-                <View style={styles.typeGrid}>
-                  {INTERVIEW_TYPES.map((type) => (
-                    <TouchableOpacity
-                      key={type.id}
-                      style={[
-                        styles.typeCard,
-                        { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
-                        interviewType === type.id && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
-                      ]}
-                      onPress={() => setInterviewType(type.id)}
-                    >
-                      <Ionicons
-                        name={type.icon as any}
-                        size={20}
-                        color={interviewType === type.id ? colors.primary : colors.textSecondary}
-                      />
-                      <ThemedText
-                        style={[
-                          styles.typeCardText,
-                          interviewType === type.id && { color: colors.primary, fontWeight: '700' }
-                        ]}
-                      >
-                        {type.label}
-                      </ThemedText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {/* Resume Context Selection */}
-              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                <View style={styles.cardHeaderRow}>
-                  <Ionicons name="document-text-outline" size={22} color={colors.accent} />
-                  <ThemedText type="subtitle" style={styles.cardTitle}>Hồ Sơ CV Sử Dụng</ThemedText>
-                </View>
-
-                {resumes && resumes.length > 0 ? (
-                  <View style={{ gap: Spacing.two }}>
-                    {resumes.map((cv) => (
-                      <TouchableOpacity
-                        key={cv.id}
-                        style={[
-                          styles.selectionRow,
-                          { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
-                          selectedResumeId === cv.id && { borderColor: colors.accent, backgroundColor: colors.accentLight }
-                        ]}
-                        onPress={() => setSelectedResumeId(cv.id)}
-                      >
-                        <Ionicons
-                          name={selectedResumeId === cv.id ? 'radio-button-on' : 'radio-button-off'}
-                          size={20}
-                          color={selectedResumeId === cv.id ? colors.accent : colors.textMuted}
-                        />
-                        <View style={{ flex: 1 }}>
-                          <ThemedText style={styles.selectionTitle}>{cv.fileName}</ThemedText>
-                          <ThemedText style={styles.selectionSub}>Trạng thái: {cv.status}</ThemedText>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                ) : (
-                  <ThemedText style={styles.emptyText}>Chưa có CV nào. Bạn vẫn có thể tiếp tục phỏng vấn theo mục tiêu chung.</ThemedText>
-                )}
-              </View>
-
-              {/* Job Description Selection */}
-              {jobDescriptions && jobDescriptions.length > 0 && (
-                <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                  <View style={styles.cardHeaderRow}>
-                    <Ionicons name="briefcase-outline" size={22} color={colors.warning} />
-                    <ThemedText type="subtitle" style={styles.cardTitle}>Gắn Mô Tả Công Việc (JD)</ThemedText>
-                  </View>
-
-                  <View style={{ gap: Spacing.two }}>
-                    <TouchableOpacity
-                      style={[
-                        styles.selectionRow,
-                        { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
-                        selectedJdId === null && { borderColor: colors.warning, backgroundColor: colors.warningLight }
-                      ]}
-                      onPress={() => setSelectedJdId(null)}
-                    >
-                      <Ionicons
-                        name={selectedJdId === null ? 'radio-button-on' : 'radio-button-off'}
-                        size={20}
-                        color={selectedJdId === null ? colors.warning : colors.textMuted}
-                      />
-                      <ThemedText style={styles.selectionTitle}>Không sử dụng JD cụ thể</ThemedText>
-                    </TouchableOpacity>
-
-                    {jobDescriptions.map((jd) => (
-                      <TouchableOpacity
-                        key={jd.id}
-                        style={[
-                          styles.selectionRow,
-                          { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
-                          selectedJdId === jd.id && { borderColor: colors.warning, backgroundColor: colors.warningLight }
-                        ]}
-                        onPress={() => setSelectedJdId(jd.id)}
-                      >
-                        <Ionicons
-                          name={selectedJdId === jd.id ? 'radio-button-on' : 'radio-button-off'}
-                          size={20}
-                          color={selectedJdId === jd.id ? colors.warning : colors.textMuted}
-                        />
-                        <View style={{ flex: 1 }}>
-                          <ThemedText style={styles.selectionTitle}>{jd.title}</ThemedText>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {/* Start Action */}
               <TouchableOpacity
                 style={[
                   styles.primaryButton,
                   { backgroundColor: colors.primary },
-                  startMutation.isPending && styles.disabledButton
+                  startMutation.isPending && styles.disabledButton,
                 ]}
                 onPress={() => startMutation.mutate()}
                 disabled={startMutation.isPending}

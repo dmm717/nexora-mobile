@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, View, Image, ScrollVie
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInUp, FadeInDown, Easing } from 'react-native-reanimated';
+import { useMutation } from '@tanstack/react-query';
 import { AppError } from '@/api/types';
 import { ThemedText } from '@/components/themed-text';
 import { MaterialInput } from '@/components/material-input';
@@ -17,57 +18,62 @@ export default function VerifyEmailScreen() {
   const { email: emailParam } = useLocalSearchParams<{ email: string }>();
   const [email, setEmail] = useState(emailParam || '');
   const [code, setCode] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
 
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  const handleVerify = async () => {
-    if (!email.trim() || !code.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập Email và Mã xác thực');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await authApi.verifyEmail({ email: email.trim(), code: code.trim() });
+  const verifyMutation = useMutation({
+    mutationFn: () =>
+      authApi.verifyEmail({ email: email.trim(), code: code.trim() }),
+    onSuccess: () => {
       Alert.alert('Thành công', 'Tài khoản của bạn đã được xác thực!', [
-        { text: 'Đăng nhập ngay', onPress: () => router.replace('/(auth)/login') }
+        { text: 'Đăng nhập ngay', onPress: () => router.replace('/(auth)/login') },
       ]);
-    } catch (error) {
+    },
+    onError: (error) => {
       if (error instanceof AppError) {
         Alert.alert('Xác thực thất bại', `[${error.code}] ${error.message}`);
       } else {
         Alert.alert('Xác thực thất bại', 'Có lỗi xảy ra khi xác thực tài khoản');
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
-  const handleResend = async () => {
-    if (!email.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập Email để nhận lại mã');
-      return;
-    }
-
-    setResending(true);
-    try {
-      await authApi.resendVerification({ email: email.trim() });
+  const resendMutation = useMutation({
+    mutationFn: () =>
+      authApi.resendVerification({ email: email.trim() }),
+    onSuccess: () => {
       Alert.alert('Thành công', 'Mã xác thực mới đã được gửi đến email của bạn.');
-    } catch (error) {
+    },
+    onError: (error) => {
       if (error instanceof AppError) {
         Alert.alert('Gửi lại thất bại', `[${error.code}] ${error.message}`);
       } else {
         Alert.alert('Gửi lại thất bại', 'Có lỗi xảy ra khi yêu cầu mã xác thực mới');
       }
-    } finally {
-      setResending(false);
+    },
+  });
+
+  const handleVerify = () => {
+    if (!email.trim() || !code.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập Email và Mã xác thực');
+      return;
     }
+    verifyMutation.mutate();
   };
+
+  const handleResend = () => {
+    if (!email.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập Email để nhận lại mã');
+      return;
+    }
+    resendMutation.mutate();
+  };
+
+  const isLoading = verifyMutation.isPending;
+  const isResending = resendMutation.isPending;
 
   return (
     <AmbientBackground>
@@ -114,9 +120,9 @@ export default function VerifyEmailScreen() {
                 <TouchableScale
                   style={[styles.submitButton, { backgroundColor: colors.primary }]}
                   onPress={handleVerify}
-                  disabled={loading || resending}
+                  disabled={isLoading || isResending}
                 >
-                  {loading ? (
+                  {isLoading ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
                     <ThemedText style={styles.submitButtonText}>Xác Thực Tài Khoản</ThemedText>
@@ -125,11 +131,11 @@ export default function VerifyEmailScreen() {
 
                 <View style={styles.resendRow}>
                   <ThemedText style={styles.footerText}>Chưa nhận được mã? </ThemedText>
-                  <Pressable onPress={handleResend} disabled={resending || loading} hitSlop={8}>
-                    {resending ? (
+                  <Pressable onPress={handleResend} disabled={isResending || isLoading} hitSlop={8}>
+                    {isResending ? (
                       <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 4 }} />
                     ) : (
-                      <ThemedText style={[styles.linkText, { color: colors.primary }, (resending || loading) && { opacity: 0.5 }]}>
+                      <ThemedText style={[styles.linkText, { color: colors.primary }, (isResending || isLoading) && { opacity: 0.5 }]}>
                         Gửi lại mã
                       </ThemedText>
                     )}

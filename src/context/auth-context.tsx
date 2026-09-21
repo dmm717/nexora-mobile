@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { authApi } from '@/api/auth.api';
 import { onAuthError } from '@/api/client';
 import { LoginRequest, RegisterRequest, UserDto } from '@/api/types';
@@ -16,94 +16,126 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ---------- Pure async helpers (defined outside provider so React Compiler can optimize them) ----------
+
+async function hydrateSessionAsync(
+  signal: { mounted: boolean },
+  setUser: (u: UserDto | null) => void,
+  setIsLoading: (v: boolean) => void,
+) {
+  const token = await tokenStorage.getAccessToken();
+  if (token) {
+    const me = await authApi.getMe();
+    if (signal.mounted) setUser(me);
+  }
+  if (signal.mounted) setIsLoading(false);
+}
+
+async function hydrateSessionWithFallback(
+  signal: { mounted: boolean },
+  setUser: (u: UserDto | null) => void,
+  setIsLoading: (v: boolean) => void,
+) {
+  try {
+    await hydrateSessionAsync(signal, setUser, setIsLoading);
+  } catch {
+    if (signal.mounted) {
+      await tokenStorage.clearTokens();
+      setUser(null);
+      setIsLoading(false);
+    }
+  }
+}
+
+async function loginAsync(
+  payload: LoginRequest,
+  setUser: (u: UserDto | null) => void,
+  setIsLoading: (v: boolean) => void,
+): Promise<void> {
+  setIsLoading(true);
+  const res = await authApi.login(payload);
+  if (res.accessToken) {
+    await tokenStorage.setAccessToken(res.accessToken);
+  }
+  if (res.refreshToken) {
+    await tokenStorage.setRefreshToken(res.refreshToken);
+  }
+  if (res.user) {
+    setUser(res.user);
+  } else {
+    const token = await tokenStorage.getAccessToken();
+    if (token) {
+      const me = await authApi.getMe();
+      setUser(me);
+    }
+  }
+  setIsLoading(false);
+}
+
+async function logoutAsync(
+  setUser: (u: UserDto | null) => void,
+  setIsLoading: (v: boolean) => void,
+): Promise<void> {
+  setIsLoading(true);
+  try {
+    await authApi.logout();
+  } finally {
+    await tokenStorage.clearTokens();
+    setUser(null);
+    setIsLoading(false);
+  }
+}
+
+// ------------------------------------------------------------------------------------------------
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUser = async () => {
+  useEffect(() => {
+    const signal = { mounted: true };
+
+    hydrateSessionWithFallback(signal, setUser, setIsLoading);
+
+    const unsubscribe = onAuthError(() => {
+      if (signal.mounted) setUser(null);
+    });
+
+    return () => {
+      signal.mounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  const login = useCallback(
+    (payload: LoginRequest) => loginAsync(payload, setUser, setIsLoading),
+    [],
+  );
+
+  const register = useCallback(
+    (payload: RegisterRequest) => authApi.register(payload),
+    [],
+  );
+
+  const logout = useCallback(
+    () => logoutAsync(setUser, setIsLoading),
+    [],
+  );
+
+  const refreshUser = useCallback(async () => {
+    const token = await tokenStorage.getAccessToken();
+    if (!token) {
+      setUser(null);
+      return;
+    }
     try {
-      const token = await tokenStorage.getAccessToken();
-      if (!token) {
-        setUser(null);
-        return;
-      }
       const me = await authApi.getMe();
       setUser(me);
     } catch {
       await tokenStorage.clearTokens();
       setUser(null);
     }
-  };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const hydrateSession = async () => {
-      try {
-        const token = await tokenStorage.getAccessToken();
-        if (token) {
-          const me = await authApi.getMe();
-          if (isMounted) setUser(me);
-        }
-      } catch {
-        if (isMounted) {
-          await tokenStorage.clearTokens();
-          setUser(null);
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    hydrateSession();
-
-    // Attach global 401 refresh failure listener
-    const unsubscribe = onAuthError(() => {
-      if (isMounted) {
-        setUser(null);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
   }, []);
-
-  const login = async (payload: LoginRequest) => {
-    setIsLoading(true);
-    try {
-      const res = await authApi.login(payload);
-      if (res.accessToken) {
-        await tokenStorage.setAccessToken(res.accessToken);
-      }
-      if (res.refreshToken) {
-        await tokenStorage.setRefreshToken(res.refreshToken);
-      }
-      if (res.user) {
-        setUser(res.user);
-      } else {
-        await fetchUser();
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const register = async (payload: RegisterRequest) => {
-    await authApi.register(payload);
-  };
-
-  const logout = async () => {
-    setIsLoading(true);
-    try {
-      await authApi.logout();
-    } finally {
-      await tokenStorage.clearTokens();
-      setUser(null);
-      setIsLoading(false);
-    }
-  };
 
   return (
     <AuthContext.Provider
@@ -114,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         register,
         logout,
-        refreshUser: fetchUser,
+        refreshUser,
       }}
     >
       {children}

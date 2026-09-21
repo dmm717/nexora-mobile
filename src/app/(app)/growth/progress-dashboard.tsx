@@ -194,8 +194,8 @@ export default function ProgressDashboardScreen() {
                   </View>
 
                   <View style={{ gap: Spacing.two }}>
-                    {dashboard.recentImprovements.map((imp, idx) => (
-                      <View key={imp.at ? `${imp.at}-${imp.currentScore}` : `imp-${idx}`} style={[styles.impRow, { backgroundColor: colors.accentLight }]}>
+                    {dashboard.recentImprovements.map((imp) => (
+                      <View key={`${imp.resourceId}-${imp.at}-${imp.delta}`} style={[styles.impRow, { backgroundColor: colors.accentLight }]}>
                         <Ionicons name="arrow-up-circle" size={24} color={colors.accent} />
                         <View style={{ flex: 1 }}>
                           <ThemedText style={[styles.impTitle, { color: colors.accent }]}>

@@ -307,8 +307,8 @@ const StarEvaluationDetailsContent = React.memo(({
         <Ionicons name="warning-outline" size={20} color={colors.warning} />
         <View style={{ flex: 1 }}>
           <ThemedText style={[styles.warningHeader, { color: colors.warning }]}>⚠️ Yếu tố STAR còn thiếu:</ThemedText>
-          {evaluation.missingElements.map((m: string, idx: number) => (
-            <ThemedText key={`${m}-${idx}`} style={styles.bulletText}>• {m}</ThemedText>
+          {evaluation.missingElements.map((m: string) => (
+            <ThemedText key={m} style={styles.bulletText}>• {m}</ThemedText>
           ))}
         </View>
       </View>

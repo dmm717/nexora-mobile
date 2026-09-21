@@ -138,8 +138,8 @@ export default function ReportScreen() {
             <View style={{ gap: Spacing.four }}>
               <ThemedText type="subtitle" style={styles.sectionHeader}>Chi Tiết Đánh Giá Theo Câu Hỏi</ThemedText>
               
-              {report.questionReviews.map((review, idx) => (
-                <View key={review.questionId || `q-${review.sequence}-${idx}`} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+              {report.questionReviews.map((review) => (
+                <View key={review.questionId || `q-${review.sequence}-${review.topic}`} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
                   <View style={styles.questionReviewHeader}>
                     <View style={[styles.badge, { backgroundColor: colors.primary }]}>
                       <ThemedText style={styles.badgeText}>Câu #{review.sequence}</ThemedText>
@@ -159,7 +159,7 @@ export default function ReportScreen() {
                     <View style={{ gap: 4, marginTop: Spacing.one }}>
                       <ThemedText style={styles.subTitle}>📊 Điểm Tiêu Chí Rubric:</ThemedText>
                       {review.rubric.map((r, rIdx) => (
-                        <View key={rIdx} style={styles.rubricRow}>
+                        <View key={r.criterion || `r-${r.score}-${rIdx}`} style={styles.rubricRow}>
                           <ThemedText style={styles.rubricLabel}>{r.criterion}:</ThemedText>
                           <ThemedText style={[styles.rubricScore, { color: colors.primary }]}>{r.score}/100</ThemedText>
                         </View>

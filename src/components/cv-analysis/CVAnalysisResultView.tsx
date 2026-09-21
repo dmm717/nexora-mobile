@@ -101,7 +101,124 @@ const CVAnalysisFailedState = memo(({
   </View>
 ));
 
-export const CVAnalysisResultView = memo(({ analysisId, analysisResult, setAnalysisId, mode, colors }: Props) => {
+// ---- Data derivation hook (keeps CVAnalysisResultView under complexity threshold) ----
+
+function getScoreSublabel(score: number | null): string {
+  if (score === null) return 'N/A';
+  if (score >= 80) return 'Rất Tốt';
+  if (score >= 60) return 'Khá Tốt';
+  if (score >= 40) return 'Cần Nỗ Lực';
+  return 'Kém';
+}
+
+function buildBreakdownEntries(isBenchmark: boolean, rawBreakdown: Record<string, unknown>) {
+  if (isBenchmark) {
+    return [
+      { key: 'technicalFoundation', name: 'Nền tảng kỹ thuật', score: typeof rawBreakdown.technicalFoundation === 'number' ? rawBreakdown.technicalFoundation : null, desc: 'Kiến trúc phần mềm, cơ sở dữ liệu' },
+      { key: 'projectEvidence', name: 'Bằng chứng dự án', score: typeof rawBreakdown.projectEvidence === 'number' ? rawBreakdown.projectEvidence : null, desc: 'Minh chứng qua quy mô dự án thực tế' },
+      { key: 'experiencePresentation', name: 'Thể hiện kinh nghiệm', score: typeof rawBreakdown.experiencePresentation === 'number' ? rawBreakdown.experiencePresentation : null, desc: 'Làm nổi bật vai trò đóng góp cá nhân' },
+      { key: 'impactAchievements', name: 'Số liệu tác động', score: typeof rawBreakdown.impactAchievements === 'number' ? rawBreakdown.impactAchievements : null, desc: 'Chỉ số định lượng về hiệu năng' },
+      { key: 'clarity', name: 'Mạch lạc & Rõ ràng', score: typeof rawBreakdown.clarity === 'number' ? rawBreakdown.clarity : null, desc: 'Trình bày chuyên nghiệp, chuẩn xác' },
+      { key: 'roleAlignment', name: 'Định hướng vai trò', score: typeof rawBreakdown.roleAlignment === 'number' ? rawBreakdown.roleAlignment : null, desc: 'Phù hợp với kỳ vọng cấp bậc mục tiêu' },
+    ];
+  }
+  return [
+    { key: 'technicalSkillMatch', name: 'Khớp kỹ năng kỹ thuật', score: typeof rawBreakdown.technicalSkillMatch === 'number' ? rawBreakdown.technicalSkillMatch : null, desc: 'Mức độ đáp ứng các công nghệ JD' },
+    { key: 'experienceRelevance', name: 'Độ liên quan kinh nghiệm', score: typeof rawBreakdown.experienceRelevance === 'number' ? rawBreakdown.experienceRelevance : null, desc: 'Kinh nghiệm trong ngành tương đồng' },
+    { key: 'impactEvidence', name: 'Bằng chứng hiệu quả', score: typeof rawBreakdown.impactEvidence === 'number' ? rawBreakdown.impactEvidence : null, desc: 'Chỉ số tải, tối ưu hóa quy trình' },
+    { key: 'clarity', name: 'Độ rõ ràng & mạch lạc', score: typeof rawBreakdown.clarity === 'number' ? rawBreakdown.clarity : null, desc: 'Từ ngữ súc tích, chuẩn kỹ thuật' },
+    { key: 'structure', name: 'Bố cục hồ sơ', score: typeof rawBreakdown.structure === 'number' ? rawBreakdown.structure : null, desc: 'Chuẩn ATS, bố cục dễ quét' },
+  ];
+}
+
+function parseAnalysisData(analysisResult: ResumeAnalysisView | undefined, mode: Props['mode']) {
+  const rawResult = parseResult(analysisResult?.result);
+  const isBenchmark = (analysisResult as any)?.mode === 'field_benchmark' || rawResult?.mode === 'field_benchmark' || mode === 'standard';
+
+  const score = isBenchmark
+    ? (typeof rawResult?.readinessScore === 'number' ? rawResult.readinessScore : null)
+    : (typeof rawResult?.matchScore === 'number' ? rawResult.matchScore : null);
+
+  const summary = typeof rawResult?.summary === 'string' ? rawResult.summary : '';
+  const strengths: string[] = Array.isArray(rawResult?.strengths) ? (rawResult.strengths as string[]) : [];
+  const gaps: string[] = Array.isArray(rawResult?.gaps) ? (rawResult.gaps as string[]) : [];
+  const recommendations: string[] = Array.isArray(rawResult?.recommendations) ? (rawResult.recommendations as string[]) : [];
+  const sectionFeedback: string[] = Array.isArray(rawResult?.sectionFeedback) ? (rawResult.sectionFeedback as string[]) : [];
+
+  const contextData = (analysisResult as any)?.context;
+  const industry: string | null = contextData?.industry ?? (typeof rawResult?.industry === 'string' ? rawResult.industry : null);
+  const targetRole: string | null = contextData?.targetRole ?? (typeof rawResult?.targetRole === 'string' ? rawResult.targetRole : null);
+  const seniority: string | null = contextData?.seniority ?? (typeof rawResult?.seniority === 'string' ? rawResult.seniority : null);
+
+  const createdAt = (analysisResult as any)?.createdAt ? new Date((analysisResult as any).createdAt).toLocaleDateString('vi-VN') : null;
+  const rubricVersion = (analysisResult as any)?.rubricVersion;
+  const modelVersion = (analysisResult as any)?.modelVersion;
+
+  const matchedSkills: string[] = Array.isArray(rawResult?.matchedKeywordsOrSkills) ? (rawResult.matchedKeywordsOrSkills as string[]) : [];
+  const missingSkills: string[] = Array.isArray(rawResult?.missingKeywordsOrSkills) ? (rawResult.missingKeywordsOrSkills as string[]) : [];
+
+  const rawBreakdown = (rawResult?.breakdown && typeof rawResult.breakdown === 'object' ? rawResult.breakdown : {}) as Record<string, unknown>;
+  const breakdownEntries = buildBreakdownEntries(isBenchmark, rawBreakdown);
+  const hasBreakdown = breakdownEntries.some((e) => e.score !== null);
+  const scoreLabel = isBenchmark ? 'Điểm Sẵn Sàng' : 'Mức độ Phù hợp';
+  const scoreSublabel = getScoreSublabel(score);
+
+  return {
+    isBenchmark, score, summary, strengths, gaps, recommendations, sectionFeedback,
+    industry, targetRole, seniority, createdAt, rubricVersion, modelVersion,
+    matchedSkills, missingSkills, breakdownEntries, hasBreakdown, scoreLabel, scoreSublabel,
+  };
+}
+
+// --------------------------------------------------------------------------------------
+
+const CVSegmentedTabs = memo(({ activeTab, setActiveTab, colors, isDark }: {
+  activeTab: TabKey;
+  setActiveTab: (tab: TabKey) => void;
+  colors: any;
+  isDark: boolean;
+}) => (
+  <View style={[styles.tabsContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9' }]}>
+    <TouchableOpacity 
+      style={[styles.tabButton, activeTab === 'overview' && [styles.activeTab, { backgroundColor: colors.card }]]}
+      onPress={() => setActiveTab('overview')}
+    >
+      <ThemedText style={[styles.tabText, activeTab === 'overview' && { color: colors.primary, fontWeight: 'bold' }]}>Tổng quan</ThemedText>
+    </TouchableOpacity>
+    
+    <TouchableOpacity 
+      style={[styles.tabButton, activeTab === 'breakdown' && [styles.activeTab, { backgroundColor: colors.card }]]}
+      onPress={() => setActiveTab('breakdown')}
+    >
+      <ThemedText style={[styles.tabText, activeTab === 'breakdown' && { color: colors.primary, fontWeight: 'bold' }]}>Chi tiết</ThemedText>
+    </TouchableOpacity>
+
+    <TouchableOpacity 
+      style={[styles.tabButton, activeTab === 'action' && [styles.activeTab, { backgroundColor: colors.card }]]}
+      onPress={() => setActiveTab('action')}
+    >
+      <ThemedText style={[styles.tabText, activeTab === 'action' && { color: colors.primary, fontWeight: 'bold' }]}>Hành động</ThemedText>
+    </TouchableOpacity>
+  </View>
+));
+
+const CVActionCtaBanner = memo(({ colors, onNavigate }: { colors: any; onNavigate: () => void }) => (
+  <View style={[styles.ctaBanner, { backgroundColor: colors.primary }]}>
+    <View style={styles.ctaBadge}>
+      <ThemedText style={styles.ctaBadgeText}>Hành động tiếp theo</ThemedText>
+    </View>
+    <ThemedText style={styles.ctaTitle}>Luyện phỏng vấn AI</ThemedText>
+    <ThemedText style={styles.ctaDesc}>
+      Chuyển sang phòng phỏng vấn để bám sát JD và CV của bạn.
+    </ThemedText>
+    <TouchableOpacity style={styles.ctaButton} onPress={onNavigate}>
+      <ThemedText style={[styles.ctaButtonText, { color: colors.primary }]}>Chuyển sang phòng phỏng vấn</ThemedText>
+      <MaterialIcons name="arrow-forward" size={18} color={colors.primary} />
+    </TouchableOpacity>
+  </View>
+));
+
+export function CVAnalysisResultView({ analysisId, analysisResult, setAnalysisId, mode = 'standard', colors }: Props) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
@@ -110,6 +227,8 @@ export const CVAnalysisResultView = memo(({ analysisId, analysisResult, setAnaly
 
   const [pulseAnim] = useState(() => new Animated.Value(0.3));
   const [slideAnim] = useState(() => new Animated.Value(0));
+
+  const parsed = parseAnalysisData(analysisResult, mode);
 
   useEffect(() => {
     if (analysisResult?.status === 'pending' || analysisResult?.status === 'processing' || analysisResult?.status === 'queued') {
@@ -139,82 +258,15 @@ export const CVAnalysisResultView = memo(({ analysisId, analysisResult, setAnaly
   }
 
   // COMPLETED STATE
-  const rawResult = parseResult(analysisResult.result);
-  const isBenchmark = (analysisResult as any).mode === 'field_benchmark' || rawResult?.mode === 'field_benchmark' || mode === 'standard';
-
-  const score = isBenchmark
-    ? (typeof rawResult?.readinessScore === 'number' ? rawResult.readinessScore : null)
-    : (typeof rawResult?.matchScore === 'number' ? rawResult.matchScore : null);
-
-  const summary = typeof rawResult?.summary === 'string' ? rawResult.summary : '';
-  const strengths = Array.isArray(rawResult?.strengths) ? (rawResult.strengths as string[]) : [];
-  const gaps = Array.isArray(rawResult?.gaps) ? (rawResult.gaps as string[]) : [];
-  const recommendations = Array.isArray(rawResult?.recommendations) ? (rawResult.recommendations as string[]) : [];
-  const sectionFeedback = Array.isArray(rawResult?.sectionFeedback) ? (rawResult.sectionFeedback as string[]) : [];
-
-  const contextData = (analysisResult as any).context;
-  const industry = contextData?.industry ?? (typeof rawResult?.industry === 'string' ? rawResult.industry : null);
-  const targetRole = contextData?.targetRole ?? (typeof rawResult?.targetRole === 'string' ? rawResult.targetRole : null);
-  const seniority = contextData?.seniority ?? (typeof rawResult?.seniority === 'string' ? rawResult.seniority : null);
-  
-  const createdAt = (analysisResult as any).createdAt ? new Date((analysisResult as any).createdAt).toLocaleDateString('vi-VN') : null;
-  const rubricVersion = (analysisResult as any).rubricVersion;
-  const modelVersion = (analysisResult as any).modelVersion;
-  
-  const matchedSkills = Array.isArray(rawResult?.matchedKeywordsOrSkills) ? (rawResult.matchedKeywordsOrSkills as string[]) : [];
-  const missingSkills = Array.isArray(rawResult?.missingKeywordsOrSkills) ? (rawResult.missingKeywordsOrSkills as string[]) : [];
-
-  const rawBreakdown = (rawResult?.breakdown && typeof rawResult.breakdown === 'object'
-    ? rawResult.breakdown
-    : {}) as Record<string, unknown>;
-
-  const breakdownEntries = isBenchmark
-    ? [
-        { key: 'technicalFoundation', name: 'Nền tảng kỹ thuật', score: typeof rawBreakdown.technicalFoundation === 'number' ? rawBreakdown.technicalFoundation : null, desc: 'Kiến trúc phần mềm, cơ sở dữ liệu' },
-        { key: 'projectEvidence', name: 'Bằng chứng dự án', score: typeof rawBreakdown.projectEvidence === 'number' ? rawBreakdown.projectEvidence : null, desc: 'Minh chứng qua quy mô dự án thực tế' },
-        { key: 'experiencePresentation', name: 'Thể hiện kinh nghiệm', score: typeof rawBreakdown.experiencePresentation === 'number' ? rawBreakdown.experiencePresentation : null, desc: 'Làm nổi bật vai trò đóng góp cá nhân' },
-        { key: 'impactAchievements', name: 'Số liệu tác động', score: typeof rawBreakdown.impactAchievements === 'number' ? rawBreakdown.impactAchievements : null, desc: 'Chỉ số định lượng về hiệu năng' },
-        { key: 'clarity', name: 'Mạch lạc & Rõ ràng', score: typeof rawBreakdown.clarity === 'number' ? rawBreakdown.clarity : null, desc: 'Trình bày chuyên nghiệp, chuẩn xác' },
-        { key: 'roleAlignment', name: 'Định hướng vai trò', score: typeof rawBreakdown.roleAlignment === 'number' ? rawBreakdown.roleAlignment : null, desc: 'Phù hợp với kỳ vọng cấp bậc mục tiêu' },
-      ]
-    : [
-        { key: 'technicalSkillMatch', name: 'Khớp kỹ năng kỹ thuật', score: typeof rawBreakdown.technicalSkillMatch === 'number' ? rawBreakdown.technicalSkillMatch : null, desc: 'Mức độ đáp ứng các công nghệ JD' },
-        { key: 'experienceRelevance', name: 'Độ liên quan kinh nghiệm', score: typeof rawBreakdown.experienceRelevance === 'number' ? rawBreakdown.experienceRelevance : null, desc: 'Kinh nghiệm trong ngành tương đồng' },
-        { key: 'impactEvidence', name: 'Bằng chứng hiệu quả', score: typeof rawBreakdown.impactEvidence === 'number' ? rawBreakdown.impactEvidence : null, desc: 'Chỉ số tải, tối ưu hóa quy trình' },
-        { key: 'clarity', name: 'Độ rõ ràng & mạch lạc', score: typeof rawBreakdown.clarity === 'number' ? rawBreakdown.clarity : null, desc: 'Từ ngữ súc tích, chuẩn kỹ thuật' },
-        { key: 'structure', name: 'Bố cục hồ sơ', score: typeof rawBreakdown.structure === 'number' ? rawBreakdown.structure : null, desc: 'Chuẩn ATS, bố cục dễ quét' },
-      ];
-
-  const hasBreakdown = breakdownEntries.some(e => e.score !== null);
-
-  const scoreLabel = isBenchmark ? "Điểm Sẵn Sàng" : "Mức độ Phù hợp";
-  const scoreSublabel = score !== null ? (score >= 80 ? "Rất Tốt" : score >= 60 ? "Khá Tốt" : score >= 40 ? "Cần Nỗ Lực" : "Kém") : "N/A";
+  const {
+    isBenchmark, score, summary, strengths, gaps, recommendations, sectionFeedback,
+    industry, targetRole, seniority, createdAt, rubricVersion, modelVersion,
+    matchedSkills, missingSkills, breakdownEntries, hasBreakdown, scoreLabel, scoreSublabel,
+  } = parsed;
 
   return (
     <View style={styles.container}>
-      {/* Segmented Tabs Control */}
-      <View style={[styles.tabsContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9' }]}>
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'overview' && [styles.activeTab, { backgroundColor: colors.card }]]}
-          onPress={() => setActiveTab('overview')}
-        >
-          <ThemedText style={[styles.tabText, activeTab === 'overview' && { color: colors.primary, fontWeight: 'bold' }]}>Tổng quan</ThemedText>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'breakdown' && [styles.activeTab, { backgroundColor: colors.card }]]}
-          onPress={() => setActiveTab('breakdown')}
-        >
-          <ThemedText style={[styles.tabText, activeTab === 'breakdown' && { color: colors.primary, fontWeight: 'bold' }]}>Chi tiết</ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'action' && [styles.activeTab, { backgroundColor: colors.card }]]}
-          onPress={() => setActiveTab('action')}
-        >
-          <ThemedText style={[styles.tabText, activeTab === 'action' && { color: colors.primary, fontWeight: 'bold' }]}>Hành động</ThemedText>
-        </TouchableOpacity>
-      </View>
+      <CVSegmentedTabs activeTab={activeTab} setActiveTab={setActiveTab} colors={colors} isDark={isDark} />
 
       {/* Render Active Tab Content */}
       <View style={styles.tabContent}>
@@ -258,23 +310,40 @@ export const CVAnalysisResultView = memo(({ analysisId, analysisResult, setAnaly
         )}
       </View>
 
-      {/* Fixed Action CTA Banner at bottom of every tab */}
-      <View style={[styles.ctaBanner, { backgroundColor: colors.primary }]}>
-        <View style={styles.ctaBadge}>
-          <ThemedText style={styles.ctaBadgeText}>Hành động tiếp theo</ThemedText>
-        </View>
-        <ThemedText style={styles.ctaTitle}>Luyện phỏng vấn AI</ThemedText>
-        <ThemedText style={styles.ctaDesc}>
-          Chuyển sang phòng phỏng vấn để bám sát JD và CV của bạn.
-        </ThemedText>
-        <TouchableOpacity style={styles.ctaButton} onPress={() => router.push('/interviews' as any)}>
-          <ThemedText style={[styles.ctaButtonText, { color: colors.primary }]}>Chuyển sang phòng phỏng vấn</ThemedText>
-          <MaterialIcons name="arrow-forward" size={18} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
+      <CVActionCtaBanner colors={colors} onNavigate={() => router.push('/interviews' as any)} />
     </View>
   );
-});
+}
+
+// ---------- CVOverviewTab sub-components (keeps complexity low) ----------
+
+const CVMetaHeader = memo(({ isBenchmark, targetRole, seniority, industry, createdAt, isDark, colors }: {
+  isBenchmark: boolean;
+  targetRole: string | null;
+  seniority: string | null;
+  industry: string | null;
+  createdAt: string | null;
+  isDark: boolean;
+  colors: any;
+}) => (
+  <View style={styles.cardHeaderRow}>
+    <View style={{ flex: 1 }}>
+      <View style={[styles.tag, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F3F4F6' }]}>
+        <MaterialIcons name="verified" size={14} color={colors.primary} />
+        <ThemedText style={[styles.tagText, { color: colors.primary }]}>Báo cáo phân tích chuyên sâu</ThemedText>
+      </View>
+      <ThemedText style={styles.mainTitle}>
+        {isBenchmark ? 'Đánh giá hồ sơ theo Chuẩn năng lực' : 'Đánh giá hồ sơ theo JD'}
+      </ThemedText>
+      <View style={styles.metaContainer}>
+        {targetRole && <ThemedText style={styles.metaText}>Vị trí: <ThemedText style={{ fontWeight: 'bold' }}>{targetRole}{seniority ? ` (${seniority})` : ''}</ThemedText></ThemedText>}
+        {industry && <ThemedText style={styles.metaText}>Ngành: <ThemedText style={{ fontWeight: 'bold' }}>{industry}</ThemedText></ThemedText>}
+        <ThemedText style={styles.metaText}>Hình thức: <ThemedText style={{ fontWeight: 'bold' }}>{isBenchmark ? 'Chuẩn thị trường' : 'Theo JD cụ thể'}</ThemedText></ThemedText>
+        {createdAt && <ThemedText style={styles.metaText}>Thời điểm: <ThemedText style={{ fontWeight: 'bold' }}>{createdAt}</ThemedText></ThemedText>}
+      </View>
+    </View>
+  </View>
+));
 
 const CVOverviewTab = memo(({
   isBenchmark,
@@ -307,24 +376,15 @@ const CVOverviewTab = memo(({
 }) => (
   <View style={{ gap: Spacing.four }}>
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-      <View style={styles.cardHeaderRow}>
-        <View style={{ flex: 1 }}>
-          <View style={[styles.tag, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F3F4F6' }]}>
-            <MaterialIcons name="verified" size={14} color={colors.primary} />
-            <ThemedText style={[styles.tagText, { color: colors.primary }]}>Báo cáo phân tích chuyên sâu</ThemedText>
-          </View>
-          <ThemedText style={styles.mainTitle}>
-            {isBenchmark ? 'Đánh giá hồ sơ theo Chuẩn năng lực' : 'Đánh giá hồ sơ theo JD'}
-          </ThemedText>
-
-          <View style={styles.metaContainer}>
-            {targetRole && <ThemedText style={styles.metaText}>Vị trí: <ThemedText style={{fontWeight: 'bold'}}>{targetRole} {seniority ? `(${seniority})` : ''}</ThemedText></ThemedText>}
-            {industry && <ThemedText style={styles.metaText}>Ngành: <ThemedText style={{fontWeight: 'bold'}}>{industry}</ThemedText></ThemedText>}
-            <ThemedText style={styles.metaText}>Hình thức: <ThemedText style={{fontWeight: 'bold'}}>{isBenchmark ? 'Chuẩn thị trường' : 'Theo JD cụ thể'}</ThemedText></ThemedText>
-            {createdAt && <ThemedText style={styles.metaText}>Thời điểm: <ThemedText style={{fontWeight: 'bold'}}>{createdAt}</ThemedText></ThemedText>}
-          </View>
-        </View>
-      </View>
+      <CVMetaHeader
+        isBenchmark={isBenchmark}
+        targetRole={targetRole}
+        seniority={seniority}
+        industry={industry}
+        createdAt={createdAt}
+        isDark={isDark}
+        colors={colors}
+      />
 
       <View style={[styles.radialScoreWrapper, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F9FAFB' }]}>
         <RadialScore score={score} label={scoreLabel} sublabel={scoreSublabel} size="lg" />
@@ -346,6 +406,8 @@ const CVOverviewTab = memo(({
     </View>
   </View>
 ));
+
+
 
 const CVBreakdownTab = memo(({
   isBenchmark,
@@ -401,8 +463,8 @@ const CVBreakdownTab = memo(({
         {strengths.length > 0 && (
           <View style={styles.listSection}>
             <ThemedText style={[styles.listHeader, { color: '#059669' }]}>Điểm mạnh & Lợi thế</ThemedText>
-            {strengths.map((s, i) => (
-              <View key={s || `str-${i}`} style={styles.listItem}>
+            {strengths.map((s) => (
+              <View key={s} style={styles.listItem}>
                 <Ionicons name="checkmark" size={16} color="#10B981" style={{ marginTop: 2 }} />
                 <ThemedText style={styles.listItemText}>{s}</ThemedText>
               </View>
@@ -413,8 +475,8 @@ const CVBreakdownTab = memo(({
         {gaps.length > 0 && (
           <View style={[styles.listSection, { marginTop: 16 }]}>
             <ThemedText style={[styles.listHeader, { color: '#991B1B' }]}>Lỗ hổng & Điểm trừ</ThemedText>
-            {gaps.map((s, i) => (
-              <View key={s || `gap-${i}`} style={styles.listItem}>
+            {gaps.map((s) => (
+              <View key={s} style={styles.listItem}>
                 <Ionicons name="remove" size={16} color="#EF4444" style={{ marginTop: 2 }} />
                 <ThemedText style={styles.listItemText}>{s}</ThemedText>
               </View>
@@ -455,8 +517,8 @@ const CVActionPlanTab = memo(({
           <View style={[styles.keywordsContainer, { marginBottom: missingSkills.length > 0 ? Spacing.four : 0 }]}>
             <ThemedText style={[styles.listHeader, { color: '#059669', marginBottom: 8 }]}>Từ khóa trùng khớp</ThemedText>
             <View style={styles.chipsWrap}>
-              {matchedSkills.map((sk, i) => (
-                <View key={sk || `match-${i}`} style={[styles.chipMatched, isDark && { backgroundColor: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.3)' }]}>
+              {matchedSkills.map((sk) => (
+                <View key={sk} style={[styles.chipMatched, isDark && { backgroundColor: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.3)' }]}>
                   <ThemedText style={[styles.chipMatchedText, isDark && { color: '#34D399' }]}>{sk}</ThemedText>
                 </View>
               ))}
@@ -468,8 +530,8 @@ const CVActionPlanTab = memo(({
           <View style={styles.keywordsContainer}>
             <ThemedText style={[styles.listHeader, { color: '#991B1B', marginBottom: 8 }]}>Từ khóa còn thiếu</ThemedText>
             <View style={styles.chipsWrap}>
-              {missingSkills.map((sk, i) => (
-                <View key={sk || `miss-${i}`} style={[styles.chipMissing, isDark && { backgroundColor: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.3)' }]}>
+              {missingSkills.map((sk) => (
+                <View key={sk} style={[styles.chipMissing, isDark && { backgroundColor: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.3)' }]}>
                   <ThemedText style={[styles.chipMissingText, isDark && { color: '#F87171' }]}>{sk}</ThemedText>
                 </View>
               ))}
@@ -495,8 +557,8 @@ const CVActionPlanTab = memo(({
                 <MaterialIcons name="task-alt" size={16} color={colors.primary} />
                 <ThemedText style={[styles.feedbackBoxTitle, { color: colors.primary }]}>Hành động khuyến nghị</ThemedText>
               </View>
-              {recommendations.map((rec, i) => (
-                <View key={rec || `rec-${i}`} style={styles.listItem}>
+              {recommendations.map((rec) => (
+                <View key={rec} style={styles.listItem}>
                   <View style={styles.dot} />
                   <ThemedText style={styles.listItemText}>{rec}</ThemedText>
                 </View>
@@ -510,8 +572,8 @@ const CVActionPlanTab = memo(({
                 <MaterialIcons name="feedback" size={16} color={colors.secondary} />
                 <ThemedText style={[styles.feedbackBoxTitle, { color: colors.secondary }]}>Góp ý từng phần hồ sơ</ThemedText>
               </View>
-              {sectionFeedback.map((fb, i) => (
-                <View key={fb || `fb-${i}`} style={styles.listItem}>
+              {sectionFeedback.map((fb) => (
+                <View key={fb} style={styles.listItem}>
                   <View style={styles.dot} />
                   <ThemedText style={styles.listItemText}>{fb}</ThemedText>
                 </View>
