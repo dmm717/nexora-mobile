@@ -1,10 +1,12 @@
 import { tokenStorage } from '@/services/storage';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiErrorResponse, AppError } from './types';
+import { toast } from '@/components/ui/toast/ToastProvider';
+import { logger } from '@/services/logger';
+import { extractErrorMessage } from '@/utils/errorTranslator';
 
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL || 'https://nexora-backend-q32b.onrender.com/api/v1';
-
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -69,22 +71,42 @@ function processQueue(error: unknown, token: string | null = null) {
   failedQueue = [];
 }
 
-// Response Interceptor: Envelope Unwrapping & Refresh Lock
+// Response Interceptor: Envelope Unwrapping, Observability & Toast Interception
 apiClient.interceptors.response.use(
   (response) => {
-    // Un-envelope data if response has { data: ... } format
     return response;
   },
   async (error: AxiosError<ApiErrorResponse>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Format normalized AppError from Backend Envelope
-    const errorEnvelope = error.response?.data?.error;
+    // Format normalized AppError from Backend Envelope or ASP.NET validation error
+    const rawData = error.response?.data;
+    const errorEnvelope = (rawData as any)?.error;
     const errorCode = errorEnvelope?.code || 'UNKNOWN_ERROR';
-    const errorMessage = errorEnvelope?.message || error.message || 'An unexpected error occurred';
     const requestId = errorEnvelope?.requestId;
+    const extractedMessage = extractErrorMessage(rawData, error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
 
-    const normalizedError = new AppError(errorCode, errorMessage, requestId, error);
+    const normalizedError = new AppError(errorCode, extractedMessage, requestId, error);
+
+    // Observability Logging
+    logger.error(`API Error [${error.config?.method?.toUpperCase() || 'HTTP'}] ${error.config?.url}`, error, {
+      requestId,
+      code: errorCode,
+      status: error.response?.status,
+    });
+
+    // Auto-trigger Toast for API failures (displaying ONLY Vietnamese message, NO raw error codes)
+    if (!error.response) {
+      toast.error('Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.');
+    } else if (error.response.status === 401) {
+      // Handled via refresh flow below
+    } else if (error.response.status === 429) {
+      toast.warning('Hệ thống đang xử lý quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.');
+    } else if (error.response.status >= 500) {
+      toast.error('Máy chủ gặp sự cố tạm thời. Vui lòng thử lại sau.');
+    } else if (extractedMessage) {
+      toast.error(extractedMessage);
+    }
 
     // Xử lý 401 Unauthorized
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
@@ -92,6 +114,7 @@ apiClient.interceptors.response.use(
 
       // Không refresh nếu chính API login hoặc refresh bị 401
       if (requestUrl.includes('/auth/login') || requestUrl.includes('/auth/refresh')) {
+        toast.error(extractedMessage);
         return Promise.reject(normalizedError);
       }
 
@@ -154,6 +177,7 @@ apiClient.interceptors.response.use(
       } catch (refreshErr) {
         processQueue(refreshErr, null);
         await tokenStorage.clearTokens();
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         notifyAuthError();
         return Promise.reject(normalizedError);
       } finally {
