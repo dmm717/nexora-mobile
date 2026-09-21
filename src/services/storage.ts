@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 const ACCESS_TOKEN_KEY = 'nexora_access_token';
 const REFRESH_TOKEN_KEY = 'nexora_refresh_token';
+const HIDE_POPUP_KEY = 'nexora_hide_latest_analysis_popup';
 
 // In-memory fallback for web environment when localStorage is unavailable
 const memoryStorage = new Map<string, string>();
@@ -73,7 +74,13 @@ export const tokenStorage = {
   setAccessToken: (token: string) => setValue(ACCESS_TOKEN_KEY, token),
   getRefreshToken: () => getValue(REFRESH_TOKEN_KEY),
   setRefreshToken: (token: string) => setValue(REFRESH_TOKEN_KEY, token),
+  getHidePopup: () => getValue(HIDE_POPUP_KEY),
+  setHidePopup: (val: string) => setValue(HIDE_POPUP_KEY, val),
   clearTokens: async () => {
-    await Promise.all([deleteValue(ACCESS_TOKEN_KEY), deleteValue(REFRESH_TOKEN_KEY)]);
+    await Promise.all([
+      deleteValue(ACCESS_TOKEN_KEY), 
+      deleteValue(REFRESH_TOKEN_KEY),
+      deleteValue(HIDE_POPUP_KEY)
+    ]);
   },
 };

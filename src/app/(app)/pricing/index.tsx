@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -13,6 +13,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function PricingScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
@@ -27,6 +28,8 @@ export default function PricingScreen() {
   const checkoutMutation = useMutation({
     mutationFn: (priceId: string) => pricingApi.createCheckoutSession(priceId),
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['billing-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['user-quota'] });
       if (data.checkout?.url) {
         Alert.alert(
           'Đơn Hàng Đã Tạo',

@@ -106,7 +106,6 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: Typography.fontFamily.semibold,
     fontWeight: '600',
-    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
 });

@@ -103,101 +103,29 @@ export default function ForgotPasswordScreen() {
           <Animated.View entering={FadeInUp.delay(200).duration(800).easing(Easing.out(Easing.cubic))}>
             <GlassCard hasGlow glowColor={colors.glowPrimary} style={styles.card}>
               {resetDone ? (
-                <View style={styles.successContainer}>
-                  <View style={[styles.successIcon, { backgroundColor: colors.accentLight }]}>
-                    <ThemedText style={{ fontSize: 36 }}>✅</ThemedText>
-                  </View>
-                  <ThemedText style={styles.successText}>
-                    Bạn có thể đăng nhập ngay bây giờ bằng mật khẩu mới vừa thiết lập.
-                  </ThemedText>
-                  
-                  <Link href="/(auth)/login" asChild>
-                    <TouchableScale style={[styles.submitButton, { backgroundColor: colors.primary, marginTop: Spacing.three }]}>
-                      <ThemedText style={styles.submitButtonText}>Đăng Nhập Ngay</ThemedText>
-                    </TouchableScale>
-                  </Link>
-                </View>
+                <ResetDoneSuccessCard colors={colors} />
               ) : step === 'request' ? (
-                <View style={styles.formStack}>
-                  <MaterialInput
-                    label="Địa chỉ Email"
-                    leftIcon="mail-outline"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                  />
-
-                  <TouchableScale
-                    style={[styles.submitButton, { backgroundColor: colors.primary }]}
-                    onPress={handleSendRequest}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <ActivityIndicator color="#ffffff" />
-                    ) : (
-                      <ThemedText style={styles.submitButtonText}>Gửi Mã OTP Khôi Phục</ThemedText>
-                    )}
-                  </TouchableScale>
-
-                  <TouchableOpacity onPress={() => setStep('reset')} style={styles.subLink}>
-                    <ThemedText style={[styles.linkText, { color: colors.primary }]}>
-                      Đã có mã OTP? Nhập mật khẩu mới
-                    </ThemedText>
-                  </TouchableOpacity>
-
-                  <View style={styles.footerRow}>
-                    <Link href="/(auth)/login" asChild>
-                      <Pressable hitSlop={8}>
-                        <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Quay lại Đăng nhập</ThemedText>
-                      </Pressable>
-                    </Link>
-                  </View>
-                </View>
+                <RequestOtpStepCard
+                  email={email}
+                  setEmail={setEmail}
+                  colors={colors}
+                  loading={loading}
+                  onSendRequest={handleSendRequest}
+                  onSwitchToReset={() => setStep('reset')}
+                />
               ) : (
-                <View style={styles.formStack}>
-                  <MaterialInput
-                    label="Email"
-                    leftIcon="mail-outline"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-
-                  <MaterialInput
-                    label="Mã OTP (6 chữ số)"
-                    leftIcon="key-outline"
-                    value={code}
-                    onChangeText={setCode}
-                    keyboardType="number-pad"
-                  />
-
-                  <MaterialInput
-                    label="Mật khẩu mới"
-                    leftIcon="lock-closed-outline"
-                    isPassword
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                  />
-
-                  <TouchableScale
-                    style={[styles.submitButton, { backgroundColor: colors.primary }]}
-                    onPress={handleResetPassword}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <ActivityIndicator color="#ffffff" />
-                    ) : (
-                      <ThemedText style={styles.submitButtonText}>Đặt Lại Mật Khẩu</ThemedText>
-                    )}
-                  </TouchableScale>
-
-                  <TouchableOpacity onPress={() => setStep('request')} style={styles.subLink}>
-                    <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Gửi lại mã OTP mới</ThemedText>
-                  </TouchableOpacity>
-                </View>
+                <ResetPasswordStepCard
+                  email={email}
+                  setEmail={setEmail}
+                  code={code}
+                  setCode={setCode}
+                  newPassword={newPassword}
+                  setNewPassword={setNewPassword}
+                  colors={colors}
+                  loading={loading}
+                  onResetPassword={handleResetPassword}
+                  onSwitchToRequest={() => setStep('request')}
+                />
               )}
             </GlassCard>
           </Animated.View>
@@ -206,6 +134,144 @@ export default function ForgotPasswordScreen() {
     </AmbientBackground>
   );
 }
+
+const ResetDoneSuccessCard = React.memo(({ colors }: { colors: any }) => (
+  <View style={styles.successContainer}>
+    <View style={[styles.successIcon, { backgroundColor: colors.accentLight }]}>
+      <ThemedText style={{ fontSize: 36 }}>✅</ThemedText>
+    </View>
+    <ThemedText style={styles.successText}>
+      Bạn có thể đăng nhập ngay bây giờ bằng mật khẩu mới vừa thiết lập.
+    </ThemedText>
+    
+    <Link href="/(auth)/login" asChild>
+      <TouchableScale style={[styles.submitButton, { backgroundColor: colors.primary, marginTop: Spacing.three }]}>
+        <ThemedText style={styles.submitButtonText}>Đăng Nhập Ngay</ThemedText>
+      </TouchableScale>
+    </Link>
+  </View>
+));
+
+const RequestOtpStepCard = React.memo(({
+  email,
+  setEmail,
+  colors,
+  loading,
+  onSendRequest,
+  onSwitchToReset,
+}: {
+  email: string;
+  setEmail: (email: string) => void;
+  colors: any;
+  loading: boolean;
+  onSendRequest: () => void;
+  onSwitchToReset: () => void;
+}) => (
+  <View style={styles.formStack}>
+    <MaterialInput
+      label="Địa chỉ Email"
+      leftIcon="mail-outline"
+      value={email}
+      onChangeText={setEmail}
+      keyboardType="email-address"
+      autoCapitalize="none"
+      autoComplete="email"
+    />
+
+    <TouchableScale
+      style={[styles.submitButton, { backgroundColor: colors.primary }]}
+      onPress={onSendRequest}
+      disabled={loading}
+    >
+      {loading ? (
+        <ActivityIndicator color="#ffffff" />
+      ) : (
+        <ThemedText style={styles.submitButtonText}>Gửi Mã OTP Khôi Phục</ThemedText>
+      )}
+    </TouchableScale>
+
+    <TouchableOpacity onPress={onSwitchToReset} style={styles.subLink}>
+      <ThemedText style={[styles.linkText, { color: colors.primary }]}>
+        Đã có mã OTP? Nhập mật khẩu mới
+      </ThemedText>
+    </TouchableOpacity>
+
+    <View style={styles.footerRow}>
+      <Link href="/(auth)/login" asChild>
+        <Pressable hitSlop={8}>
+          <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Quay lại Đăng nhập</ThemedText>
+        </Pressable>
+      </Link>
+    </View>
+  </View>
+));
+
+const ResetPasswordStepCard = React.memo(({
+  email,
+  setEmail,
+  code,
+  setCode,
+  newPassword,
+  setNewPassword,
+  colors,
+  loading,
+  onResetPassword,
+  onSwitchToRequest,
+}: {
+  email: string;
+  setEmail: (email: string) => void;
+  code: string;
+  setCode: (code: string) => void;
+  newPassword: string;
+  setNewPassword: (pwd: string) => void;
+  colors: any;
+  loading: boolean;
+  onResetPassword: () => void;
+  onSwitchToRequest: () => void;
+}) => (
+  <View style={styles.formStack}>
+    <MaterialInput
+      label="Email"
+      leftIcon="mail-outline"
+      value={email}
+      onChangeText={setEmail}
+      keyboardType="email-address"
+      autoCapitalize="none"
+    />
+
+    <MaterialInput
+      label="Mã OTP (6 chữ số)"
+      leftIcon="key-outline"
+      value={code}
+      onChangeText={setCode}
+      keyboardType="number-pad"
+    />
+
+    <MaterialInput
+      label="Mật khẩu mới"
+      leftIcon="lock-closed-outline"
+      isPassword
+      value={newPassword}
+      onChangeText={setNewPassword}
+    />
+
+    <TouchableScale
+      style={[styles.submitButton, { backgroundColor: colors.primary }]}
+      onPress={onResetPassword}
+      disabled={loading}
+    >
+      {loading ? (
+        <ActivityIndicator color="#ffffff" />
+      ) : (
+        <ThemedText style={styles.submitButtonText}>Đặt Lại Mật Khẩu</ThemedText>
+      )}
+    </TouchableScale>
+
+    <TouchableOpacity onPress={onSwitchToRequest} style={styles.subLink}>
+      <ThemedText style={[styles.linkText, { color: colors.textSecondary }]}>Gửi lại mã OTP mới</ThemedText>
+    </TouchableOpacity>
+  </View>
+));
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },

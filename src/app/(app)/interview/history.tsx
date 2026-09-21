@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, ScrollView, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   FadeInDown,
-  FadeInUp,
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
@@ -20,9 +19,49 @@ import { AmbientBackground as SolidBackground } from '@/components/ui/ambient-ba
 
 type FilterType = 'all' | 'active' | 'completed';
 
+function useFilteredInterviewHistory(rawData: any, filter: FilterType, page: number) {
+  return useMemo(() => {
+    const isItemCompleted = (item: any) =>
+      item.status === 'completed' || Boolean(item.reportAvailable);
+
+    const allItems = [...(rawData?.items ?? [])].sort((a, b) => {
+      const timeA = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    const activeItems = allItems.filter((item) => !isItemCompleted(item));
+    const completedItems = allItems.filter((item) => isItemCompleted(item));
+
+    const totalCountAll = allItems.length;
+    const totalCountActive = activeItems.length;
+    const totalCountCompleted = completedItems.length;
+
+    const filteredList =
+      filter === 'active'
+        ? activeItems
+        : filter === 'completed'
+        ? completedItems
+        : allItems;
+
+    const PAGE_SIZE = 10;
+    const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
+    const paginatedItems = filteredList.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const hasNextPage = page < totalPages;
+
+    return {
+      totalCountAll,
+      totalCountActive,
+      totalCountCompleted,
+      totalPages,
+      paginatedItems,
+      hasNextPage,
+    };
+  }, [rawData, filter, page]);
+}
+
 export default function InterviewHistoryScreen() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
@@ -30,7 +69,6 @@ export default function InterviewHistoryScreen() {
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<FilterType>('all');
 
-  // Fetch Interview History
   const { data: rawData, isLoading, refetch, isRefetching, error } = useQuery({
     queryKey: ['interview-history'],
     queryFn: () => interviewApi.list(1, 50),
@@ -38,44 +76,21 @@ export default function InterviewHistoryScreen() {
 
   const handleFilterChange = (newFilter: FilterType) => {
     setFilter(newFilter);
-    setPage(1); // Reset to page 1 on status change
+    setPage(1);
   };
 
   const handleRefresh = () => {
     refetch();
   };
 
-  // Helper to check if item is completed
-  const isItemCompleted = (item: any) =>
-    item.status === 'completed' || Boolean(item.reportAvailable);
-
-  // Ensure items are sorted by latest first (descending date), safely handling missing dates
-  const allItems = [...(rawData?.items ?? [])].sort((a, b) => {
-    const timeA = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const timeB = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return timeB - timeA;
-  });
-
-  // Categorize items dynamically for counts & accurate filter sorting
-  const activeItems = allItems.filter((item) => !isItemCompleted(item));
-  const completedItems = allItems.filter((item) => isItemCompleted(item));
-
-  const totalCountAll = allItems.length;
-  const totalCountActive = activeItems.length;
-  const totalCountCompleted = completedItems.length;
-
-  // Selected filter list & pagination
-  const filteredList =
-    filter === 'active'
-      ? activeItems
-      : filter === 'completed'
-      ? completedItems
-      : allItems;
-
-  const PAGE_SIZE = 10;
-  const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
-  const paginatedItems = filteredList.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const hasNextPage = page < totalPages;
+  const {
+    totalCountAll,
+    totalCountActive,
+    totalCountCompleted,
+    totalPages,
+    paginatedItems,
+    hasNextPage,
+  } = useFilteredInterviewHistory(rawData, filter, page);
 
   return (
     <SolidBackground>
@@ -94,57 +109,14 @@ export default function InterviewHistoryScreen() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={colors.primary} />}
         >
           {/* TOP CONTROL BAR (Sort Pills) */}
-          <View style={styles.topControlContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBarScroll}>
-              <View>
-                <TouchableScale
-                  onPress={() => handleFilterChange('all')}
-                  style={[
-                    styles.filterChip,
-                    filter === 'all'
-                      ? { backgroundColor: colors.primary }
-                      : { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder, borderWidth: 1 },
-                  ]}
-                >
-                  <ThemedText style={[styles.filterChipText, { color: filter === 'all' ? '#ffffff' : colors.textSecondary }]}>
-                    Tất cả ({totalCountAll})
-                  </ThemedText>
-                </TouchableScale>
-              </View>
-
-              <View>
-                <TouchableScale
-                  onPress={() => handleFilterChange('active')}
-                  style={[
-                    styles.filterChip,
-                    filter === 'active'
-                      ? { backgroundColor: colors.primary }
-                      : { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder, borderWidth: 1 },
-                  ]}
-                >
-                  <ThemedText style={[styles.filterChipText, { color: filter === 'active' ? '#ffffff' : colors.textSecondary }]}>
-                    Đang làm ({totalCountActive})
-                  </ThemedText>
-                </TouchableScale>
-              </View>
-
-              <View>
-                <TouchableScale
-                  onPress={() => handleFilterChange('completed')}
-                  style={[
-                    styles.filterChip,
-                    filter === 'completed'
-                      ? { backgroundColor: colors.primary }
-                      : { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder, borderWidth: 1 },
-                  ]}
-                >
-                  <ThemedText style={[styles.filterChipText, { color: filter === 'completed' ? '#ffffff' : colors.textSecondary }]}>
-                    Đã xong ({totalCountCompleted})
-                  </ThemedText>
-                </TouchableScale>
-              </View>
-            </ScrollView>
-          </View>
+          <HistoryFilterHeader
+            filter={filter}
+            colors={colors}
+            totalCountAll={totalCountAll}
+            totalCountActive={totalCountActive}
+            totalCountCompleted={totalCountCompleted}
+            onFilterChange={handleFilterChange}
+          />
 
           {/* LIST CONTENT */}
           {isLoading ? (
@@ -192,117 +164,220 @@ export default function InterviewHistoryScreen() {
             </SurfaceCard>
           ) : (
             <Animated.View entering={FadeInDown.duration(400).springify()} style={{ gap: Spacing.three }}>
-              {paginatedItems.map((item) => {
-                const isCompleted = item.status === 'completed' || item.reportAvailable;
-                const dateObj = new Date(item.createdAt);
-                const timeStr = dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                const dateStr = dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const fullTimestamp = `${timeStr}  •  ${dateStr}`;
-
-                return (
-                  <TouchableScale
-                    key={item.id}
-                    style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-                    onPress={() => {
-                      if (isCompleted) {
-                        router.push(`/(app)/interview/report/${item.id}` as any);
-                      } else {
-                        router.push(`/(app)/interview/${item.id}` as any);
-                      }
-                    }}
-                  >
-                    {/* Header Row: Role Title + Status Badge */}
-                    <View style={styles.cardHeaderRow}>
-                      <ThemedText style={styles.cardTitle} numberOfLines={1}>
-                        {item.role || 'Phỏng Vấn AI'}
-                      </ThemedText>
-                      <Badge variant={isCompleted ? 'success' : 'warning'} size="sm">
-                        {isCompleted ? 'Hoàn thành' : 'Đang làm'}
-                      </Badge>
-                    </View>
-
-                    {/* Middle Row: Pill Badges */}
-                    <View style={styles.metaBadgesRow}>
-                      {item.seniority && (
-                        <Badge variant="neutral" size="sm">
-                          {item.seniority}
-                        </Badge>
-                      )}
-                      {item.interviewType && (
-                        <Badge variant="info" size="sm">
-                          {item.interviewType}
-                        </Badge>
-                      )}
-                      <Badge variant={isCompleted ? 'success' : 'primary'} size="sm">
-                        Đã trả lời: {item.answeredQuestionCount} câu
-                      </Badge>
-                    </View>
-
-                    {/* Footer Row: Date Time + Action Link */}
-                    <View style={styles.footerRow}>
-                      <ThemedText style={[styles.dateText, { color: colors.textSecondary }]}>
-                        {fullTimestamp}
-                      </ThemedText>
-
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <ThemedText style={[styles.actionText, { color: colors.primary }]}>
-                          {isCompleted ? 'Xem Báo Cáo' : 'Tiếp Tục'}
-                        </ThemedText>
-                        <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-                      </View>
-                    </View>
-                  </TouchableScale>
-                );
-              })}
+              {paginatedItems.map((item: any) => (
+                <HistoryListItemCard
+                  key={item.id}
+                  item={item}
+                  colors={colors}
+                  onPress={() => {
+                    const isCompleted = item.status === 'completed' || item.reportAvailable;
+                    if (isCompleted) {
+                      router.push(`/(app)/interview/report/${item.id}` as any);
+                    } else {
+                      router.push(`/(app)/interview/${item.id}` as any);
+                    }
+                  }}
+                />
+              ))}
             </Animated.View>
           )}
         </ScrollView>
       </SafeAreaView>
 
       {/* Floating Pagination Bar (Always Visible) */}
-      <View style={styles.floatingNavContainer}>
-        <View style={[styles.inlineNavContainer, { 
-          backgroundColor: colors.card, 
-          borderColor: colors.cardBorder, 
-          shadowColor: '#000', 
-          shadowOpacity: 0.1, 
-          shadowRadius: 8, 
-          shadowOffset: { width: 0, height: 4 }, 
-          elevation: 5,
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          borderRadius: 24
-        }]}>
-          <TouchableScale
-            style={[styles.miniPageBtn, page === 1 ? styles.disabledButton : null]}
-            disabled={page === 1}
-            onPress={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            <Ionicons name="chevron-back" size={16} color={page === 1 ? colors.border : colors.primary} />
-            <ThemedText style={[styles.miniPageBtnText, { color: page === 1 ? colors.border : colors.textPrimary }]}>
-              Trước
-            </ThemedText>
-          </TouchableScale>
-
-          <ThemedText style={[styles.inlinePageIndicator, { color: colors.textPrimary, marginHorizontal: 16 }]}>
-            Trang {page}/{totalPages}
-          </ThemedText>
-
-          <TouchableScale
-            style={[styles.miniPageBtn, (!hasNextPage) ? styles.disabledButton : null]}
-            disabled={!hasNextPage}
-            onPress={() => setPage((p) => p + 1)}
-          >
-            <ThemedText style={[styles.miniPageBtnText, { color: (!hasNextPage) ? colors.border : colors.textPrimary }]}>
-              Sau
-            </ThemedText>
-            <Ionicons name="chevron-forward" size={16} color={(!hasNextPage) ? colors.border : colors.primary} />
-          </TouchableScale>
-        </View>
-      </View>
+      <HistoryPaginationBar
+        page={page}
+        totalPages={totalPages}
+        hasNextPage={hasNextPage}
+        colors={colors}
+        onPrevPage={() => setPage((p) => Math.max(1, p - 1))}
+        onNextPage={() => setPage((p) => p + 1)}
+      />
     </SolidBackground>
   );
 }
+
+const HistoryFilterHeader = React.memo(({
+  filter,
+  colors,
+  totalCountAll,
+  totalCountActive,
+  totalCountCompleted,
+  onFilterChange,
+}: {
+  filter: FilterType;
+  colors: any;
+  totalCountAll: number;
+  totalCountActive: number;
+  totalCountCompleted: number;
+  onFilterChange: (newFilter: FilterType) => void;
+}) => (
+  <View style={styles.topControlContainer}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBarScroll}>
+      <View>
+        <TouchableScale
+          onPress={() => onFilterChange('all')}
+          style={[
+            styles.filterChip,
+            filter === 'all'
+              ? { backgroundColor: colors.primary }
+              : { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder, borderWidth: 1 },
+          ]}
+        >
+          <ThemedText style={[styles.filterChipText, { color: filter === 'all' ? '#ffffff' : colors.textSecondary }]}>
+            Tất cả ({totalCountAll})
+          </ThemedText>
+        </TouchableScale>
+      </View>
+
+      <View>
+        <TouchableScale
+          onPress={() => onFilterChange('active')}
+          style={[
+            styles.filterChip,
+            filter === 'active'
+              ? { backgroundColor: colors.primary }
+              : { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder, borderWidth: 1 },
+          ]}
+        >
+          <ThemedText style={[styles.filterChipText, { color: filter === 'active' ? '#ffffff' : colors.textSecondary }]}>
+            Đang làm ({totalCountActive})
+          </ThemedText>
+        </TouchableScale>
+      </View>
+
+      <View>
+        <TouchableScale
+          onPress={() => onFilterChange('completed')}
+          style={[
+            styles.filterChip,
+            filter === 'completed'
+              ? { backgroundColor: colors.primary }
+              : { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder, borderWidth: 1 },
+          ]}
+        >
+          <ThemedText style={[styles.filterChipText, { color: filter === 'completed' ? '#ffffff' : colors.textSecondary }]}>
+            Đã xong ({totalCountCompleted})
+          </ThemedText>
+        </TouchableScale>
+      </View>
+    </ScrollView>
+  </View>
+));
+
+const HistoryListItemCard = React.memo(({
+  item,
+  colors,
+  onPress,
+}: {
+  item: any;
+  colors: any;
+  onPress: () => void;
+}) => {
+  const isCompleted = item.status === 'completed' || item.reportAvailable;
+  const dateObj = new Date(item.createdAt);
+  const timeStr = dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = dateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const fullTimestamp = `${timeStr}  •  ${dateStr}`;
+
+  return (
+    <TouchableScale
+      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+      onPress={onPress}
+    >
+      <View style={styles.cardHeaderRow}>
+        <ThemedText style={styles.cardTitle} numberOfLines={1}>
+          {item.role || 'Phỏng Vấn AI'}
+        </ThemedText>
+        <Badge variant={isCompleted ? 'success' : 'warning'} size="sm">
+          {isCompleted ? 'Hoàn thành' : 'Đang làm'}
+        </Badge>
+      </View>
+
+      <View style={styles.metaBadgesRow}>
+        {item.seniority && (
+          <Badge variant="neutral" size="sm">
+            {item.seniority}
+          </Badge>
+        )}
+        {item.interviewType && (
+          <Badge variant="info" size="sm">
+            {item.interviewType}
+          </Badge>
+        )}
+        <Badge variant={isCompleted ? 'success' : 'primary'} size="sm">
+          Đã trả lời: {item.answeredQuestionCount} câu
+        </Badge>
+      </View>
+
+      <View style={styles.footerRow}>
+        <ThemedText style={[styles.dateText, { color: colors.textSecondary }]}>
+          {fullTimestamp}
+        </ThemedText>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <ThemedText style={[styles.actionText, { color: colors.primary }]}>
+            {isCompleted ? 'Xem Báo Cáo' : 'Tiếp Tục'}
+          </ThemedText>
+          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+        </View>
+      </View>
+    </TouchableScale>
+  );
+});
+
+const HistoryPaginationBar = React.memo(({
+  page,
+  totalPages,
+  hasNextPage,
+  colors,
+  onPrevPage,
+  onNextPage,
+}: {
+  page: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  colors: any;
+  onPrevPage: () => void;
+  onNextPage: () => void;
+}) => (
+  <View style={styles.floatingNavContainer}>
+    <View style={[styles.inlineNavContainer, { 
+      backgroundColor: colors.card, 
+      borderColor: colors.cardBorder, 
+      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 24
+    }]}>
+      <TouchableScale
+        style={[styles.miniPageBtn, page === 1 ? styles.disabledButton : null]}
+        disabled={page === 1}
+        onPress={onPrevPage}
+      >
+        <Ionicons name="chevron-back" size={16} color={page === 1 ? colors.border : colors.primary} />
+        <ThemedText style={[styles.miniPageBtnText, { color: page === 1 ? colors.border : colors.textPrimary }]}>
+          Trước
+        </ThemedText>
+      </TouchableScale>
+
+      <ThemedText style={[styles.inlinePageIndicator, { color: colors.textPrimary, marginHorizontal: 16 }]}>
+        Trang {page}/{totalPages}
+      </ThemedText>
+
+      <TouchableScale
+        style={[styles.miniPageBtn, (!hasNextPage) ? styles.disabledButton : null]}
+        disabled={!hasNextPage}
+        onPress={onNextPage}
+      >
+        <ThemedText style={[styles.miniPageBtnText, { color: (!hasNextPage) ? colors.border : colors.textPrimary }]}>
+          Sau
+        </ThemedText>
+        <Ionicons name="chevron-forward" size={16} color={(!hasNextPage) ? colors.border : colors.primary} />
+      </TouchableScale>
+    </View>
+  </View>
+));
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },

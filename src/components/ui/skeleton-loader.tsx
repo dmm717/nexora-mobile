@@ -7,7 +7,6 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export interface SkeletonProps {
@@ -25,8 +24,6 @@ export const SkeletonLoader: React.FC<SkeletonProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const themeKey = isDark ? 'dark' : 'light';
-  const colors = Colors[themeKey];
 
   // Use surface-container-highest for skeleton base
   const backgroundColor = isDark ? '#444655' : '#e2e7ff';
@@ -34,12 +31,14 @@ export const SkeletonLoader: React.FC<SkeletonProps> = ({
   const opacity = useSharedValue(0.5);
 
   useEffect(() => {
-    opacity.value = withRepeat(
-      withTiming(0.85, { duration: 900, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true
+    opacity.set(
+      withRepeat(
+        withTiming(0.85, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      )
     );
-  }, []);
+  }, [opacity]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {

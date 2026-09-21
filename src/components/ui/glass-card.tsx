@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewProps, ViewStyle, StyleProp } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+
 
 interface GlassCardProps extends ViewProps {
   style?: StyleProp<ViewStyle>;
@@ -28,11 +28,7 @@ export function GlassCard({
           backgroundColor: colors.card,
           borderColor: withBorder ? colors.cardBorder : 'transparent',
           borderWidth: withBorder ? 1 : 0,
-          shadowColor: '#131b2e',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.08,
-          shadowRadius: 26,
-          elevation: 5,
+          boxShadow: '0px 10px 26px rgba(19, 27, 46, 0.08)',
         },
         style,
       ]}

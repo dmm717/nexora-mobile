@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity, RefreshControl } from 'react-native';
+import { StyleSheet, ScrollView, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -195,7 +195,7 @@ export default function ProgressDashboardScreen() {
 
                   <View style={{ gap: Spacing.two }}>
                     {dashboard.recentImprovements.map((imp, idx) => (
-                      <View key={idx} style={[styles.impRow, { backgroundColor: colors.accentLight }]}>
+                      <View key={imp.at ? `${imp.at}-${imp.currentScore}` : `imp-${idx}`} style={[styles.impRow, { backgroundColor: colors.accentLight }]}>
                         <Ionicons name="arrow-up-circle" size={24} color={colors.accent} />
                         <View style={{ flex: 1 }}>
                           <ThemedText style={[styles.impTitle, { color: colors.accent }]}>

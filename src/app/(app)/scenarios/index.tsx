@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, TextInput, RefreshControl } from 'react-native';
+import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, TextInput, RefreshControl, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -66,7 +66,7 @@ export default function ScenariosListScreen() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
         >
           {/* Progress Banner */}
-          {progress && (
+          {progress ? (
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
               <View style={styles.cardHeaderRow}>
                 <Ionicons name="trophy-outline" size={22} color={colors.warning} />
@@ -94,7 +94,7 @@ export default function ScenariosListScreen() {
                 </View>
               </View>
             </View>
-          )}
+          ) : null}
 
           {/* Search Bar */}
           <View style={[styles.searchBox, { borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }]}>
@@ -115,20 +115,26 @@ export default function ScenariosListScreen() {
 
           {/* Category Chips */}
           {categories && categories.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-              <TouchableOpacity
-                style={[
-                  styles.categoryChip,
-                  { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
-                  !selectedCategory && { backgroundColor: colors.primary, borderColor: colors.primary }
-                ]}
-                onPress={() => setSelectedCategory('')}
-              >
-                <ThemedText style={[styles.categoryChipText, !selectedCategory && { color: '#fff' }]}>Tất cả danh mục</ThemedText>
-              </TouchableOpacity>
-              {categories.map((cat) => (
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryScroll}
+              data={categories}
+              keyExtractor={(cat) => cat.id}
+              ListHeaderComponent={
                 <TouchableOpacity
-                  key={cat.id}
+                  style={[
+                    styles.categoryChip,
+                    { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
+                    !selectedCategory && { backgroundColor: colors.primary, borderColor: colors.primary }
+                  ]}
+                  onPress={() => setSelectedCategory('')}
+                >
+                  <ThemedText style={[styles.categoryChipText, !selectedCategory && { color: '#fff' }]}>Tất cả danh mục</ThemedText>
+                </TouchableOpacity>
+              }
+              renderItem={({ item: cat }) => (
+                <TouchableOpacity
                   style={[
                     styles.categoryChip,
                     { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
@@ -140,8 +146,8 @@ export default function ScenariosListScreen() {
                     {cat.name}
                   </ThemedText>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
+              )}
+            />
           )}
 
           {/* Difficulty Chips */}

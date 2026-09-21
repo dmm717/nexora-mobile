@@ -31,7 +31,7 @@ export default function StarBuilderScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [attemptId, setAttemptId] = useState<string | null>(null);
 
-  const { data: starAttempts, isLoading: isHistoryLoading } = useQuery({
+  const { data: starAttempts } = useQuery({
     queryKey: ['star-attempts'],
     queryFn: starApi.list,
   });
@@ -103,163 +103,26 @@ export default function StarBuilderScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Sample Questions Selection */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.cardHeaderRow}>
-              <Ionicons name="help-circle-outline" size={22} color={colors.primary} />
-              <ThemedText type="subtitle" style={styles.cardTitle}>Câu Hỏi Tình Huống Phỏng Vấn</ThemedText>
-            </View>
+          <SampleQuestionPickerCard question={question} setQuestion={setQuestion} colors={colors} />
 
-            <View style={{ gap: Spacing.two }}>
-              {SAMPLE_QUESTIONS.map((q, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={[
-                    styles.sampleRow,
-                    { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
-                    question === q && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
-                  ]}
-                  onPress={() => setQuestion(q)}
-                >
-                  <Ionicons
-                    name={question === q ? 'radio-button-on' : 'radio-button-off'}
-                    size={18}
-                    color={question === q ? colors.primary : colors.textMuted}
-                  />
-                  <ThemedText style={[styles.sampleText, question === q && { color: colors.primary, fontWeight: '600' }]}>
-                    {q}
-                  </ThemedText>
-                </TouchableOpacity>
-              ))}
-            </View>
+          <StarAnswerInputCard
+            colors={colors}
+            answer={answer}
+            setAnswer={setAnswer}
+            isRecording={isRecording}
+            toggleSpeech={toggleSpeech}
+            onSubmit={() => createStarMutation.mutate()}
+            isSubmitting={createStarMutation.isPending}
+          />
 
-            <ThemedText style={styles.inputLabel}>Hoặc tự nhập câu hỏi tình huống khác:</ThemedText>
-            <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }]}
-              placeholder="Nhập nội dung câu hỏi..."
-              placeholderTextColor={colors.textMuted}
-              value={question}
-              onChangeText={setQuestion}
-            />
-          </View>
-
-          {/* Natural Answer Input */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.cardHeaderRow}>
-              <Ionicons name="chatbubble-outline" size={22} color={colors.secondary} />
-              <ThemedText type="subtitle" style={styles.cardTitle}>Câu Trả Lời Tự Nhiên Của Bạn</ThemedText>
-            </View>
-
-            <ThemedText style={styles.subTip}>
-              💡 Nhập một câu trả lời tự nhiên dạng văn bản hoặc giọng nói. AI sẽ tự bóc tách thành 4 thành phần S-T-A-R.
-            </ThemedText>
-
-            <TextInput
-              style={[
-                styles.textArea,
-                { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }
-              ]}
-              placeholder="Ví dụ: Trong một dự án E-commerce, hệ thống bị nghẽn thanh toán khi flash sale (Situation). Tôi được giao xử lý khắc phục trong 24h (Task). Tôi đã thêm Redis caching và tối ưu query (Action), giúp hệ thống chịu tải gấp 3 lần không bị sập (Result)..."
-              placeholderTextColor={colors.textMuted}
-              multiline
-              numberOfLines={7}
-              value={answer}
-              onChangeText={setAnswer}
-            />
-
-            <View style={styles.actionRow}>
-              <TouchableOpacity
-                style={[styles.micButton, isRecording && { backgroundColor: colors.danger }]}
-                onPress={toggleSpeech}
-              >
-                <Ionicons name={isRecording ? 'mic-off' : 'mic'} size={20} color="#fff" />
-                <ThemedText style={styles.micButtonText}>{isRecording ? 'Dừng' : 'Thu Giọng Nói'}</ThemedText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.submitButton,
-                  { backgroundColor: colors.primary },
-                  (!answer.trim() || createStarMutation.isPending) && styles.disabledButton
-                ]}
-                onPress={() => createStarMutation.mutate()}
-                disabled={!answer.trim() || createStarMutation.isPending}
-              >
-                {createStarMutation.isPending ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="sparkles" size={18} color="#fff" style={{ marginRight: 6 }} />
-                    <ThemedText style={styles.submitButtonText}>Phân Tích Cấu Trúc STAR</ThemedText>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Analysis Result Card */}
           {attemptId && activeAttempt && (
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <View style={styles.cardHeaderRow}>
-                <Ionicons name="analytics" size={22} color={colors.warning} />
-                <ThemedText type="subtitle" style={styles.cardTitle}>Phân Tích Cấu Trúc STAR từ AI</ThemedText>
-              </View>
-
-              {(activeAttempt.status === 'queued' || activeAttempt.status === 'processing') && (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color={colors.primary} style={{ marginBottom: Spacing.two }} />
-                  <ThemedText style={{ textAlign: 'center', opacity: 0.8 }}>
-                    AI đang bóc tách các yếu tố S-T-A-R trong câu trả lời của bạn...
-                  </ThemedText>
-                </View>
-              )}
-
-              {activeAttempt.status === 'completed' && evaluation && (
-                <View style={{ gap: Spacing.three }}>
-                  <View style={styles.successRow}>
-                    <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
-                    <ThemedText style={[styles.successText, { color: colors.accent }]}>Hoàn tất phân tích!</ThemedText>
-                  </View>
-
-                  {/* S - T - A - R Elements breakdown */}
-                  <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
-                    <ThemedText style={[styles.starLabel, { color: colors.primary }]}>S - Situation (Bối cảnh / Tình huống):</ThemedText>
-                    <ThemedText style={styles.starText}>{evaluation.situation || evaluation.Situation || 'Chưa phát hiện rõ bối cảnh'}</ThemedText>
-                  </View>
-
-                  <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
-                    <ThemedText style={[styles.starLabel, { color: colors.secondary }]}>T - Task (Nhiệm vụ / Mục tiêu):</ThemedText>
-                    <ThemedText style={styles.starText}>{evaluation.task || evaluation.Task || 'Chưa phát hiện rõ mục tiêu'}</ThemedText>
-                  </View>
-
-                  <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
-                    <ThemedText style={[styles.starLabel, { color: colors.warning }]}>A - Action (Hành động thực hiện):</ThemedText>
-                    <ThemedText style={styles.starText}>{evaluation.action || evaluation.Action || 'Chưa phát hiện rõ hành động'}</ThemedText>
-                  </View>
-
-                  <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
-                    <ThemedText style={[styles.starLabel, { color: colors.accent }]}>R - Result (Kết quả đạt được):</ThemedText>
-                    <ThemedText style={styles.starText}>{evaluation.result || evaluation.Result || 'Chưa có chỉ số / kết quả rõ ràng'}</ThemedText>
-                  </View>
-
-                  {/* Missing Elements Warning */}
-                  {evaluation.missingElements && Array.isArray(evaluation.missingElements) && evaluation.missingElements.length > 0 && (
-                    <View style={[styles.warningBox, { backgroundColor: colors.warningLight }]}>
-                      <Ionicons name="warning-outline" size={20} color={colors.warning} />
-                      <View style={{ flex: 1 }}>
-                        <ThemedText style={[styles.warningHeader, { color: colors.warning }]}>⚠️ Yếu tố STAR còn thiếu:</ThemedText>
-                        {evaluation.missingElements.map((m: string, idx: number) => (
-                          <ThemedText key={idx} style={styles.bulletText}>• {m}</ThemedText>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-                </View>
-              )}
-            </View>
+            <StarEvaluationResultCard
+              activeAttempt={activeAttempt}
+              evaluation={evaluation}
+              colors={colors}
+            />
           )}
 
-          {/* Past STAR Attempts History */}
           {starAttempts && starAttempts.length > 0 && (
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
               <ThemedText type="subtitle" style={styles.cardTitle}>Lịch Sử Phân Tích STAR ({starAttempts.length})</ThemedText>
@@ -285,6 +148,203 @@ export default function StarBuilderScreen() {
     </ThemedView>
   );
 }
+
+const SampleQuestionPickerCard = React.memo(({
+  question,
+  setQuestion,
+  colors,
+}: {
+  question: string;
+  setQuestion: (q: string) => void;
+  colors: any;
+}) => (
+  <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={styles.cardHeaderRow}>
+      <Ionicons name="help-circle-outline" size={22} color={colors.primary} />
+      <ThemedText type="subtitle" style={styles.cardTitle}>Câu Hỏi Tình Huống Phỏng Vấn</ThemedText>
+    </View>
+
+    <View style={{ gap: Spacing.two }}>
+      {SAMPLE_QUESTIONS.map((q) => (
+        <TouchableOpacity
+          key={q}
+          style={[
+            styles.sampleRow,
+            { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
+            question === q && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
+          ]}
+          onPress={() => setQuestion(q)}
+        >
+          <Ionicons
+            name={question === q ? 'radio-button-on' : 'radio-button-off'}
+            size={18}
+            color={question === q ? colors.primary : colors.textMuted}
+          />
+          <ThemedText style={[styles.sampleText, question === q && { color: colors.primary, fontWeight: '600' }]}>
+            {q}
+          </ThemedText>
+        </TouchableOpacity>
+      ))}
+    </View>
+
+    <ThemedText style={styles.inputLabel}>Hoặc tự nhập câu hỏi tình huống khác:</ThemedText>
+    <TextInput
+      style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }]}
+      placeholder="Nhập nội dung câu hỏi..."
+      placeholderTextColor={colors.textMuted}
+      value={question}
+      onChangeText={setQuestion}
+    />
+  </View>
+));
+
+const StarAnswerInputCard = React.memo(({
+  colors,
+  answer,
+  setAnswer,
+  isRecording,
+  toggleSpeech,
+  onSubmit,
+  isSubmitting,
+}: {
+  colors: any;
+  answer: string;
+  setAnswer: (text: string) => void;
+  isRecording: boolean;
+  toggleSpeech: () => void;
+  onSubmit: () => void;
+  isSubmitting: boolean;
+}) => (
+  <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={styles.cardHeaderRow}>
+      <Ionicons name="chatbubble-outline" size={22} color={colors.secondary} />
+      <ThemedText type="subtitle" style={styles.cardTitle}>Câu Trả Lời Tự Nhiên Của Bạn</ThemedText>
+    </View>
+
+    <ThemedText style={styles.subTip}>
+      💡 Nhập một câu trả lời tự nhiên dạng văn bản hoặc giọng nói. AI sẽ tự bóc tách thành 4 thành phần S-T-A-R.
+    </ThemedText>
+
+    <TextInput
+      style={[
+        styles.textArea,
+        { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }
+      ]}
+      placeholder="Ví dụ: Trong một dự án E-commerce, hệ thống bị nghẽn thanh toán khi flash sale (Situation). Tôi được giao xử lý khắc phục trong 24h (Task). Tôi đã thêm Redis caching và tối ưu query (Action), giúp hệ thống chịu tải gấp 3 lần không bị sập (Result)..."
+      placeholderTextColor={colors.textMuted}
+      multiline
+      numberOfLines={7}
+      value={answer}
+      onChangeText={setAnswer}
+    />
+
+    <View style={styles.actionRow}>
+      <TouchableOpacity
+        style={[styles.micButton, isRecording && { backgroundColor: colors.danger }]}
+        onPress={toggleSpeech}
+      >
+        <Ionicons name={isRecording ? 'mic-off' : 'mic'} size={20} color="#fff" />
+        <ThemedText style={styles.micButtonText}>{isRecording ? 'Dừng' : 'Thu Giọng Nói'}</ThemedText>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.submitButton,
+          { backgroundColor: colors.primary },
+          (!answer.trim() || isSubmitting) && styles.disabledButton
+        ]}
+        onPress={onSubmit}
+        disabled={!answer.trim() || isSubmitting}
+      >
+        {isSubmitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <>
+            <Ionicons name="sparkles" size={18} color="#fff" style={{ marginRight: 6 }} />
+            <ThemedText style={styles.submitButtonText}>Phân Tích Cấu Trúc STAR</ThemedText>
+          </>
+        )}
+      </TouchableOpacity>
+    </View>
+  </View>
+));
+
+const StarEvaluationDetailsContent = React.memo(({
+  evaluation,
+  colors,
+}: {
+  evaluation: any;
+  colors: any;
+}) => (
+  <View style={{ gap: Spacing.three }}>
+    <View style={styles.successRow}>
+      <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
+      <ThemedText style={[styles.successText, { color: colors.accent }]}>Hoàn tất phân tích!</ThemedText>
+    </View>
+
+    <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
+      <ThemedText style={[styles.starLabel, { color: colors.primary }]}>S - Situation (Bối cảnh / Tình huống):</ThemedText>
+      <ThemedText style={styles.starText}>{evaluation.situation || evaluation.Situation || 'Chưa phát hiện rõ bối cảnh'}</ThemedText>
+    </View>
+
+    <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
+      <ThemedText style={[styles.starLabel, { color: colors.secondary }]}>T - Task (Nhiệm vụ / Mục tiêu):</ThemedText>
+      <ThemedText style={styles.starText}>{evaluation.task || evaluation.Task || 'Chưa phát hiện rõ mục tiêu'}</ThemedText>
+    </View>
+
+    <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
+      <ThemedText style={[styles.starLabel, { color: colors.warning }]}>A - Action (Hành động thực hiện):</ThemedText>
+      <ThemedText style={styles.starText}>{evaluation.action || evaluation.Action || 'Chưa phát hiện rõ hành động'}</ThemedText>
+    </View>
+
+    <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
+      <ThemedText style={[styles.starLabel, { color: colors.accent }]}>R - Result (Kết quả đạt được):</ThemedText>
+      <ThemedText style={styles.starText}>{evaluation.result || evaluation.Result || 'Chưa có chỉ số / kết quả rõ ràng'}</ThemedText>
+    </View>
+
+    {evaluation.missingElements && Array.isArray(evaluation.missingElements) && evaluation.missingElements.length > 0 && (
+      <View style={[styles.warningBox, { backgroundColor: colors.warningLight }]}>
+        <Ionicons name="warning-outline" size={20} color={colors.warning} />
+        <View style={{ flex: 1 }}>
+          <ThemedText style={[styles.warningHeader, { color: colors.warning }]}>⚠️ Yếu tố STAR còn thiếu:</ThemedText>
+          {evaluation.missingElements.map((m: string, idx: number) => (
+            <ThemedText key={`${m}-${idx}`} style={styles.bulletText}>• {m}</ThemedText>
+          ))}
+        </View>
+      </View>
+    )}
+  </View>
+));
+
+const StarEvaluationResultCard = React.memo(({
+  activeAttempt,
+  evaluation,
+  colors,
+}: {
+  activeAttempt: any;
+  evaluation: any;
+  colors: any;
+}) => (
+  <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={styles.cardHeaderRow}>
+      <Ionicons name="analytics" size={22} color={colors.warning} />
+      <ThemedText type="subtitle" style={styles.cardTitle}>Phân Tích Cấu Trúc STAR từ AI</ThemedText>
+    </View>
+
+    {(activeAttempt.status === 'queued' || activeAttempt.status === 'processing') && (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginBottom: Spacing.two }} />
+        <ThemedText style={{ textAlign: 'center', opacity: 0.8 }}>
+          AI đang bóc tách các yếu tố S-T-A-R trong câu trả lời của bạn...
+        </ThemedText>
+      </View>
+    )}
+
+    {activeAttempt.status === 'completed' && evaluation && (
+      <StarEvaluationDetailsContent evaluation={evaluation} colors={colors} />
+    )}
+  </View>
+));
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

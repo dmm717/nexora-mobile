@@ -39,6 +39,7 @@ export function RadialScoreRing({
     let startTime: number | null = null;
     const duration = 1000; // 1 second duration
 
+    let frameId: number;
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
@@ -51,12 +52,12 @@ export function RadialScoreRing({
       setDisplayScore(current);
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        frameId = requestAnimationFrame(animate);
       }
     };
 
-    const animFrame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animFrame);
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
   }, [score, targetScore]);
 
   const strokeDashoffset = circumference - (displayScore / 100) * circumference;

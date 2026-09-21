@@ -14,6 +14,160 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { SkeletonCard } from '@/components/ui/skeleton-loader';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 
+interface ActivityCardProps {
+  activity: any;
+  aIdx: number;
+  totalActivities: number;
+  colors: any;
+  onActivityAction: (type: string, resourceId?: string | null) => void;
+  onComplete: (id: string) => void;
+  isCompleting: boolean;
+}
+
+const ActivityCardItem = React.memo(({
+  activity,
+  aIdx,
+  totalActivities,
+  colors,
+  onActivityAction,
+  onComplete,
+  isCompleting,
+}: ActivityCardProps) => (
+  <View key={activity.id} style={styles.timelineRow}>
+    {/* Timeline Node Line Connector */}
+    <View style={styles.timelineNodeCol}>
+      <View
+        style={[
+          styles.timelineDot,
+          activity.status === 'completed'
+            ? { backgroundColor: colors.accent, borderColor: colors.accentLight }
+            : { backgroundColor: colors.warning, borderColor: colors.warningLight },
+        ]}
+      />
+      {aIdx < totalActivities - 1 && (
+        <View style={[styles.timelineLine, { backgroundColor: colors.cardBorder }]} />
+      )}
+    </View>
+
+    {/* Activity Glass Card */}
+    <GlassCard
+      style={[
+        styles.activityCard,
+        activity.status === 'completed' && { opacity: 0.8 },
+      ]}
+    >
+      <View style={styles.cardHeaderRow}>
+        <View style={[styles.typeBadge, { backgroundColor: colors.primaryLight }]}>
+          <ThemedText style={[styles.typeBadgeText, { color: colors.primary }]}>
+            {activity.type.toUpperCase().replace('_', ' ')}
+          </ThemedText>
+        </View>
+        {activity.status === 'completed' ? (
+          <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
+            <Ionicons name="checkmark-circle" size={14} color={colors.accent} style={{ marginRight: 4 }} />
+            <ThemedText style={[styles.statusText, { color: colors.accent }]}>Đã hoàn thành</ThemedText>
+          </View>
+        ) : (
+          <View style={[styles.statusBadge, { backgroundColor: colors.warningLight }]}>
+            <ThemedText style={[styles.statusText, { color: colors.warning }]}>Đang chờ</ThemedText>
+          </View>
+        )}
+      </View>
+
+      <ThemedText type="subtitle" style={styles.activityTitle}>{activity.title}</ThemedText>
+      <ThemedText style={styles.activityDesc}>{activity.description}</ThemedText>
+
+      <View style={styles.activityFooterRow}>
+        <TouchableScale
+          style={[styles.actionButton, { backgroundColor: colors.primary }]}
+          onPress={() => onActivityAction(activity.type, activity.resourceId)}
+        >
+          <ThemedText style={styles.actionButtonText}>Luyện Tập Ngay</ThemedText>
+          <Ionicons name="arrow-forward" size={16} color="#fff" />
+        </TouchableScale>
+
+        {activity.status !== 'completed' && (
+          <TouchableScale
+            style={[styles.completeButton, { borderColor: colors.accent }]}
+            onPress={() => onComplete(activity.id)}
+            disabled={isCompleting}
+          >
+            <Ionicons name="checkmark" size={16} color={colors.accent} style={{ marginRight: 4 }} />
+            <ThemedText style={[styles.completeButtonText, { color: colors.accent }]}>Đánh Dấu Xong</ThemedText>
+          </TouchableScale>
+        )}
+      </View>
+    </GlassCard>
+  </View>
+));
+
+interface MilestoneSectionProps {
+  milestone: any;
+  colors: any;
+  onActivityAction: (type: string, resourceId?: string | null) => void;
+  onComplete: (id: string) => void;
+  isCompleting: boolean;
+}
+
+const MilestoneSectionItem = React.memo(({
+  milestone,
+  colors,
+  onActivityAction,
+  onComplete,
+  isCompleting,
+}: MilestoneSectionProps) => (
+  <View style={{ gap: Spacing.two }}>
+    <View style={styles.milestoneHeader}>
+      <View style={[styles.milestoneIconRing, { backgroundColor: colors.secondaryLight }]}>
+        <Ionicons name="flag" size={16} color={colors.secondary} />
+      </View>
+      <ThemedText type="subtitle" style={styles.milestoneTitle}>
+        Cột Mốc #{milestone.sortOrder}: {milestone.title}
+      </ThemedText>
+    </View>
+
+    <View style={styles.timelineList}>
+      {milestone.activities.map((activity: any, aIdx: number) => (
+        <ActivityCardItem
+          key={activity.id}
+          activity={activity}
+          aIdx={aIdx}
+          totalActivities={milestone.activities.length}
+          colors={colors}
+          onActivityAction={onActivityAction}
+          onComplete={onComplete}
+          isCompleting={isCompleting}
+        />
+      ))}
+    </View>
+  </View>
+));
+
+function executeActivityAction(type: string, resourceId: string | null | undefined, router: ReturnType<typeof useRouter>) {
+  switch (type.toLowerCase()) {
+    case 'star':
+    case 'star_drill':
+      router.push('/(app)/star-builder' as any);
+      break;
+    case 'scenario':
+      if (resourceId) {
+        router.push(`/(app)/scenarios/${resourceId}` as any);
+      } else {
+        router.push('/(app)/scenarios' as any);
+      }
+      break;
+    case 'interview':
+      router.push('/(app)/interview/preflight' as any);
+      break;
+    case 'resume_improvement':
+      router.push('/(app)/profile' as any);
+      break;
+    default:
+      router.push('/(app)/scenarios' as any);
+      break;
+  }
+}
+
 export default function LearningPathScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -59,28 +213,7 @@ export default function LearningPathScreen() {
   });
 
   const handleActivityAction = (type: string, resourceId?: string | null) => {
-    switch (type.toLowerCase()) {
-      case 'star':
-      case 'star_drill':
-        router.push('/(app)/star-builder' as any);
-        break;
-      case 'scenario':
-        if (resourceId) {
-          router.push(`/(app)/scenarios/${resourceId}` as any);
-        } else {
-          router.push('/(app)/scenarios' as any);
-        }
-        break;
-      case 'interview':
-        router.push('/(app)/interview/preflight' as any);
-        break;
-      case 'resume_improvement':
-        router.push('/(app)/profile' as any);
-        break;
-      default:
-        router.push('/(app)/scenarios' as any);
-        break;
-    }
+    executeActivityAction(type, resourceId, router);
   };
 
   const isCareerGoalRequired = isError && ((error as any)?.response?.data?.code === 'ACTIVE_CAREER_GOAL_REQUIRED' || (error as any)?.status === 400);
@@ -189,87 +322,14 @@ export default function LearningPathScreen() {
 
               {/* Milestones Stepper Timeline */}
               {path.milestones.map((milestone) => (
-                <View key={milestone.id} style={{ gap: Spacing.two }}>
-                  <View style={styles.milestoneHeader}>
-                    <View style={[styles.milestoneIconRing, { backgroundColor: colors.secondaryLight }]}>
-                      <Ionicons name="flag" size={16} color={colors.secondary} />
-                    </View>
-                    <ThemedText type="subtitle" style={styles.milestoneTitle}>
-                      Cột Mốc #{milestone.sortOrder}: {milestone.title}
-                    </ThemedText>
-                  </View>
-
-                  <View style={styles.timelineList}>
-                    {milestone.activities.map((activity, aIdx) => (
-                      <View key={activity.id} style={styles.timelineRow}>
-                        {/* Timeline Node Line Connector */}
-                        <View style={styles.timelineNodeCol}>
-                          <View
-                            style={[
-                              styles.timelineDot,
-                              activity.status === 'completed'
-                                ? { backgroundColor: colors.accent, borderColor: colors.accentLight }
-                                : { backgroundColor: colors.warning, borderColor: colors.warningLight },
-                            ]}
-                          />
-                          {aIdx < milestone.activities.length - 1 && (
-                            <View style={[styles.timelineLine, { backgroundColor: colors.cardBorder }]} />
-                          )}
-                        </View>
-
-                        {/* Activity Glass Card */}
-                        <GlassCard
-                          style={[
-                            styles.activityCard,
-                            activity.status === 'completed' && { opacity: 0.8 },
-                          ]}
-                        >
-                          <View style={styles.cardHeaderRow}>
-                            <View style={[styles.typeBadge, { backgroundColor: colors.primaryLight }]}>
-                              <ThemedText style={[styles.typeBadgeText, { color: colors.primary }]}>
-                                {activity.type.toUpperCase().replace('_', ' ')}
-                              </ThemedText>
-                            </View>
-                            {activity.status === 'completed' ? (
-                              <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
-                                <Ionicons name="checkmark-circle" size={14} color={colors.accent} style={{ marginRight: 4 }} />
-                                <ThemedText style={[styles.statusText, { color: colors.accent }]}>Đã hoàn thành</ThemedText>
-                              </View>
-                            ) : (
-                              <View style={[styles.statusBadge, { backgroundColor: colors.warningLight }]}>
-                                <ThemedText style={[styles.statusText, { color: colors.warning }]}>Đang chờ</ThemedText>
-                              </View>
-                            )}
-                          </View>
-
-                          <ThemedText type="subtitle" style={styles.activityTitle}>{activity.title}</ThemedText>
-                          <ThemedText style={styles.activityDesc}>{activity.description}</ThemedText>
-
-                          <View style={styles.activityFooterRow}>
-                            <TouchableScale
-                              style={[styles.actionButton, { backgroundColor: colors.primary }]}
-                              onPress={() => handleActivityAction(activity.type, activity.resourceId)}
-                            >
-                              <ThemedText style={styles.actionButtonText}>Luyện Tập Ngay</ThemedText>
-                              <Ionicons name="arrow-forward" size={16} color="#fff" />
-                            </TouchableScale>
-
-                            {activity.status !== 'completed' && (
-                              <TouchableScale
-                                style={[styles.completeButton, { borderColor: colors.accent }]}
-                                onPress={() => completeActivityMutation.mutate(activity.id)}
-                                disabled={completeActivityMutation.isPending}
-                              >
-                                <Ionicons name="checkmark" size={16} color={colors.accent} style={{ marginRight: 4 }} />
-                                <ThemedText style={[styles.completeButtonText, { color: colors.accent }]}>Đánh Dấu Xong</ThemedText>
-                              </TouchableScale>
-                            )}
-                          </View>
-                        </GlassCard>
-                      </View>
-                    ))}
-                  </View>
-                </View>
+                <MilestoneSectionItem
+                  key={milestone.id}
+                  milestone={milestone}
+                  colors={colors}
+                  onActivityAction={handleActivityAction}
+                  onComplete={(actId) => completeActivityMutation.mutate(actId)}
+                  isCompleting={completeActivityMutation.isPending}
+                />
               ))}
             </>
           )}

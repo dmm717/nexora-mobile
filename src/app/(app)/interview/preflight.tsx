@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -30,6 +30,7 @@ const DIFFICULTIES = [
 
 export default function PreflightScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
@@ -83,6 +84,8 @@ export default function PreflightScreen() {
       return res;
     },
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['interview-history'] });
+      queryClient.invalidateQueries({ queryKey: ['progress-dashboard'] });
       router.replace(`/(app)/interview/${data.id}` as any);
     },
     onError: (err: any) => {

@@ -73,7 +73,15 @@ export default function ResumesScreen() {
     mutationFn: async (id: string) => {
       await profileApi.setPrimaryResume({ resumeId: id });
     },
-    onSuccess: () => {
+    onSuccess: (_, resumeId) => {
+      // Optimistic update
+      const selectedResume = resumes?.find(r => r.id === resumeId);
+      if (selectedResume) {
+        queryClient.setQueryData(['career-profile'], (old: any) => {
+          if (!old) return old;
+          return { ...old, primaryResume: selectedResume };
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
       queryClient.invalidateQueries({ queryKey: ['resumes'] });
       Alert.alert('Thành công', 'Đã đặt làm CV chính');

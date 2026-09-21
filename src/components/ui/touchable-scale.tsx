@@ -33,16 +33,16 @@ export const TouchableScale: React.FC<TouchableScaleProps> = ({
 
   const handlePressIn = (e: any) => {
     if (!disabled) {
-      scale.value = withSpring(scaleTo, { damping: 15, stiffness: 300 });
-      opacity.value = withSpring(activeOpacity, { damping: 15, stiffness: 300 });
+      scale.set(withSpring(scaleTo, { damping: 15, stiffness: 300 }));
+      opacity.set(withSpring(activeOpacity, { damping: 15, stiffness: 300 }));
     }
     onPressIn?.(e);
   };
 
   const handlePressOut = (e: any) => {
     if (!disabled) {
-      scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-      opacity.value = withSpring(1, { damping: 15, stiffness: 300 });
+      scale.set(withSpring(1, { damping: 15, stiffness: 300 }));
+      opacity.set(withSpring(1, { damping: 15, stiffness: 300 }));
     }
     onPressOut?.(e);
   };

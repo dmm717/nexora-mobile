@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -24,6 +24,7 @@ export default function ReportScreen() {
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
+  const queryClient = useQueryClient();
 
   const [selectedQuestionForPractice, setSelectedQuestionForPractice] = useState<string | null>(null);
   const [practiceReason, setPracticeReason] = useState('rubric_weakness');
@@ -46,6 +47,8 @@ export default function ReportScreen() {
       return res;
     },
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['interview-history'] });
+      queryClient.invalidateQueries({ queryKey: ['interview-report', id] });
       setShowPracticeModal(false);
       router.replace(`/(app)/interview/${data.id}` as any);
     },
@@ -136,7 +139,7 @@ export default function ReportScreen() {
               <ThemedText type="subtitle" style={styles.sectionHeader}>Chi Tiết Đánh Giá Theo Câu Hỏi</ThemedText>
               
               {report.questionReviews.map((review, idx) => (
-                <View key={review.questionId || idx} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                <View key={review.questionId || `q-${review.sequence}-${idx}`} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
                   <View style={styles.questionReviewHeader}>
                     <View style={[styles.badge, { backgroundColor: colors.primary }]}>
                       <ThemedText style={styles.badgeText}>Câu #{review.sequence}</ThemedText>

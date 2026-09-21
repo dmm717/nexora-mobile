@@ -121,7 +121,7 @@ export default function SkillProfileScreen() {
                           <ThemedText style={styles.sourcesHeader}>Nguồn minh chứng:</ThemedText>
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                             {comp.sources.map((src, idx) => (
-                              <View key={idx} style={[styles.sourceChip, { borderColor: colors.cardBorder }]}>
+                              <View key={`${src.sourceType}-${idx}`} style={[styles.sourceChip, { borderColor: colors.cardBorder }]}>
                                 <ThemedText style={styles.sourceText}>
                                   {src.sourceType.toUpperCase()} ({src.evidenceCount})
                                 </ThemedText>
@@ -147,7 +147,7 @@ export default function SkillProfileScreen() {
 
                   <View style={{ gap: Spacing.two, marginTop: Spacing.one }}>
                     {profile.weaknessSignals.map((signal, idx) => (
-                      <View key={idx} style={[styles.signalRow, { backgroundColor: colors.dangerLight }]}>
+                      <View key={`${signal.label}-${idx}`} style={[styles.signalRow, { backgroundColor: colors.dangerLight }]}>
                         <Ionicons name="alert-circle" size={18} color={colors.danger} />
                         <View style={{ flex: 1 }}>
                           <ThemedText style={[styles.signalLabel, { color: colors.danger }]}>{signal.label}</ThemedText>

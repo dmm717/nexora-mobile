@@ -107,156 +107,193 @@ export default function ScenarioDetailScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Scenario Details */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.cardHeaderRow}>
-              <View style={[styles.badge, { backgroundColor: colors.primaryLight }]}>
-                <ThemedText style={[styles.badgeText, { color: colors.primary }]}>{scenario.categoryName}</ThemedText>
-              </View>
-              <View style={[styles.badge, { backgroundColor: colors.accentLight }]}>
-                <ThemedText style={[styles.badgeText, { color: colors.accent }]}>{scenario.difficulty.toUpperCase()}</ThemedText>
-              </View>
-            </View>
+          <ScenarioHeaderCard scenario={scenario} colors={colors} />
 
-            <ThemedText type="subtitle" style={styles.scenarioTitle}>{scenario.title}</ThemedText>
-            <ThemedText style={styles.scenarioSummary}>{scenario.summary}</ThemedText>
+          <ScenarioHistoryCard history={history} colors={colors} />
 
-            <View style={[styles.contentBox, { backgroundColor: colors.backgroundElement }]}>
-              <ThemedText style={styles.contentHeader}>📌 Đề Bài Tình Huống:</ThemedText>
-              <ThemedText style={styles.contentText}>{scenario.content}</ThemedText>
-            </View>
-          </View>
+          <ScenarioAnswerCard
+            colors={colors}
+            answer={answer}
+            setAnswer={setAnswer}
+            isRecording={isRecording}
+            toggleSpeech={toggleSpeech}
+            onSubmit={() => submitAttemptMutation.mutate()}
+            isSubmitting={submitAttemptMutation.isPending}
+          />
 
-          {/* History Comparison Header */}
-          {history && history.comparison && (
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <ThemedText type="subtitle" style={styles.cardTitle}>Lịch Sử & So Sánh Kết Quả</ThemedText>
-              <View style={styles.historyStatsRow}>
-                <View style={styles.statItem}>
-                  <ThemedText style={styles.statLabel}>Lần mới nhất</ThemedText>
-                  <ThemedText style={[styles.statValue, { color: colors.primary }]}>
-                    {history.latestScore !== null && history.latestScore !== undefined ? `${history.latestScore}/100` : '—'}
-                  </ThemedText>
-                </View>
-
-                <View style={styles.statItem}>
-                  <ThemedText style={styles.statLabel}>Cao nhất</ThemedText>
-                  <ThemedText style={[styles.statValue, { color: colors.accent }]}>
-                    {history.bestScore !== null && history.bestScore !== undefined ? `${history.bestScore}/100` : '—'}
-                  </ThemedText>
-                </View>
-
-                {history.comparison.delta !== null && history.comparison.delta !== undefined && (
-                  <View style={styles.statItem}>
-                    <ThemedText style={styles.statLabel}>Mức cải thiện</ThemedText>
-                    <ThemedText style={[styles.statValue, { color: history.comparison.improved ? colors.accent : colors.danger }]}>
-                      {history.comparison.delta > 0 ? `+${history.comparison.delta}` : `${history.comparison.delta}`}
-                    </ThemedText>
-                  </View>
-                )}
-              </View>
-            </View>
-          )}
-
-          {/* Answer & Speech Input */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.cardHeaderRow}>
-              <Ionicons name="create-outline" size={20} color={colors.primary} />
-              <ThemedText type="subtitle" style={styles.cardTitle}>Phương Án Xử Lý Của Bạn</ThemedText>
-            </View>
-
-            <TextInput
-              style={[
-                styles.textArea,
-                { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }
-              ]}
-              placeholder="Nhập hoặc nhấn Micro thu âm phương án xử lý tình huống..."
-              placeholderTextColor={colors.textMuted}
-              multiline
-              numberOfLines={6}
-              value={answer}
-              onChangeText={setAnswer}
-            />
-
-            <View style={styles.actionRow}>
-              <TouchableOpacity
-                style={[styles.micButton, isRecording && { backgroundColor: colors.danger }]}
-                onPress={toggleSpeech}
-              >
-                <Ionicons name={isRecording ? 'mic-off' : 'mic'} size={20} color="#fff" />
-                <ThemedText style={styles.micButtonText}>{isRecording ? 'Dừng' : 'Thu Âm'}</ThemedText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.submitButton,
-                  { backgroundColor: colors.primary },
-                  (!answer.trim() || submitAttemptMutation.isPending) && styles.disabledButton
-                ]}
-                onPress={() => submitAttemptMutation.mutate()}
-                disabled={!answer.trim() || submitAttemptMutation.isPending}
-              >
-                {submitAttemptMutation.isPending ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="send" size={18} color="#fff" style={{ marginRight: 6 }} />
-                    <ThemedText style={styles.submitButtonText}>Nộp Bài Làm</ThemedText>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Result Card */}
           {attemptId && activeAttempt && (
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <View style={styles.cardHeaderRow}>
-                <Ionicons name="analytics" size={20} color={colors.warning} />
-                <ThemedText type="subtitle" style={styles.cardTitle}>Kết Quả Xử Lý Tình Huống AI</ThemedText>
-              </View>
-
-              {(activeAttempt.status === 'draft' || activeAttempt.status === 'processing' || activeAttempt.status === 'queued') && (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color={colors.primary} style={{ marginBottom: Spacing.two }} />
-                  <ThemedText style={{ textAlign: 'center', opacity: 0.8 }}>
-                    AI đang đánh giá phương án xử lý tình huống của bạn...
-                  </ThemedText>
-                </View>
-              )}
-
-              {activeAttempt.status === 'completed' && (
-                <View style={{ gap: Spacing.two }}>
-                  <View style={styles.successRow}>
-                    <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
-                    <ThemedText style={[styles.successText, { color: colors.accent }]}>Hoàn tất đánh giá!</ThemedText>
-                  </View>
-
-                  <View style={[styles.evaluationBox, { backgroundColor: colors.backgroundElement }]}>
-                    <ThemedText style={styles.evaluationText}>
-                      {activeAttempt.evaluation
-                        ? typeof activeAttempt.evaluation === 'string'
-                          ? activeAttempt.evaluation
-                          : JSON.stringify(activeAttempt.evaluation, null, 2)
-                        : 'Phương án xử lý đã được ghi nhận.'}
-                    </ThemedText>
-                  </View>
-                </View>
-              )}
-
-              {activeAttempt.status === 'failed' && (
-                <View style={styles.errorRow}>
-                  <Ionicons name="alert-circle" size={22} color={colors.danger} />
-                  <ThemedText style={{ color: colors.danger }}>Đánh giá thất bại. Vui lòng thử lại.</ThemedText>
-                </View>
-              )}
-            </View>
+            <ScenarioResultCard activeAttempt={activeAttempt} colors={colors} />
           )}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
 }
+
+const ScenarioHeaderCard = React.memo(({ scenario, colors }: { scenario: any; colors: any }) => (
+  <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={styles.cardHeaderRow}>
+      <View style={[styles.badge, { backgroundColor: colors.primaryLight }]}>
+        <ThemedText style={[styles.badgeText, { color: colors.primary }]}>{scenario.categoryName}</ThemedText>
+      </View>
+      <View style={[styles.badge, { backgroundColor: colors.accentLight }]}>
+        <ThemedText style={[styles.badgeText, { color: colors.accent }]}>{scenario.difficulty.toUpperCase()}</ThemedText>
+      </View>
+    </View>
+
+    <ThemedText type="subtitle" style={styles.scenarioTitle}>{scenario.title}</ThemedText>
+    <ThemedText style={styles.scenarioSummary}>{scenario.summary}</ThemedText>
+
+    <View style={[styles.contentBox, { backgroundColor: colors.backgroundElement }]}>
+      <ThemedText style={styles.contentHeader}>📌 Đề Bài Tình Huống:</ThemedText>
+      <ThemedText style={styles.contentText}>{scenario.content}</ThemedText>
+    </View>
+  </View>
+));
+
+const ScenarioHistoryCard = React.memo(({ history, colors }: { history: any; colors: any }) => {
+  if (!history || !history.comparison) return null;
+  return (
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+      <ThemedText type="subtitle" style={styles.cardTitle}>Lịch Sử & So Sánh Kết Quả</ThemedText>
+      <View style={styles.historyStatsRow}>
+        <View style={styles.statItem}>
+          <ThemedText style={styles.statLabel}>Lần mới nhất</ThemedText>
+          <ThemedText style={[styles.statValue, { color: colors.primary }]}>
+            {history.latestScore !== null && history.latestScore !== undefined ? `${history.latestScore}/100` : '—'}
+          </ThemedText>
+        </View>
+
+        <View style={styles.statItem}>
+          <ThemedText style={styles.statLabel}>Cao nhất</ThemedText>
+          <ThemedText style={[styles.statValue, { color: colors.accent }]}>
+            {history.bestScore !== null && history.bestScore !== undefined ? `${history.bestScore}/100` : '—'}
+          </ThemedText>
+        </View>
+
+        {history.comparison.delta !== null && history.comparison.delta !== undefined && (
+          <View style={styles.statItem}>
+            <ThemedText style={styles.statLabel}>Mức cải thiện</ThemedText>
+            <ThemedText style={[styles.statValue, { color: history.comparison.improved ? colors.accent : colors.danger }]}>
+              {history.comparison.delta > 0 ? `+${history.comparison.delta}` : `${history.comparison.delta}`}
+            </ThemedText>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+});
+
+const ScenarioAnswerCard = React.memo(({
+  colors,
+  answer,
+  setAnswer,
+  isRecording,
+  toggleSpeech,
+  onSubmit,
+  isSubmitting,
+}: {
+  colors: any;
+  answer: string;
+  setAnswer: (text: string) => void;
+  isRecording: boolean;
+  toggleSpeech: () => void;
+  onSubmit: () => void;
+  isSubmitting: boolean;
+}) => (
+  <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={styles.cardHeaderRow}>
+      <Ionicons name="create-outline" size={20} color={colors.primary} />
+      <ThemedText type="subtitle" style={styles.cardTitle}>Phương Án Xử Lý Của Bạn</ThemedText>
+    </View>
+
+    <TextInput
+      style={[
+        styles.textArea,
+        { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }
+      ]}
+      placeholder="Nhập hoặc nhấn Micro thu âm phương án xử lý tình huống..."
+      placeholderTextColor={colors.textMuted}
+      multiline
+      numberOfLines={6}
+      value={answer}
+      onChangeText={setAnswer}
+    />
+
+    <View style={styles.actionRow}>
+      <TouchableOpacity
+        style={[styles.micButton, isRecording && { backgroundColor: colors.danger }]}
+        onPress={toggleSpeech}
+      >
+        <Ionicons name={isRecording ? 'mic-off' : 'mic'} size={20} color="#fff" />
+        <ThemedText style={styles.micButtonText}>{isRecording ? 'Dừng' : 'Thu Âm'}</ThemedText>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.submitButton,
+          { backgroundColor: colors.primary },
+          (!answer.trim() || isSubmitting) && styles.disabledButton
+        ]}
+        onPress={onSubmit}
+        disabled={!answer.trim() || isSubmitting}
+      >
+        {isSubmitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <>
+            <Ionicons name="send" size={18} color="#fff" style={{ marginRight: 6 }} />
+            <ThemedText style={styles.submitButtonText}>Nộp Bài Làm</ThemedText>
+          </>
+        )}
+      </TouchableOpacity>
+    </View>
+  </View>
+));
+
+const ScenarioResultCard = React.memo(({ activeAttempt, colors }: { activeAttempt: any; colors: any }) => (
+  <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={styles.cardHeaderRow}>
+      <Ionicons name="analytics" size={20} color={colors.warning} />
+      <ThemedText type="subtitle" style={styles.cardTitle}>Kết Quả Xử Lý Tình Huống AI</ThemedText>
+    </View>
+
+    {(activeAttempt.status === 'draft' || activeAttempt.status === 'processing' || activeAttempt.status === 'queued') && (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginBottom: Spacing.two }} />
+        <ThemedText style={{ textAlign: 'center', opacity: 0.8 }}>
+          AI đang đánh giá phương án xử lý tình huống của bạn...
+        </ThemedText>
+      </View>
+    )}
+
+    {activeAttempt.status === 'completed' && (
+      <View style={{ gap: Spacing.two }}>
+        <View style={styles.successRow}>
+          <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
+          <ThemedText style={[styles.successText, { color: colors.accent }]}>Hoàn tất đánh giá!</ThemedText>
+        </View>
+
+        <View style={[styles.evaluationBox, { backgroundColor: colors.backgroundElement }]}>
+          <ThemedText style={styles.evaluationText}>
+            {activeAttempt.evaluation
+              ? typeof activeAttempt.evaluation === 'string'
+                ? activeAttempt.evaluation
+                : JSON.stringify(activeAttempt.evaluation, null, 2)
+              : 'Phương án xử lý đã được ghi nhận.'}
+          </ThemedText>
+        </View>
+      </View>
+    )}
+
+    {activeAttempt.status === 'failed' && (
+      <View style={styles.errorRow}>
+        <Ionicons name="alert-circle" size={22} color={colors.danger} />
+        <ThemedText style={{ color: colors.danger }}>Đánh giá thất bại. Vui lòng thử lại.</ThemedText>
+      </View>
+    )}
+  </View>
+));
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

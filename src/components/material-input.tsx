@@ -27,7 +27,6 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
   secureTextEntry,
   onFocus,
   onBlur,
-  style,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -43,20 +42,16 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
 
   const handleFocus = (e: any) => {
     setIsFocused(true);
-    focusAnim.value = withTiming(1, { duration: 200 });
+    focusAnim.set(withTiming(1, { duration: 200 }));
     onFocus?.(e);
   };
 
   const handleBlur = (e: any) => {
     setIsFocused(false);
     if (!value) {
-      focusAnim.value = withTiming(0, { duration: 200 });
+      focusAnim.set(withTiming(0, { duration: 200 }));
     }
     onBlur?.(e);
-  };
-
-  const handleContainerPress = () => {
-    inputRef.current?.focus();
   };
 
   // Label animation style

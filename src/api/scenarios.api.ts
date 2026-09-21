@@ -1,7 +1,6 @@
 import { apiClient } from './client';
 import {
   ScenarioCategoryResponse,
-  ScenarioCardResponse,
   ScenarioPageResponse,
   ScenarioDetailResponse,
   ScenarioAttemptResponse,

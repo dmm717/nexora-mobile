@@ -23,26 +23,30 @@ export function AnimatedHandTrigger({ size = 22 }: AnimatedHandTriggerProps) {
   const translateY = useSharedValue(0);
 
   useEffect(() => {
-    scale.value = withRepeat(
-      withSequence(
-        withTiming(1.22, { duration: 400, easing: Easing.out(Easing.quad) }),
-        withTiming(0.92, { duration: 350, easing: Easing.in(Easing.quad) }),
-        withTiming(1, { duration: 250 })
-      ),
-      -1,
-      true
+    scale.set(
+      withRepeat(
+        withSequence(
+          withTiming(1.22, { duration: 400, easing: Easing.out(Easing.quad) }),
+          withTiming(0.92, { duration: 350, easing: Easing.in(Easing.quad) }),
+          withTiming(1, { duration: 250 })
+        ),
+        -1,
+        true
+      )
     );
 
-    translateY.value = withRepeat(
-      withSequence(
-        withTiming(-2, { duration: 400 }),
-        withTiming(2, { duration: 400 }),
-        withTiming(0, { duration: 200 })
-      ),
-      -1,
-      true
+    translateY.set(
+      withRepeat(
+        withSequence(
+          withTiming(-2, { duration: 400 }),
+          withTiming(2, { duration: 400 }),
+          withTiming(0, { duration: 200 })
+        ),
+        -1,
+        true
+      )
     );
-  }, []);
+  }, [scale, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

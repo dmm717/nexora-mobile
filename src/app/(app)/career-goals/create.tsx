@@ -68,7 +68,7 @@ export default function CreateCareerGoalScreen() {
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Vai trò mục tiêu (Target Role) *</ThemedText>
               <TextInput
-                style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.inputBorder }]}
+                style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
                 placeholder="VD: Software Engineer, Product Manager"
                 placeholderTextColor={colors.textMuted}
                 value={form.targetRole}
@@ -79,7 +79,7 @@ export default function CreateCareerGoalScreen() {
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Cấp bậc (Seniority) *</ThemedText>
               <TextInput
-                style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.inputBorder }]}
+                style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
                 placeholder="VD: Senior, Middle, Junior, Intern"
                 placeholderTextColor={colors.textMuted}
                 value={form.seniority}
@@ -90,7 +90,7 @@ export default function CreateCareerGoalScreen() {
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Ngành (Industry)</ThemedText>
               <TextInput
-                style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.inputBorder }]}
+                style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
                 placeholder="VD: Fintech, E-commerce, AI"
                 placeholderTextColor={colors.textMuted}
                 value={form.industry}
@@ -101,7 +101,7 @@ export default function CreateCareerGoalScreen() {
             <View style={styles.inputGroup}>
               <ThemedText style={styles.label}>Công ty mục tiêu (Target Company)</ThemedText>
               <TextInput
-                style={[styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.inputBorder }]}
+                style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
                 placeholder="VD: Google, Shopee, VNG"
                 placeholderTextColor={colors.textMuted}
                 value={form.targetCompany}

@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient, API_BASE_URL } from './client';
 import { PresignUploadRequest, UploadIntent, FinalizeResumeRequest, ResumeView } from './types';
 
 export const resumesApi = {
@@ -14,8 +14,18 @@ export const resumesApi = {
   /**
    * Upload file bytes (binary) lên URL đã presigned
    */
-  uploadRawBytes: async (uploadUrl: string, fileBytes: ArrayBuffer, contentType: string): Promise<void> => {
-    const response = await fetch(uploadUrl, {
+  uploadRawBytes: async (uploadUrl: string, fileBytes: ArrayBuffer | Blob, contentType: string): Promise<void> => {
+    let finalUrl = uploadUrl;
+    if (uploadUrl.startsWith('/')) {
+      try {
+        const baseUrlObj = new URL(API_BASE_URL);
+        finalUrl = `${baseUrlObj.origin}${uploadUrl}`;
+      } catch {
+        finalUrl = `${API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${uploadUrl}`;
+      }
+    }
+
+    const response = await fetch(finalUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': contentType,
