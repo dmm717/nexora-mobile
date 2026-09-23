@@ -89,4 +89,24 @@ export const interviewApi = {
     });
     return 'data' in res.data && res.data.data ? res.data.data : (res.data as InterviewView);
   },
+
+  retryQuestionPreparation: async (id: string, idempotencyKey?: string): Promise<InterviewView> => {
+    const key = idempotencyKey || uuid.v4().toString();
+    const res = await apiClient.post<{ data?: InterviewView } | InterviewView>(`/interviews/${id}/questions/retry`, {}, {
+      headers: {
+        'Idempotency-Key': key,
+      },
+    });
+    return 'data' in res.data && res.data.data ? res.data.data : (res.data as InterviewView);
+  },
+
+  retryResults: async (id: string, idempotencyKey?: string): Promise<InterviewView> => {
+    const key = idempotencyKey || uuid.v4().toString();
+    const res = await apiClient.post<{ data?: InterviewView } | InterviewView>(`/interviews/${id}/results/retry`, {}, {
+      headers: {
+        'Idempotency-Key': key,
+      },
+    });
+    return 'data' in res.data && res.data.data ? res.data.data : (res.data as InterviewView);
+  },
 };

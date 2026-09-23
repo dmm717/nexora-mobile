@@ -150,12 +150,6 @@ export const CurrentQuestionCard = React.memo(({
             <ThemedText style={[styles.kindChipText, { color: colors.warning }]}>Hỏi đào sâu</ThemedText>
           </View>
         )}
-        <TouchableOpacity
-          style={[styles.speakerButton, { backgroundColor: colors.primaryLight }]}
-          onPress={() => ttsService.speak(currentQuestion.content)}
-        >
-          <Ionicons name="volume-medium" size={18} color={colors.primary} />
-        </TouchableOpacity>
       </View>
 
       <ThemedText style={styles.questionContent}>

@@ -15,6 +15,8 @@ import { SkeletonCard } from '@/components/ui/skeleton-loader';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { styles } from '@/styles/learning-path.styles';
 
+import { getLocalizedCompetencyLabel } from '@/utils/competencyLocalization';
+
 interface ActivityCardProps {
   activity: any;
   aIdx: number;
@@ -58,11 +60,22 @@ const ActivityCardItem = React.memo(({
       ]}
     >
       <View style={styles.cardHeaderRow}>
-        <View style={[styles.typeBadge, { backgroundColor: colors.primaryLight }]}>
-          <ThemedText style={[styles.typeBadgeText, { color: colors.primary }]}>
-            {activity.type.toUpperCase().replace('_', ' ')}
-          </ThemedText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1 }}>
+          <View style={[styles.typeBadge, { backgroundColor: colors.primaryLight }]}>
+            <ThemedText style={[styles.typeBadgeText, { color: colors.primary }]}>
+              {activity.type.toUpperCase().replace('_', ' ')}
+            </ThemedText>
+          </View>
+          {Boolean(activity.competencyCode) && (
+            <View style={[styles.typeBadge, { backgroundColor: colors.backgroundElement || colors.cardBorder }]}>
+              <Ionicons name="ribbon-outline" size={12} color={colors.primary} style={{ marginRight: 3 }} />
+              <ThemedText style={[styles.typeBadgeText, { color: colors.text }]}>
+                {getLocalizedCompetencyLabel(activity.competencyCode, activity.type)}
+              </ThemedText>
+            </View>
+          )}
         </View>
+
         {activity.status === 'completed' ? (
           <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
             <Ionicons name="checkmark-circle" size={14} color={colors.accent} style={{ marginRight: 4 }} />

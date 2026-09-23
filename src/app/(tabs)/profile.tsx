@@ -13,6 +13,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AmbientBackground } from '@/components/ui/ambient-background';
+import { ProductFeedbackCard } from '@/components/profile/ProductFeedbackCard';
 import { styles } from '@/styles/profile.styles';
 
 function useUserProfileData() {
@@ -105,6 +106,9 @@ export default function ProfileScreen() {
                 onNavigateCareerGoals={() => router.push('/(app)/career-goals' as any)}
                 onNavigateResumes={() => router.push('/(app)/resumes' as any)}
               />
+
+              {/* Product Feedback Card */}
+              <ProductFeedbackCard />
 
               {/* Red Logout Button */}
               <TouchableScale

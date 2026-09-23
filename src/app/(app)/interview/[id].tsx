@@ -12,6 +12,7 @@ import { useInterviewSession } from '@/components/interview/useInterviewSession'
 import { AiInterviewerPresence } from '@/components/interview/AiInterviewerPresence';
 import { AudioSpeechDock } from '@/components/interview/AudioSpeechDock';
 import { QuickCoachingModal } from '@/components/interview/QuickCoachingModal';
+import { GlassCard } from '@/components/ui/glass-card';
 import {
   CurrentQuestionCard,
   Q2BoundaryModal,
@@ -23,12 +24,13 @@ import {
 import { styles } from '@/styles/interview-room.styles';
 
 export default function InterviewRoomScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, micMode } = useLocalSearchParams<{ id: string; micMode?: string }>();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
   const [showExitModal, setShowExitModal] = useState(false);
+  const [isCameraOn, setIsCameraOn] = useState(false);
 
   const {
     router,
@@ -54,13 +56,110 @@ export default function InterviewRoomScreen() {
     submitAnswerMutation,
     completeMutation,
     continueMutation,
+    isMicAllowed,
   } = useInterviewSession(id);
+
+  const isMicEnabled = true;
 
   if (isLoading || !interview) {
     return (
       <ThemedView style={styles.centerContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
         <ThemedText style={{ marginTop: Spacing.two }}>Đang tải phòng phỏng vấn...</ThemedText>
+      </ThemedView>
+    );
+  }
+
+  // 1. Preparing State (status === 'starting')
+  if (interview.status === 'starting') {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
+            <TouchableOpacity onPress={() => setShowExitModal(true)} style={styles.exitSessionBtn}>
+              <Ionicons name="log-out-outline" size={16} color={colors.danger} />
+              <ThemedText style={[styles.exitSessionText, { color: colors.danger }]}>Thoát phiên</ThemedText>
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="title" style={styles.title}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
+              <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {(interview.interviewType || '').toUpperCase()}</ThemedText>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
+              <ThemedText style={[styles.statusText, { color: colors.accent }]}>
+                STARTING
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.four }}>
+            <GlassCard style={{ padding: Spacing.five, borderRadius: 24, alignItems: 'center', width: '100%', maxWidth: 450, gap: Spacing.three }}>
+              <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: Spacing.two }} />
+              <ThemedText type="title" style={{ textAlign: 'center', fontSize: 18, fontWeight: '700' }}>
+                Đang chuẩn bị câu hỏi phỏng vấn...
+              </ThemedText>
+              <ThemedText style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
+                Nexora AI đang tổng hợp các tình huống phù hợp nhất với vị trí {interview.role || 'mục tiêu'}. Vui lòng chờ trong giây lát.
+              </ThemedText>
+            </GlassCard>
+          </View>
+
+          <ExitConfirmationModal
+            visible={showExitModal}
+            colors={colors}
+            onStay={() => setShowExitModal(false)}
+            onLeave={() => {
+              setShowExitModal(false);
+              router.replace('/(app)/interview/history' as any);
+            }}
+          />
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
+  // 2. Processing / Completing State (status === 'completing' || status === 'processing')
+  if (interview.status === 'completing' || interview.status === 'processing') {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
+            <TouchableOpacity onPress={() => setShowExitModal(true)} style={styles.exitSessionBtn}>
+              <Ionicons name="log-out-outline" size={16} color={colors.danger} />
+              <ThemedText style={[styles.exitSessionText, { color: colors.danger }]}>Thoát phiên</ThemedText>
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="title" style={styles.title}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
+              <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {(interview.interviewType || '').toUpperCase()}</ThemedText>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
+              <ThemedText style={[styles.statusText, { color: colors.accent }]}>
+                {interview.status.toUpperCase()}
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.four }}>
+            <GlassCard style={{ padding: Spacing.five, borderRadius: 24, alignItems: 'center', width: '100%', maxWidth: 450, gap: Spacing.three }}>
+              <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: Spacing.two }} />
+              <ThemedText type="title" style={{ textAlign: 'center', fontSize: 18, fontWeight: '700' }}>
+                Đang chấm điểm & Tổng hợp báo cáo...
+              </ThemedText>
+              <ThemedText style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
+                AI đang hoàn tất đánh giá 4 trục Rubric và mô hình STAR cho buổi phỏng vấn.
+              </ThemedText>
+            </GlassCard>
+          </View>
+
+          <ExitConfirmationModal
+            visible={showExitModal}
+            colors={colors}
+            onStay={() => setShowExitModal(false)}
+            onLeave={() => {
+              setShowExitModal(false);
+              router.replace('/(app)/interview/history' as any);
+            }}
+          />
+        </SafeAreaView>
       </ThemedView>
     );
   }
@@ -92,8 +191,9 @@ export default function InterviewRoomScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Header Bar */}
         <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => setShowExitModal(true)} style={styles.backButton}>
-            <Ionicons name="close" size={24} color={colors.text} />
+          <TouchableOpacity onPress={() => setShowExitModal(true)} style={styles.exitSessionBtn}>
+            <Ionicons name="log-out-outline" size={16} color={colors.danger} />
+            <ThemedText style={[styles.exitSessionText, { color: colors.danger }]}>Thoát phiên</ThemedText>
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <ThemedText type="title" style={styles.title}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
@@ -152,6 +252,9 @@ export default function InterviewRoomScreen() {
             onFinishEarly={handleEarlyExit}
             canFinishEarly={answeredCount > 0}
             colors={colors}
+            isMicEnabled={isMicEnabled}
+            isCameraOn={isCameraOn}
+            onToggleCamera={() => setIsCameraOn(prev => !prev)}
           />
         )}
 

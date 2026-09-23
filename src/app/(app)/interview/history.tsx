@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, RefreshControl } from 'react-native';
+import { ActivityIndicator, StyleSheet, ScrollView, View, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -162,10 +162,25 @@ export default function InterviewHistoryScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         {/* Header Navigation */}
         <View style={[styles.header, { borderColor: colors.cardBorder }]}>
-          <TouchableScale style={styles.backButton} onPress={() => router.replace('/(tabs)/practice' as any)}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </TouchableScale>
-          <ThemedText style={styles.headerTitle}>Lịch Sử Phỏng Vấn</ThemedText>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)/interview' as any);
+              }
+            }}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <ThemedText style={[styles.headerTitle, { flex: 1 }]}>Lịch Sử Phỏng Vấn</ThemedText>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.replace('/(tabs)/home' as any)}
+          >
+            <Ionicons name="home-outline" size={22} color={colors.primary} />
+          </TouchableOpacity>
         </View>
 
         <ScrollView
@@ -342,12 +357,12 @@ const HistoryListItemCard = React.memo(({
   } else if (statusNorm === 'starting') {
     statusLabel = 'Đang khởi tạo';
     statusVariant = 'info';
-  } else if (statusNorm === 'completing' || statusNorm === 'processing') {
+  } else if (statusNorm === 'completing' || statusNorm === 'evaluating' || statusNorm === 'processing') {
     statusLabel = 'Đang chấm điểm';
     statusVariant = 'warning';
   } else if (statusNorm === 'failed') {
     statusLabel = 'Thất bại';
-    statusVariant = 'danger';
+    statusVariant = 'error';
   } else if (statusNorm === 'abandoned') {
     statusLabel = 'Đã hủy';
     statusVariant = 'neutral';

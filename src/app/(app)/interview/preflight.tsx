@@ -926,7 +926,7 @@ export default function PreflightScreen() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['interview-history'] });
       queryClient.invalidateQueries({ queryKey: ['progress-dashboard'] });
-      router.replace(`/interview/${data.id}?micMode=${micMode}` as any);
+      router.replace(`/(app)/interview/${data.id}?micMode=${micMode}` as any);
     },
     onError: (err: any) => {
       Alert.alert('Lỗi', err.message || 'Không thể khởi tạo phiên phỏng vấn. Vui lòng thử lại.');
@@ -996,7 +996,7 @@ export default function PreflightScreen() {
           onStay={() => setShowExitModal(false)}
           onLeave={() => {
             setShowExitModal(false);
-            router.push('/interview/history' as any);
+            router.push('/(app)/interview/history' as any);
           }}
         />
       </SafeAreaView>

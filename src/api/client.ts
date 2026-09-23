@@ -88,15 +88,24 @@ apiClient.interceptors.response.use(
 
     const normalizedError = new AppError(errorCode, extractedMessage, requestId, error);
 
-    // Observability Logging
-    logger.error(`API Error [${error.config?.method?.toUpperCase() || 'HTTP'}] ${error.config?.url}`, error, {
-      requestId,
-      code: errorCode,
-      status: error.response?.status,
-    });
+    const isReportProcessing =
+      error.response?.status === 409 ||
+      errorCode === 'INTERVIEW_REPORT_PROCESSING';
+
+    // Observability Logging (skip expected transient polling status 409)
+    if (!isReportProcessing) {
+      logger.error(`API Error [${error.config?.method?.toUpperCase() || 'HTTP'}] ${error.config?.url}`, error, {
+        requestId,
+        code: errorCode,
+        status: error.response?.status,
+      });
+    }
 
     // Auto-trigger Toast for API failures (displaying ONLY Vietnamese message, NO raw error codes)
-    if (!error.response) {
+    // Skip toast for transient polling status (409 INTERVIEW_REPORT_PROCESSING)
+    if (isReportProcessing) {
+      // Do not trigger toast error for expected report processing polling state
+    } else if (!error.response) {
       toast.error('Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.');
     } else if (error.response.status === 401) {
       // Handled via refresh flow below

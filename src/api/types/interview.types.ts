@@ -45,9 +45,17 @@ export interface InterviewContinuationView {
   canUpgradeAndContinue: boolean;
 }
 
+export interface EvaluationProgressView {
+  total: number;
+  queued: number;
+  processing: number;
+  ready: number;
+  failed: number;
+}
+
 export interface InterviewView {
   id: string;
-  status: string; // 'starting' | 'active' | 'completing' | 'completed' | 'failed'
+  status: string; // 'starting' | 'active' | 'completing' | 'evaluating' | 'completed' | 'failed' | 'abandoned'
   role: string;
   seniority: string;
   interviewType: string;
@@ -58,6 +66,9 @@ export interface InterviewView {
   createdAt: string;
   updatedAt: string;
   continuation?: InterviewContinuationView | null;
+  reportState?: 'none' | 'processing' | 'ready' | 'failed';
+  resultState?: 'collecting' | 'processing' | 'ready' | 'failed';
+  evaluationProgress?: EvaluationProgressView | null;
 }
 
 export interface AnswerResult {
@@ -151,7 +162,7 @@ export interface ReportSampleView {
 export interface ReportView {
   id: string;
   interviewId: string;
-  overallScore: number;
+  overallScore: number | null;
   rubric: any;
   strengths: any;
   gaps: any;

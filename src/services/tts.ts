@@ -1,5 +1,36 @@
 import { Platform } from 'react-native';
 import { getInterviewSpeechAuthorization } from './speechTokenManager';
+import { INTERVIEW_SPEECH_CONFIG } from '@/config/speech';
+
+function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '&':
+        return '&amp;';
+      case '\'':
+        return '&apos;';
+      case '"':
+        return '&quot;';
+      default:
+        return c;
+    }
+  });
+}
+
+function buildSingleVoiceSsml(text: string, voiceName: string = INTERVIEW_SPEECH_CONFIG.voiceName): string {
+  const escaped = escapeXml(text.trim());
+  return (
+    `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xml:lang='vi-VN'>` +
+    `<voice name='${voiceName}'>` +
+    `<prosody rate='0.95'>${escaped}</prosody>` +
+    `</voice>` +
+    `</speak>`
+  );
+}
 
 class TTSService {
   private isSpeaking = false;
@@ -16,7 +47,6 @@ class TTSService {
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return;
 
-        // Search for native Vietnamese voices (Google Tiếng Việt, Microsoft An, Linh, HoaiMy, etc.)
         const viVoice = voices.find((v) => {
           const lang = (v.lang || '').toLowerCase();
           const name = (v.name || '').toLowerCase();
@@ -66,7 +96,6 @@ class TTSService {
       return;
     }
 
-    // Try Azure REST Cloud TTS if interviewId is present
     if (interviewId) {
       void this.speakWithAzureRest(text, interviewId, actualOnDone, onError);
       return;
@@ -85,9 +114,10 @@ class TTSService {
       this.isSpeaking = true;
       const auth = await getInterviewSpeechAuthorization(interviewId);
 
-      const ssml = `<speak version='1.0' xml:lang='vi-VN'><voice xml:lang='vi-VN' xml:gender='Female' name='vi-VN-HoaiMyNeural'>${escapeXml(text)}</voice></speak>`;
+      // Attempt 1: Dragon HD Multilingual Voice matching nexora-fe (INTERVIEW_SPEECH_CONFIG.voiceName)
+      let ssml = buildSingleVoiceSsml(text, INTERVIEW_SPEECH_CONFIG.voiceName);
 
-      const response = await fetch(
+      let response = await fetch(
         `https://${auth.region}.tts.speech.microsoft.com/cognitiveservices/v1`,
         {
           method: 'POST',
@@ -100,6 +130,25 @@ class TTSService {
           body: ssml,
         }
       );
+
+      // Attempt 2: If primary voice fails, fallback to vi-VN-HoaiMyNeural single-voice SSML
+      if (!response.ok) {
+        console.warn(`Azure TTS primary voice (${INTERVIEW_SPEECH_CONFIG.voiceName}) returned ${response.status}. Retrying with vi-VN-HoaiMyNeural...`);
+        ssml = buildSingleVoiceSsml(text, 'vi-VN-HoaiMyNeural');
+        response = await fetch(
+          `https://${auth.region}.tts.speech.microsoft.com/cognitiveservices/v1`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${auth.token}`,
+              'Content-Type': 'application/ssml+xml',
+              'X-Microsoft-OutputFormat': 'audio-24khz-160kbitrate-mono-mp3',
+              'User-Agent': 'NexoraMobile',
+            },
+            body: ssml,
+          }
+        );
+      }
 
       if (!response.ok) {
         throw new Error(`Azure TTS REST failed with status ${response.status}`);
@@ -118,7 +167,7 @@ class TTSService {
       };
 
       audio.onerror = (e) => {
-        console.warn('Azure audio playback error, falling back:', e);
+        console.warn('Azure audio playback error, falling back to local voice:', e);
         this.isSpeaking = false;
         this.currentAudioElement = null;
         URL.revokeObjectURL(audioUrl);
@@ -142,15 +191,11 @@ class TTSService {
     try {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
+
         const utterance = new SpeechSynthesisUtterance(text);
-
-        if (!this.selectedVoice) {
-          this.initVoices();
-        }
-
         if (this.selectedVoice) {
           utterance.voice = this.selectedVoice;
-          utterance.lang = this.selectedVoice.lang;
+          utterance.lang = this.selectedVoice.lang || 'vi-VN';
         } else {
           utterance.lang = 'vi-VN';
         }
@@ -162,10 +207,13 @@ class TTSService {
           this.isSpeaking = false;
           onDone?.();
         };
+
         utterance.onerror = (e) => {
+          console.warn('Local TTS playback error:', e);
           this.isSpeaking = false;
           onError?.(e);
         };
+
         this.isSpeaking = true;
         window.speechSynthesis.speak(utterance);
       } else {
@@ -196,25 +244,6 @@ class TTSService {
   public getIsSpeaking(): boolean {
     return this.isSpeaking;
   }
-}
-
-function escapeXml(unsafe: string): string {
-  return unsafe.replace(/[<>&'"]/g, (c) => {
-    switch (c) {
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '&':
-        return '&amp;';
-      case '\'':
-        return '&apos;';
-      case '"':
-        return '&quot;';
-      default:
-        return c;
-    }
-  });
 }
 
 export const ttsService = new TTSService();

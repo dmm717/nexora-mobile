@@ -16,6 +16,7 @@ import {
   HomeHeroSection,
   RecentActivitiesSection,
 } from '@/components/home/HomeSubComponents';
+import { PlatformStatsCard } from '@/components/home/PlatformStatsCard';
 import { styles } from '@/styles/home.styles';
 
 export default function HomeScreen() {
@@ -111,6 +112,9 @@ export default function HomeScreen() {
               </View>
             </View>
           </Animated.View>
+
+          {/* REALTIME PLATFORM STATS CARD */}
+          <PlatformStatsCard />
 
           {/* KHỐI 3: HOẠT ĐỘNG GẦN ĐÂY */}
           <RecentActivitiesSection

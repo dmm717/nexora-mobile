@@ -19,9 +19,28 @@ export function useInterviewSession(id: string | undefined) {
 
   const [isTtsSpeaking, setIsTtsSpeaking] = useState(false);
   const [showCoachingModal, setShowCoachingModal] = useState(false);
+  const [isMicAllowed, setIsMicAllowed] = useState<boolean | null>(null);
   const attemptedQuestionsRef = useRef<Set<string>>(new Set());
 
   const timerRef = useRef<any>(null);
+
+  // Check browser mic permission on load
+  useEffect(() => {
+    let active = true;
+    async function checkMicPermission() {
+      const state = await speechService.checkPermission();
+      if (!active) return;
+      if (state === 'denied') {
+        setIsMicAllowed(false);
+      } else if (state === 'granted') {
+        setIsMicAllowed(true);
+      }
+    }
+    checkMicPermission();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const { data: interview, isLoading, refetch } = useQuery({
     queryKey: ['interview', id],
@@ -29,7 +48,13 @@ export function useInterviewSession(id: string | undefined) {
     enabled: !!id,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      if (status === 'starting' || status === 'completing') {
+      const reportState = query.state.data?.reportState;
+      if (
+        status === 'starting' ||
+        status === 'completing' ||
+        status === 'evaluating' ||
+        reportState === 'processing'
+      ) {
         return 3000;
       }
       return false;
@@ -40,12 +65,18 @@ export function useInterviewSession(id: string | undefined) {
   const answeredQuestionIds = new Set(interview?.answers?.map((a) => a.questionId) || []);
   const currentQuestion = interview?.questions?.find((q) => !answeredQuestionIds.has(q.id));
 
-  // Automatically check completion and navigate to report when completed
+  // Automatically check completion and navigate to report when completing/evaluating/completed
   useEffect(() => {
-    if (interview?.status === 'completed' && interview.id) {
-      router.replace(`/interview/report/${interview.id}` as any);
+    if (
+      interview?.id &&
+      (interview.status === 'completed' ||
+        interview.status === 'completing' ||
+        interview.status === 'evaluating' ||
+        interview.reportState === 'ready')
+    ) {
+      router.replace(`/(app)/interview/report/${interview.id}` as any);
     }
-  }, [interview?.status, interview?.id, router]);
+  }, [interview?.status, interview?.reportState, interview?.id, router]);
 
   // Auto-play TTS question reading on question change (AutoSpeak)
   useEffect(() => {
@@ -103,6 +134,8 @@ export function useInterviewSession(id: string | undefined) {
     };
   }, [isRecording]);
 
+  const speechBaseTextRef = useRef<string>('');
+
   // Speech Recognition toggle
   const toggleSpeech = () => {
     if (isTtsSpeaking) {
@@ -114,19 +147,23 @@ export function useInterviewSession(id: string | undefined) {
       speechService.stopListening();
       setIsRecording(false);
     } else {
+      speechBaseTextRef.current = answerText;
       setIsRecording(true);
-      speechService.startListening({
-        onResult: (transcript) => {
-          setAnswerText((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      speechService.startListening(
+        {
+          onResult: (transcript) => {
+            setAnswerText(transcript);
+          },
+          onError: (err) => {
+            Alert.alert('Thông báo Microphone', String(err));
+            setIsRecording(false);
+          },
+          onEnd: () => {
+            setIsRecording(false);
+          },
         },
-        onError: (err) => {
-          Alert.alert('Lỗi thu âm', err);
-          setIsRecording(false);
-        },
-        onEnd: () => {
-          setIsRecording(false);
-        }
-      });
+        answerText
+      );
     }
   };
 
@@ -162,10 +199,9 @@ export function useInterviewSession(id: string | undefined) {
         setLastCoaching(evalData);
         setShowCoachingModal(true);
       } else {
-        const newAnswerCount = (interview?.answers.length || 0) + 1;
-        if (newAnswerCount === 2) {
-          setShowQ2BoundaryModal(true);
-        } else if (newAnswerCount === 3) {
+        // Match Web FE: Seamless transition without forced Q2/Q3 popups
+        const isUpgradeRequired = !data.nextQuestion && data.continuation?.state === 'upgrade_required';
+        if (isUpgradeRequired) {
           setShowQ3BoundaryModal(true);
         }
       }
@@ -190,12 +226,6 @@ export function useInterviewSession(id: string | undefined) {
   // Handle continuing from coaching modal
   const handleContinueAfterCoaching = () => {
     setShowCoachingModal(false);
-    const newAnswerCount = interview?.answers.length || 0;
-    if (newAnswerCount === 2) {
-      setShowQ2BoundaryModal(true);
-    } else if (newAnswerCount === 3) {
-      setShowQ3BoundaryModal(true);
-    }
   };
 
   // Complete Interview mutation
@@ -255,5 +285,6 @@ export function useInterviewSession(id: string | undefined) {
     submitAnswerMutation,
     completeMutation,
     continueMutation,
+    isMicAllowed,
   };
 }

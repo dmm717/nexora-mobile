@@ -7,3 +7,5 @@ export * from './types/interview.types';
 export * from './types/scenario.types';
 export * from './types/growth.types';
 export * from './types/billing.types';
+export * from './types/feedback.types';
+export * from './types/platform-stats.types';

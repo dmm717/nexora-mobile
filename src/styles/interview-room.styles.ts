@@ -12,6 +12,23 @@ export const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   backButton: { marginRight: Spacing.two },
+  exitSessionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.md,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+    marginRight: Spacing.two,
+  },
+  exitSessionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#EF4444',
+  },
   title: { fontSize: 18, fontWeight: '700' },
   subtitle: { fontSize: 12, opacity: 0.7 },
   statusBadge: {
