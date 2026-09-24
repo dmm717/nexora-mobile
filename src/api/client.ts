@@ -10,6 +10,7 @@ export const API_BASE_URL =
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -147,35 +148,27 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = await tokenStorage.getRefreshToken();
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
-
-        // Gọi API refresh
+        // Call backend /auth/refresh with credentials (cookie nexora_refresh_token)
         const refreshResponse = await axios.post<{
-          data?: { accessToken: string; refreshToken?: string };
+          data?: { accessToken: string };
           accessToken?: string;
-          refreshToken?: string;
         }>(
           `${API_BASE_URL}/auth/refresh`,
-          { refreshToken },
-          { headers: { 'Content-Type': 'application/json' } }
+          {},
+          {
+            withCredentials: true,
+            headers: { 'Content-Type': 'application/json' },
+          }
         );
 
         const newAccessToken =
           refreshResponse.data?.data?.accessToken || refreshResponse.data?.accessToken;
-        const newRefreshToken =
-          refreshResponse.data?.data?.refreshToken || refreshResponse.data?.refreshToken;
 
         if (!newAccessToken) {
           throw new Error('Failed to obtain new access token');
         }
 
         await tokenStorage.setAccessToken(newAccessToken);
-        if (newRefreshToken) {
-          await tokenStorage.setRefreshToken(newRefreshToken);
-        }
 
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;

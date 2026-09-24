@@ -39,6 +39,22 @@ export interface ScenarioAttemptCreateRequest {
   scenarioId: string;
 }
 
+export interface ScenarioEvaluationDimension {
+  criterion: string;
+  score: number;
+  evidence?: string;
+  feedback?: string;
+}
+
+export interface ScenarioEvaluation {
+  overallScore?: number | null;
+  feedback?: string;
+  dimensions?: ScenarioEvaluationDimension[];
+  strengths?: string[];
+  gaps?: string[];
+  recommendedApproach?: string[];
+}
+
 export interface ScenarioAttemptSubmitRequest {
   answer: string;
 }
@@ -49,7 +65,7 @@ export interface ScenarioAttemptResponse {
   scenarioTitle: string;
   status: string; // 'draft' | 'processing' | 'completed' | 'failed'
   answer?: string | null;
-  evaluation?: any | null;
+  evaluation?: ScenarioEvaluation | null;
   errorCode?: string | null;
   createdAt: string;
   completedAt?: string | null;

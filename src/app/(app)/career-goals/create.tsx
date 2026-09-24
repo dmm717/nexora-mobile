@@ -11,6 +11,9 @@ import { careerGoalsApi } from '@/api/career-goals.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { CreateCareerGoalRequest } from '@/api/types';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
+import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/career-goals-create.styles';
 
 export default function CreateCareerGoalScreen() {
@@ -33,7 +36,7 @@ export default function CreateCareerGoalScreen() {
       queryClient.invalidateQueries({ queryKey: ['career-goals'] });
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
       Alert.alert('Thành công', 'Đã tạo mục tiêu nghề nghiệp mới');
-      router.back();
+      safeBack(router, '/career-goals');
     },
     onError: (error) => {
       Alert.alert('Lỗi', 'Không thể tạo mục tiêu. Vui lòng thử lại.');
@@ -57,12 +60,8 @@ export default function CreateCareerGoalScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <ThemedText type="title" style={styles.title}>Tạo Mục Tiêu Nghề Nghiệp</ThemedText>
-        </View>
+        {/* Header */}
+        <AppScreenHeader title="Tạo Mục Tiêu Nghề Nghiệp" fallbackRoute="/(app)/career-goals" />
 
         <ScrollView contentContainerStyle={styles.formContainer} showsVerticalScrollIndicator={false}>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
@@ -123,6 +122,7 @@ export default function CreateCareerGoalScreen() {
             </TouchableOpacity>
           </View>
         </ScrollView>
+        <AppBottomNavBar activeTab="profile" />
       </SafeAreaView>
     </ThemedView>
   );

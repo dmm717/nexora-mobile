@@ -10,7 +10,10 @@ import { ThemedView } from '@/components/themed-view';
 import { growthApi } from '@/api/growth.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/skill-profile.styles';
+import { safeBack } from '@/utils/navigation';
 
 export default function SkillProfileScreen() {
   const router = useRouter();
@@ -27,12 +30,7 @@ export default function SkillProfileScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <ThemedText type="title" style={styles.title}>Hồ Sơ Năng Lực AI</ThemedText>
-        </View>
+        <AppScreenHeader title="Hồ Sơ Năng Lực AI" fallbackRoute="/(tabs)/profile" />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -164,6 +162,7 @@ export default function SkillProfileScreen() {
             </>
           )}
         </ScrollView>
+        <AppBottomNavBar activeTab="growth" />
       </SafeAreaView>
     </ThemedView>
   );

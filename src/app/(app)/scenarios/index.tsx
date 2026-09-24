@@ -10,13 +10,16 @@ import { ThemedView } from '@/components/themed-view';
 import { scenariosApi } from '@/api/scenarios.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/scenarios.styles';
+import { safeBack } from '@/utils/navigation';
 
 const DIFFICULTIES = [
   { id: '', label: 'Tất cả' },
-  { id: 'junior', label: 'Junior' },
-  { id: 'medium', label: 'Medium' },
-  { id: 'senior', label: 'Senior' },
+  { id: 'easy', label: 'Dễ' },
+  { id: 'medium', label: 'Trung bình' },
+  { id: 'hard', label: 'Khó' },
 ];
 
 export default function ScenariosListScreen() {
@@ -50,16 +53,52 @@ export default function ScenariosListScreen() {
     }),
   });
 
+  const formatDifficultyLabel = (diff: string) => {
+    const d = (diff || '').toLowerCase();
+    if (d === 'easy') return 'DỄ';
+    if (d === 'medium') return 'TRUNG BÌNH';
+    if (d === 'hard') return 'KHÓ';
+    return diff.toUpperCase();
+  };
+
+  const recommendedScenario = React.useMemo(() => {
+    const items = scenarioPage?.items || [];
+    if (items.length === 0) return null;
+    const recDiff = progress?.recommendedDifficulty;
+    if (recDiff) {
+      const match = items.find((s) => s.difficulty === recDiff);
+      if (match) return match;
+    }
+    return items[0];
+  }, [scenarioPage?.items, progress]);
+
+  const hasProgressAuthority = progress !== undefined;
+  const isNewUser = hasProgressAuthority && (progress.attemptCount === 0 || progress.completedAttempts === 0);
+  const recommendationLabel = !hasProgressAuthority
+    ? 'Tình huống gợi ý'
+    : isNewUser
+      ? 'Gợi ý để bắt đầu'
+      : 'Tình huống ưu tiên hôm nay';
+
+  const recommendationAction = !hasProgressAuthority
+    ? 'Xem tình huống'
+    : isNewUser
+      ? 'Bắt đầu giải quyết'
+      : 'Luyện lại tình huống';
+
+  const hasFilters = Boolean(selectedCategory || selectedDifficulty || search.trim());
+
+  const handleResetFilters = () => {
+    setSelectedCategory('');
+    setSelectedDifficulty('');
+    setSearch('');
+  };
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <ThemedText type="title" style={styles.title}>Kịch Bản Tình Huống AI</ThemedText>
-        </View>
+        <AppScreenHeader title="Kịch Bản Tình Huống AI" fallbackRoute="/(tabs)/practice" />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -89,13 +128,110 @@ export default function ScenariosListScreen() {
                 </View>
                 <View style={styles.statBox}>
                   <ThemedText style={[styles.statNumber, { color: colors.warning }]}>
-                    {progress.recommendedDifficulty?.toUpperCase() || 'MEDIUM'}
+                    {formatDifficultyLabel(progress.recommendedDifficulty || 'medium')}
                   </ThemedText>
                   <ThemedText style={styles.statLabel}>Đề xuất</ThemedText>
                 </View>
               </View>
             </View>
           ) : null}
+
+          {/* Featured / Recommended Scenario Card */}
+          {recommendedScenario && (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              style={[styles.featuredCard, { backgroundColor: colors.card }]}
+              onPress={() => router.push(`/(app)/scenarios/${recommendedScenario.slug}` as any)}
+            >
+              <View style={styles.featuredHeaderBadges}>
+                <View style={styles.featuredTagPill}>
+                  <ThemedText style={styles.featuredTagText}>{recommendationLabel}</ThemedText>
+                </View>
+
+                {recommendedScenario.categoryName ? (
+                  <View style={styles.featuredCategoryBadge}>
+                    <ThemedText style={styles.featuredCategoryText}>{recommendedScenario.categoryName}</ThemedText>
+                  </View>
+                ) : null}
+
+                <View
+                  style={[
+                    styles.featuredDiffBadge,
+                    {
+                      backgroundColor:
+                        (recommendedScenario.difficulty || '').toLowerCase() === 'easy'
+                          ? '#e0f2fe'
+                          : (recommendedScenario.difficulty || '').toLowerCase() === 'medium'
+                            ? '#fef3c7'
+                            : '#fee2e2',
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    style={[
+                      styles.featuredDiffText,
+                      {
+                        color:
+                          (recommendedScenario.difficulty || '').toLowerCase() === 'easy'
+                            ? '#0369a1'
+                            : (recommendedScenario.difficulty || '').toLowerCase() === 'medium'
+                              ? '#b45309'
+                              : '#b91c1c',
+                      },
+                    ]}
+                  >
+                    {formatDifficultyLabel(recommendedScenario.difficulty)}
+                  </ThemedText>
+                </View>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+                  <ThemedText style={{ fontSize: 12, color: colors.textMuted }}>
+                    {recommendedScenario.estimatedMinutes} phút
+                  </ThemedText>
+                </View>
+              </View>
+
+              <ThemedText style={[styles.featuredTitle, { color: colors.text }]}>
+                {recommendedScenario.title}
+              </ThemedText>
+
+              <ThemedText style={[styles.featuredSummary, { color: colors.textMuted }]} numberOfLines={3}>
+                {recommendedScenario.summary}
+              </ThemedText>
+
+              {recommendedScenario.competency ? (
+                <View style={styles.featuredCompetencyRow}>
+                  <ThemedText style={{ fontSize: 12, color: colors.textMuted, fontWeight: '500' }}>
+                    Năng lực trọng tâm:
+                  </ThemedText>
+                  <View style={styles.featuredCompetencyBadge}>
+                    <ThemedText style={styles.featuredCompetencyText}>
+                      {recommendedScenario.competency}
+                    </ThemedText>
+                  </View>
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                style={styles.featuredButton}
+                onPress={() => router.push(`/(app)/scenarios/${recommendedScenario.slug}` as any)}
+              >
+                <ThemedText style={styles.featuredButtonText}>{recommendationAction}</ThemedText>
+                <Ionicons name="play" size={14} color="#ffffff" />
+              </TouchableOpacity>
+            </TouchableOpacity>
+          )}
+
+          {/* Search & Filter Header */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <ThemedText style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>Bộ Lọc Tình Huống</ThemedText>
+            {hasFilters && (
+              <TouchableOpacity onPress={handleResetFilters}>
+                <ThemedText style={{ fontSize: 12, color: colors.primary, fontWeight: '700' }}>Xóa bộ lọc</ThemedText>
+              </TouchableOpacity>
+            )}
+          </View>
 
           {/* Search Bar */}
           <View style={[styles.searchBox, { borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }]}>
@@ -193,12 +329,23 @@ export default function ScenariosListScreen() {
                       <ThemedText style={[styles.badgeText, { color: colors.primary }]}>{scenario.categoryName}</ThemedText>
                     </View>
                     <View style={[styles.badge, { backgroundColor: colors.accentLight }]}>
-                      <ThemedText style={[styles.badgeText, { color: colors.accent }]}>{scenario.difficulty.toUpperCase()}</ThemedText>
+                      <ThemedText style={[styles.badgeText, { color: colors.accent }]}>
+                        {formatDifficultyLabel(scenario.difficulty)}
+                      </ThemedText>
                     </View>
                   </View>
 
                   <ThemedText type="subtitle" style={styles.scenarioTitle}>{scenario.title}</ThemedText>
                   <ThemedText style={styles.scenarioSummary}>{scenario.summary}</ThemedText>
+
+                  {scenario.competency ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                      <Ionicons name="sparkles" size={13} color={colors.secondary} />
+                      <ThemedText style={{ fontSize: 12, color: colors.secondary, fontWeight: '600' }}>
+                        {scenario.competency}
+                      </ThemedText>
+                    </View>
+                  ) : null}
 
                   <View style={styles.cardFooterRow}>
                     <View style={styles.timeBadge}>
@@ -215,6 +362,9 @@ export default function ScenariosListScreen() {
             </View>
           )}
         </ScrollView>
+
+        {/* Global Bottom Navigation Bar */}
+        <AppBottomNavBar activeTab="practice" />
       </SafeAreaView>
     </ThemedView>
   );

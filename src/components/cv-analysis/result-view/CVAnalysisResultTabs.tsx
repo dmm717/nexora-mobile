@@ -3,7 +3,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { RadialScore } from '@/components/ui/RadialScore';
+import { RadialScore } from '@/components/ui/radial-score';
 import { Spacing } from '@/constants/theme';
 import { styles } from '../CVAnalysisResultView.styles';
 

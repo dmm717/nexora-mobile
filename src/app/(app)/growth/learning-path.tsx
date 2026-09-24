@@ -13,6 +13,9 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlassCard } from '@/components/ui/glass-card';
 import { SkeletonCard } from '@/components/ui/skeleton-loader';
 import { TouchableScale } from '@/components/ui/touchable-scale';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
+import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/learning-path.styles';
 
 import { getLocalizedCompetencyLabel } from '@/utils/competencyLocalization';
@@ -286,12 +289,7 @@ export default function LearningPathScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableScale onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableScale>
-          <ThemedText type="title" style={styles.title}>Lộ Trình Học Tập AI</ThemedText>
-        </View>
+        <AppScreenHeader title="Lộ Trình Học Tập AI" fallbackRoute="/(tabs)/practice" />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -370,6 +368,7 @@ export default function LearningPathScreen() {
             </>
           )}
         </ScrollView>
+        <AppBottomNavBar activeTab="growth" />
       </SafeAreaView>
     </ThemedView>
   );

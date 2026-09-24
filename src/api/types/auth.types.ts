@@ -1,3 +1,5 @@
+import { BillingSummaryResponse } from './billing.types';
+
 export interface UserDto {
   id: string;
   email: string;
@@ -6,6 +8,7 @@ export interface UserDto {
   avatarUrl?: string;
   emailVerified?: boolean;
   roles?: string[];
+  billing?: BillingSummaryResponse | null;
   createdAt?: string;
 }
 

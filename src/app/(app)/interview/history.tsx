@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, RefreshControl, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, StyleSheet, ScrollView, View, RefreshControl, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard as SurfaceCard } from '@/components/ui/glass-card';
 import { AmbientBackground as SolidBackground } from '@/components/ui/ambient-background';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/interview-history.styles';
 
 type FilterType = 'all' | 'active' | 'completed';
@@ -135,6 +137,7 @@ const HistoryEmptyOrErrorStateCard = React.memo(({
 export default function InterviewHistoryScreen() {
   const colors = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<FilterType>('all');
   const [page, setPage] = useState<number>(1);
 
@@ -157,34 +160,25 @@ export default function InterviewHistoryScreen() {
     setPage(1);
   };
 
+  const isWeb = Platform.OS === 'web';
+  const bottomBarHeight = isWeb ? 66 : 54 + insets.bottom;
+
   return (
     <SolidBackground style={styles.safeArea}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         {/* Header Navigation */}
-        <View style={[styles.header, { borderColor: colors.cardBorder }]}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace('/(tabs)/interview' as any);
-              }
-            }}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <ThemedText style={[styles.headerTitle, { flex: 1 }]}>Lịch Sử Phỏng Vấn</ThemedText>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.replace('/(tabs)/home' as any)}
-          >
-            <Ionicons name="home-outline" size={22} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
+        <AppScreenHeader
+          title="Lịch Sử Phỏng Vấn"
+          onBack={() => router.replace('/(tabs)/interview' as any)}
+          rightElement={
+            <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)}>
+              <Ionicons name="home-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          }
+        />
 
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -255,7 +249,7 @@ export default function InterviewHistoryScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {/* Floating Pagination Bar (Always Visible) */}
+      {/* Floating Pagination Bar */}
       <HistoryPaginationBar
         page={page}
         totalPages={totalPages}
@@ -263,7 +257,11 @@ export default function InterviewHistoryScreen() {
         colors={colors}
         onPrevPage={() => setPage((p) => Math.max(1, p - 1))}
         onNextPage={() => setPage((p) => p + 1)}
+        bottomOffset={bottomBarHeight + 8}
       />
+
+      {/* Bottom Navigation Bar */}
+      <AppBottomNavBar activeTab="interview" />
     </SolidBackground>
   );
 }
@@ -431,6 +429,7 @@ const HistoryPaginationBar = React.memo(({
   colors,
   onPrevPage,
   onNextPage,
+  bottomOffset = 70,
 }: {
   page: number;
   totalPages: number;
@@ -438,8 +437,9 @@ const HistoryPaginationBar = React.memo(({
   colors: any;
   onPrevPage: () => void;
   onNextPage: () => void;
+  bottomOffset?: number;
 }) => (
-  <View style={styles.floatingNavContainer}>
+  <View style={[styles.floatingNavContainer, { bottom: bottomOffset }]}>
     <View style={[styles.inlineNavContainer, { 
       backgroundColor: colors.card, 
       borderColor: colors.cardBorder, 
@@ -476,4 +476,61 @@ const HistoryPaginationBar = React.memo(({
     </View>
   </View>
 ));
+
+const HistoryBottomNavBar = React.memo(({ colors }: { colors: any }) => {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const isWeb = Platform.OS === 'web';
+  const bottomPadding = isWeb ? 8 : Math.max(insets.bottom, 8);
+  const calculatedHeight = isWeb ? 70 : 60 + insets.bottom;
+
+  const tabs = [
+    { id: 'home', title: 'Tổng quan', route: '/(tabs)/home', icon: 'home-outline' },
+    { id: 'cv-jd', title: 'CV & JD', route: '/(tabs)/cv-jd', icon: 'document-text-outline' },
+    { id: 'interview', title: 'Phỏng vấn', route: '/(tabs)/interview', icon: 'mic', active: true },
+    { id: 'practice', title: 'Luyện tập', route: '/(tabs)/practice', icon: 'construct-outline' },
+    { id: 'growth', title: 'Tiến độ', route: '/(tabs)/growth', icon: 'analytics-outline' },
+    { id: 'profile', title: 'Hồ sơ', route: '/(tabs)/profile', icon: 'person-outline' },
+  ];
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        backgroundColor: colors.card,
+        borderTopWidth: 1,
+        borderTopColor: colors.cardBorder,
+        paddingTop: 4,
+        paddingBottom: bottomPadding,
+        height: calculatedHeight,
+      }}
+    >
+      {tabs.map((tab) => (
+        <TouchableOpacity
+          key={tab.id}
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+          onPress={() => router.replace(tab.route as any)}
+        >
+          <Ionicons
+            name={tab.icon as any}
+            size={20}
+            color={tab.active ? colors.primary : colors.textMuted}
+          />
+          <ThemedText
+            style={{
+              fontSize: 11,
+              fontWeight: tab.active ? '700' : '600',
+              color: tab.active ? colors.primary : colors.textMuted,
+              marginTop: 1,
+            }}
+          >
+            {tab.title}
+          </ThemedText>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+});
 

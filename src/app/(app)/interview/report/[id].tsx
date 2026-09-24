@@ -10,6 +10,9 @@ import { ThemedView } from '@/components/themed-view';
 import { interviewApi } from '@/api/interview.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
+import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/interview-report.styles';
 
 const PRACTICE_REASONS = [
@@ -165,26 +168,15 @@ export default function ReportScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-            <TouchableOpacity
-              onPress={() => {
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace('/(tabs)/interview' as any);
-                }
-              }}
-              style={styles.backButton}
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="title" style={styles.title}>Báo Cáo Phỏng Vấn AI</ThemedText>
-            </View>
-            <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)} style={{ padding: 6 }}>
-              <Ionicons name="home-outline" size={22} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
+          <AppScreenHeader
+            title="Báo Cáo Phỏng Vấn AI"
+            fallbackRoute="/(tabs)/interview"
+            rightElement={
+              <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)} style={{ padding: 6 }}>
+                <Ionicons name="home-outline" size={22} color={colors.primary} />
+              </TouchableOpacity>
+            }
+          />
           <View style={styles.centerContainer}>
             <View
               style={{
@@ -225,26 +217,15 @@ export default function ReportScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-            <TouchableOpacity
-              onPress={() => {
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace('/(tabs)/interview' as any);
-                }
-              }}
-              style={styles.backButton}
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="title" style={styles.title}>Báo Cáo Phỏng Vấn AI</ThemedText>
-            </View>
-            <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)} style={{ padding: 6 }}>
-              <Ionicons name="home-outline" size={22} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
+          <AppScreenHeader
+            title="Báo Cáo Phỏng Vấn AI"
+            fallbackRoute="/(tabs)/interview"
+            rightElement={
+              <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)} style={{ padding: 6 }}>
+                <Ionicons name="home-outline" size={22} color={colors.primary} />
+              </TouchableOpacity>
+            }
+          />
           <View style={styles.centerContainer}>
             <Ionicons name="alert-circle-outline" size={56} color={colors.danger} />
             <ThemedText type="subtitle" style={{ marginTop: Spacing.two }}>
@@ -279,29 +260,20 @@ export default function ReportScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity
-            onPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace('/(tabs)/interview' as any);
-              }
-            }}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <ThemedText type="title" style={styles.title}>Báo Cáo Phỏng Vấn AI</ThemedText>
-          </View>
-          <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)} style={{ padding: 6, marginRight: 4 }}>
-            <Ionicons name="home-outline" size={22} color={colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleShareReport} style={{ padding: 6 }}>
-            <Ionicons name="share-outline" size={22} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
+        <AppScreenHeader
+          title="Báo Cáo Phỏng Vấn AI"
+          fallbackRoute="/(tabs)/interview"
+          rightElement={
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)} style={{ padding: 6 }}>
+                <Ionicons name="home-outline" size={22} color={colors.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleShareReport} style={{ padding: 6 }}>
+                <Ionicons name="share-outline" size={22} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+          }
+        />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Overall Score Badge Card */}
@@ -501,6 +473,9 @@ export default function ReportScreen() {
             </View>
           </View>
         </Modal>
+
+        {/* Global Bottom Navigation Bar */}
+        <AppBottomNavBar activeTab="interview" />
       </SafeAreaView>
     </ThemedView>
   );

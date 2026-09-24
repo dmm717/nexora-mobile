@@ -16,6 +16,10 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { SkeletonCard } from '@/components/ui/skeleton-loader';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { AmbientBackground } from '@/components/ui/ambient-background';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
+import { EmptyStateCard } from '@/components/ui/empty-state-card';
+import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/resumes.styles';
 
 export default function ResumesScreen() {
@@ -140,18 +144,7 @@ export default function ResumesScreen() {
     <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
         {/* Top Header */}
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableScale onPress={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/(tabs)/cv-jd');
-            }
-          }} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableScale>
-          <ThemedText type="title" style={styles.title}>Quản Lý CV</ThemedText>
-        </View>
+        <AppScreenHeader title="Quản Lý CV" fallbackRoute="/(tabs)/cv-jd" />
 
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
@@ -195,10 +188,14 @@ export default function ResumesScreen() {
               </TouchableScale>
             </GlassCard>
           ) : resumeList.length === 0 ? (
-            <GlassCard style={styles.emptyContainer}>
-              <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
-              <ThemedText style={styles.emptyText}>Chưa có CV nào được tải lên.</ThemedText>
-            </GlassCard>
+            <EmptyStateCard
+              icon="document-text-outline"
+              title="Chưa có CV nào được tải lên"
+              description="Hãy tải lên tệp CV đầu tiên của bạn để AI phân tích và cá nhân hóa các bộ câu hỏi luyện tập phỏng vấn."
+              actionLabel="Tải lên CV ngay"
+              onAction={handleUpload}
+              actionIcon="cloud-upload-outline"
+            />
           ) : (
             resumeList.map((resume) => {
               const isPrimary = resume.id === primaryResumeId;
@@ -261,6 +258,7 @@ export default function ResumesScreen() {
             })
           )}
         </ScrollView>
+        <AppBottomNavBar activeTab="cv-jd" />
       </SafeAreaView>
     </AmbientBackground>
   );

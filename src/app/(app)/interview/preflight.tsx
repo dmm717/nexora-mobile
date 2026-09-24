@@ -14,6 +14,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/interview-preflight.styles';
 
 const INTERVIEW_TYPES = [
@@ -938,17 +940,15 @@ export default function PreflightScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header matching Web: ← Thoát phiên luyện | Chế độ luyện tập tập trung */}
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => setShowExitModal(true)} style={[styles.backButton, { flexDirection: 'row', alignItems: 'center' }]}>
-            <Ionicons name="arrow-back" size={20} color={colors.text} style={{ marginRight: 4 }} />
-            <ThemedText style={{ fontSize: 13, fontWeight: '600' }}>Thoát phiên luyện</ThemedText>
-          </TouchableOpacity>
-          <View style={{ flex: 1, alignItems: 'flex-end' }}>
+        <AppScreenHeader
+          title="Thoát phiên luyện"
+          onBack={() => setShowExitModal(true)}
+          rightElement={
             <ThemedText style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>
               Chế độ luyện tập tập trung
             </ThemedText>
-          </View>
-        </View>
+          }
+        />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {isProfileLoading ? (
@@ -999,6 +999,9 @@ export default function PreflightScreen() {
             router.push('/(app)/interview/history' as any);
           }}
         />
+
+        {/* Global Bottom Navigation Bar */}
+        <AppBottomNavBar activeTab="interview" />
       </SafeAreaView>
     </ThemedView>
   );

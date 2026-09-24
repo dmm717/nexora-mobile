@@ -10,6 +10,9 @@ import { ThemedView } from '@/components/themed-view';
 import { careerGoalsApi } from '@/api/career-goals.api';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
+import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/career-goals.styles';
 
 export default function CareerGoalsScreen() {
@@ -52,12 +55,8 @@ export default function CareerGoalsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <ThemedText type="title" style={styles.title}>Mục Tiêu Nghề Nghiệp</ThemedText>
-        </View>
+        {/* Header */}
+        <AppScreenHeader title="Mục Tiêu Nghề Nghiệp" fallbackRoute="/(tabs)/profile" />
 
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
@@ -128,6 +127,7 @@ export default function CareerGoalsScreen() {
             ))
           )}
         </ScrollView>
+        <AppBottomNavBar activeTab="profile" />
       </SafeAreaView>
     </ThemedView>
   );

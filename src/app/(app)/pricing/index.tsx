@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+  ScrollView,
+  View,
+  TouchableOpacity,
+  Linking,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -8,8 +16,23 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { pricingApi } from '@/api/pricing.api';
-import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { authApi } from '@/api/auth.api';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { GlassCard } from '@/components/ui/glass-card';
+import { TouchableScale } from '@/components/ui/touchable-scale';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
+import { OrderStatusBadge } from '@/components/ui/order-status-badge';
+import { safeBack } from '@/utils/navigation';
+import {
+  formatCurrency,
+  getExactEntitlementFeature,
+  formatFeatureAvailability,
+  formatInterviewQuestionLimit,
+  describePlanFeature,
+  getOrderStatusPresentation,
+} from '@/utils/billing-presentation';
 import { styles } from '@/styles/pricing.styles';
 
 export default function PricingScreen() {
@@ -21,24 +44,58 @@ export default function PricingScreen() {
 
   const [selectedPriceId, setSelectedPriceId] = useState<string | null>(null);
 
-  const { data: plans, isLoading, isError, refetch, isRefetching } = useQuery({
+  // 1. Fetch Current User (with billing entitlement & orders)
+  const {
+    data: currentUser,
+    isLoading: isUserLoading,
+    refetch: refetchUser,
+  } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => authApi.getMe(),
+  });
+
+  // 2. Fetch Pricing Plans
+  const {
+    data: plans = [],
+    isLoading: isPlansLoading,
+    refetch: refetchPlans,
+    isRefetching,
+  } = useQuery({
     queryKey: ['plans'],
     queryFn: pricingApi.listPlans,
   });
 
+  const isRefreshing = isRefetching;
+  const handleRefresh = async () => {
+    await Promise.all([refetchUser(), refetchPlans()]);
+  };
+
   const checkoutMutation = useMutation({
     mutationFn: (priceId: string) => pricingApi.createCheckoutSession(priceId),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['billing-summary'] });
-      queryClient.invalidateQueries({ queryKey: ['user-quota'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
       if (data.checkout?.url) {
         Alert.alert(
           'Đơn Hàng Đã Tạo',
-          `Mã đơn hàng: ${data.orderId}\nSố tiền: ${data.amountMinor.toLocaleString('vi-VN')} ${data.currency}\n\nĐang chuyển đến cổng thanh toán an toàn...`,
-          [{ text: 'OK' }]
+          `Mã đơn hàng: ${data.orderId.slice(0, 12)}\nSố tiền: ${formatCurrency(
+            data.amountMinor,
+            data.currency
+          )}\n\nBạn có muốn mở trang thanh toán an toàn ngay không?`,
+          [
+            { text: 'Để sau', style: 'cancel' },
+            {
+              text: 'Thanh toán ngay',
+              onPress: () => {
+                if (data.checkout?.url) {
+                  Linking.openURL(data.checkout.url);
+                }
+              },
+            },
+          ]
         );
       } else {
-        Alert.alert('Thành Công', `Đã khởi tạo đơn hàng: ${data.orderId}`);
+        Alert.alert('Thành Công', `Đã khởi tạo đơn hàng: ${data.orderId.slice(0, 12)}`);
       }
     },
     onError: (err: any) => {
@@ -46,173 +103,312 @@ export default function PricingScreen() {
     },
   });
 
-  const describeFeature = (feat: { name: string; enabled: boolean; limit?: number | null; unlimited: boolean }) => {
-    if (!feat.enabled) return null;
-    if (feat.unlimited) return `${feat.name}: Không giới hạn`;
-    if (feat.limit !== null && feat.limit !== undefined) return `${feat.name}: ${feat.limit}`;
-    return feat.name;
-  };
+  // Billing Entitlement Calculations
+  const entitlement = currentUser?.billing?.entitlement;
+  const orders = currentUser?.billing?.orders || [];
+  const currentPlanCode = entitlement?.planCode ? entitlement.planCode.toLowerCase() : null;
+  const planNameDisplay = entitlement?.planCode
+    ? entitlement.planCode.toUpperCase()
+    : 'Chưa có thông tin gói';
+
+  const expiresAtText = entitlement?.endsAt
+    ? new Date(entitlement.endsAt).toLocaleDateString('vi-VN')
+    : entitlement
+    ? 'Không có ngày hết hạn'
+    : 'Chưa có thông tin';
+
+  const interviewFeature = getExactEntitlementFeature(entitlement?.features, 'interview');
+  const cvFeature = getExactEntitlementFeature(entitlement?.features, 'cv_analysis');
+  const questionLimitFeature = getExactEntitlementFeature(
+    entitlement?.features,
+    'interview_question_limit'
+  );
+
+  const interviewQuotaText = formatFeatureAvailability(interviewFeature, 'phiên');
+  const cvAnalysisText = formatFeatureAvailability(cvFeature, 'lần');
+  const interviewQuestionLimitText = formatInterviewQuestionLimit(questionLimitFeature);
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <ThemedText type="title" style={styles.title}>Gói Dịch Vụ & Bảng Giá</ThemedText>
-            <ThemedText style={{ fontSize: 12, opacity: 0.7, marginTop: 2 }}>
-              Đồng hành cùng bạn trên hành trình chinh phục phỏng vấn
-            </ThemedText>
-          </View>
-        </View>
+        {/* Navigation Header */}
+        <AppScreenHeader title="Gói Dịch Vụ & Thanh Toán" fallbackRoute="/(tabs)/profile" />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+          }
         >
-          {/* Store Compliance Banner */}
-          <View style={[styles.warningBanner, { backgroundColor: colors.warningLight, borderColor: colors.warning }]}>
-            <Ionicons name="shield-checkmark" size={20} color={colors.warning} />
-            <View style={{ flex: 1 }}>
-              <ThemedText style={[styles.warningTitle, { color: colors.warning }]}>
-                🔒 Tuân Thủ Chính Sách Store & Bảo Mật Quyền Hạn
-              </ThemedText>
-              <ThemedText style={styles.warningSub}>
-                Không ép buộc thanh toán sớm. Bạn có thể thử nghiệm gói Miễn phí trước khi quyết định nâng cấp. Quyền hạn tính năng được xác thực tập trung từ hệ thống authoritative backend.
+          {/* PAGE HERO HEADER BLOCK (BillingPageHeader) */}
+          <View style={styles.heroBlock}>
+            <View style={[styles.pillBadge, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="card-outline" size={14} color={colors.primary} />
+              <ThemedText style={[styles.pillBadgeText, { color: colors.primary }]}>
+                Quản lý tài khoản & Gói dịch vụ
               </ThemedText>
             </View>
+
+            <ThemedText style={styles.mainHeading}>Gói dịch vụ & Lịch sử thanh toán</ThemedText>
+
+            <ThemedText style={styles.subHeading}>
+              Theo dõi hạn mức phỏng vấn, thời hạn gói và mở khóa thêm các tính năng phân tích & phỏng vấn AI mạnh mẽ.
+            </ThemedText>
           </View>
 
-          {isLoading ? (
-            <ThemedView style={styles.centerContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </ThemedView>
-          ) : isError || !plans || plans.length === 0 ? (
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder, alignItems: 'center' }]}>
-              <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
-              <ThemedText style={{ marginTop: Spacing.two, opacity: 0.8 }}>Chưa thể tải danh sách gói cước. Vui lòng thử lại sau.</ThemedText>
-            </View>
-          ) : (
-            <View style={{ gap: Spacing.four }}>
-              {plans.map((plan) => (
-                <View
-                  key={plan.id}
-                  style={[
-                    styles.card,
-                    { backgroundColor: colors.card, borderColor: colors.cardBorder },
-                    plan.isHighlighted && { borderColor: colors.primary, borderWidth: 2 }
-                  ]}
-                >
-                  <View style={styles.cardHeaderRow}>
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <ThemedText type="subtitle" style={styles.planName}>{plan.name}</ThemedText>
-                        {plan.isHighlighted && (
-                          <View style={[styles.badge, { backgroundColor: colors.accent || '#10b981' }]}>
-                            <Ionicons name="sparkles" size={12} color="#ffffff" style={{ marginRight: 3 }} />
-                            <ThemedText style={[styles.badgeText, { color: '#ffffff' }]}>Phổ biến nhất</ThemedText>
-                          </View>
-                        )}
-                        {plan.badge && !plan.isHighlighted && (
-                          <View style={[styles.badge, { backgroundColor: colors.primaryLight }]}>
-                            <ThemedText style={[styles.badgeText, { color: colors.primary }]}>{plan.badge}</ThemedText>
-                          </View>
-                        )}
-                      </View>
-                      <ThemedText style={styles.planDesc}>
-                        {plan.description || 'Gói dịch vụ được thiết kế tối ưu cho nhu cầu rèn luyện phỏng vấn của bạn.'}
-                      </ThemedText>
-                    </View>
+          {/* CARD 1: GÓI HIỆN TẠI (Current Entitlement Card) */}
+          <GlassCard style={styles.entitlementCard}>
+            <View style={[styles.entitlementHeaderRow, { borderBottomColor: colors.cardBorder }]}>
+              <View>
+                <ThemedText style={[styles.entitlementHeaderLabel, { color: colors.textMuted }]}>
+                  GÓI HIỆN TẠI
+                </ThemedText>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                  <ThemedText style={[styles.planCodeText, { color: colors.primary }]}>
+                    {planNameDisplay}
+                  </ThemedText>
+                  <View style={[styles.activeStatusBadge, { backgroundColor: colors.primaryLight }]}>
+                    <ThemedText style={[styles.activeStatusBadgeText, { color: colors.primary }]}>
+                      Đang hoạt động
+                    </ThemedText>
                   </View>
-
-                  {/* Prices list */}
-                  {plan.prices.map((price) => (
-                    <View key={price.id} style={[styles.priceBox, { backgroundColor: colors.backgroundElement }]}>
-                      <View style={styles.priceHeaderRow}>
-                        <ThemedText style={styles.amountText}>
-                          {price.amountMinor === 0 ? 'Miễn phí' : `${price.amountMinor.toLocaleString('vi-VN')} ${price.currency}`}
-                        </ThemedText>
-                        <ThemedText style={styles.durationText}>
-                          {price.durationDays > 0 ? `/ ${price.durationDays} ngày` : 'Sử dụng linh hoạt'}
-                        </ThemedText>
-                      </View>
-
-                      <ThemedText style={styles.quotaText}>
-                        Hạn mức phỏng vấn: {price.interviewQuota > 0 ? `${price.interviewQuota} lượt` : price.interviewQuota === 0 ? '0 lượt' : 'Không giới hạn'}
-                      </ThemedText>
-
-                      {/* Features Checklist */}
-                      <View style={styles.featuresList}>
-                        {price.features.map((feat, fIdx) => {
-                          const desc = describeFeature(feat);
-                          if (!desc) return null;
-                          return (
-                            <View key={fIdx} style={styles.featureRow}>
-                              <Ionicons
-                                name={feat.enabled ? 'checkmark-circle' : 'close-circle'}
-                                size={16}
-                                color={feat.enabled ? (colors.accent || '#10b981') : colors.textMuted}
-                              />
-                              <ThemedText style={[styles.featureName, !feat.enabled && { opacity: 0.5 }]}>
-                                {desc}
-                              </ThemedText>
-                            </View>
-                          );
-                        })}
-                      </View>
-
-                      <TouchableOpacity
-                        style={[
-                          styles.checkoutButton,
-                          {
-                            backgroundColor: price.amountMinor === 0
-                              ? (colors.cardBorder || '#cbd5e1')
-                              : (colors.primary || '#6366f1'),
-                          },
-                          checkoutMutation.isPending && { opacity: 0.6 }
-                        ]}
-                        onPress={() => {
-                          if (price.amountMinor > 0) {
-                            setSelectedPriceId(price.id);
-                            checkoutMutation.mutate(price.id);
-                          } else {
-                            router.push('/(tabs)/home' as any);
-                          }
-                        }}
-                        disabled={checkoutMutation.isPending}
-                      >
-                        {checkoutMutation.isPending && selectedPriceId === price.id ? (
-                          <ActivityIndicator color="#fff" />
-                        ) : (
-                          <>
-                            <Ionicons
-                              name={price.amountMinor > 0 ? 'card-outline' : 'checkmark-circle-outline'}
-                              size={18}
-                              color={price.amountMinor === 0 ? colors.text : '#fff'}
-                              style={{ marginRight: 6 }}
-                            />
-                            <ThemedText
-                              style={[
-                                styles.checkoutButtonText,
-                                price.amountMinor === 0 && { color: colors.text }
-                              ]}
-                            >
-                              {price.amountMinor === 0 ? 'Bắt đầu miễn phí' : 'Chọn gói này'}
-                            </ThemedText>
-                          </>
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                  ))}
                 </View>
-              ))}
+              </View>
+
+              <View>
+                <ThemedText style={styles.expiryLabel}>Thời hạn sử dụng</ThemedText>
+                <ThemedText style={styles.expiryValue}>{expiresAtText}</ThemedText>
+              </View>
+            </View>
+
+            {/* 3 Quota Highlights Boxes */}
+            <View style={styles.quotaGrid}>
+              <View style={[styles.quotaBox, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
+                <ThemedText style={styles.quotaBoxLabel}>Hạn mức phỏng vấn khả dụng</ThemedText>
+                <ThemedText style={styles.quotaBoxValue}>{interviewQuotaText}</ThemedText>
+              </View>
+
+              <View style={[styles.quotaBox, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
+                <ThemedText style={styles.quotaBoxLabel}>Phân tích CV & So khớp JD</ThemedText>
+                <ThemedText style={styles.quotaBoxValue}>{cvAnalysisText}</ThemedText>
+              </View>
+
+              <View style={[styles.quotaBox, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
+                <ThemedText style={styles.quotaBoxLabel}>Giới hạn câu hỏi / phiên</ThemedText>
+                <ThemedText style={styles.quotaBoxValue}>{interviewQuestionLimitText}</ThemedText>
+              </View>
+            </View>
+          </GlassCard>
+
+          {/* SECTION 2: NÂNG CẤP GÓI DỊCH VỤ (Upgrade Plans Section) */}
+          <View style={[styles.sectionHeaderBlock, { borderBottomColor: colors.cardBorder }]}>
+            <ThemedText style={styles.sectionTitle}>Nâng cấp gói dịch vụ</ThemedText>
+            <ThemedText style={styles.sectionSubtitle}>
+              Chọn gói cước phù hợp với tốc độ luyện tập và mục tiêu chuẩn bị phỏng vấn của bạn.
+            </ThemedText>
+          </View>
+
+          {isPlansLoading ? (
+            <View style={styles.centerContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : plans.length === 0 ? (
+            <GlassCard style={{ alignItems: 'center', padding: Spacing.four }}>
+              <Ionicons name="alert-circle-outline" size={36} color={colors.textMuted} />
+              <ThemedText style={{ marginTop: Spacing.one, opacity: 0.8 }}>
+                Hiện chưa có gói dịch vụ khả dụng.
+              </ThemedText>
+            </GlassCard>
+          ) : (
+            <View style={styles.plansStack}>
+              {plans.map((plan) => {
+                const price = plan.prices?.[0];
+                if (!price) return null;
+
+                const isCurrentPlan = currentPlanCode === plan.code.toLowerCase();
+                const isFree = price.amountMinor === 0;
+                const isHighlighted = plan.isHighlighted;
+                const featureDescriptions = price.features
+                  .map(describePlanFeature)
+                  .filter(Boolean) as string[];
+
+                return (
+                  <View
+                    key={plan.id}
+                    style={[
+                      styles.planCard,
+                      {
+                        backgroundColor: isCurrentPlan
+                          ? colors.primaryLight + '20'
+                          : colors.surface,
+                        borderColor: isCurrentPlan
+                          ? colors.primary
+                          : isHighlighted
+                          ? colors.primary
+                          : colors.cardBorder,
+                      },
+                      isHighlighted && styles.highlightedPlanCard,
+                    ]}
+                  >
+                    {/* Highlight Badge on top center */}
+                    {isHighlighted && (
+                      <View style={styles.topBadgeContainer}>
+                        <View style={[styles.topBadge, { backgroundColor: colors.primary }]}>
+                          <Ionicons name="sparkles" size={12} color="#f59e0b" />
+                          <ThemedText style={styles.topBadgeText}>Phổ biến nhất</ThemedText>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Plan Header */}
+                    <View style={styles.planHeaderRow}>
+                      <ThemedText style={styles.planNameText}>{plan.name}</ThemedText>
+                      {isCurrentPlan && (
+                        <View style={[styles.currentPlanBadge, { backgroundColor: colors.primaryLight }]}>
+                          <ThemedText style={[styles.currentPlanBadgeText, { color: colors.primary }]}>
+                            Gói hiện tại
+                          </ThemedText>
+                        </View>
+                      )}
+                    </View>
+
+                    <ThemedText style={styles.planDescText}>
+                      {plan.description ||
+                        'Gói dịch vụ được thiết kế tối ưu cho nhu cầu rèn luyện phỏng vấn của bạn.'}
+                    </ThemedText>
+
+                    {/* Price Display */}
+                    <View style={[styles.priceDisplayRow, { borderBottomColor: colors.cardBorder }]}>
+                      <ThemedText style={styles.priceAmountText}>
+                        {isFree ? 'Miễn phí' : formatCurrency(price.amountMinor, price.currency)}
+                      </ThemedText>
+                      {!isFree && price.durationDays > 0 && (
+                        <ThemedText style={styles.priceDurationText}>
+                          / {price.durationDays} ngày
+                        </ThemedText>
+                      )}
+                    </View>
+
+                    {/* Features Checklist */}
+                    <View style={styles.featuresContainer}>
+                      {price.interviewQuota > 0 && (
+                        <View style={styles.featureRow}>
+                          <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+                          <ThemedText style={styles.featureText}>
+                            Hạn mức phỏng vấn: {price.interviewQuota} lượt
+                          </ThemedText>
+                        </View>
+                      )}
+
+                      {featureDescriptions.map((desc, fIdx) => (
+                        <View key={fIdx} style={styles.featureRow}>
+                          <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+                          <ThemedText style={styles.featureText}>{desc}</ThemedText>
+                        </View>
+                      ))}
+                    </View>
+
+                    {/* Bottom Action Button */}
+                    <TouchableOpacity
+                      style={[
+                        styles.planActionButton,
+                        {
+                          backgroundColor: isCurrentPlan
+                            ? colors.cardBorder
+                            : isHighlighted
+                            ? colors.primary
+                            : 'transparent',
+                          borderWidth: isCurrentPlan || isHighlighted ? 0 : 1,
+                          borderColor: colors.primary,
+                        },
+                        checkoutMutation.isPending && selectedPriceId === price.id && { opacity: 0.6 },
+                      ]}
+                      onPress={() => {
+                        if (isCurrentPlan) return;
+                        if (!isFree) {
+                          setSelectedPriceId(price.id);
+                          checkoutMutation.mutate(price.id);
+                        } else {
+                          router.push('/(tabs)/home' as any);
+                        }
+                      }}
+                      disabled={isCurrentPlan || (checkoutMutation.isPending && selectedPriceId === price.id)}
+                    >
+                      {checkoutMutation.isPending && selectedPriceId === price.id ? (
+                        <ActivityIndicator color="#ffffff" size="small" />
+                      ) : (
+                        <ThemedText
+                          style={[
+                            styles.planActionText,
+                            {
+                              color: isCurrentPlan
+                                ? colors.textMuted
+                                : isHighlighted
+                                ? '#ffffff'
+                                : colors.primary,
+                            },
+                          ]}
+                        >
+                          {isCurrentPlan
+                            ? 'Gói hiện tại'
+                            : isHighlighted
+                            ? 'Nâng cấp ngay'
+                            : 'Chọn gói này'}
+                        </ThemedText>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {/* SECTION 3: LỊCH SỬ GIAO DỊCH (Orders History) */}
+          {orders.length > 0 && (
+            <View style={{ gap: Spacing.two, marginTop: Spacing.two }}>
+              <View style={[styles.sectionHeaderBlock, { borderBottomColor: colors.cardBorder }]}>
+                <ThemedText style={styles.sectionTitle}>Lịch sử giao dịch</ThemedText>
+              </View>
+
+              <View style={styles.ordersContainer}>
+                {orders.map((o) => {
+                  const statusInfo = getOrderStatusPresentation(o.status);
+                  return (
+                    <View
+                      key={o.id}
+                      style={[
+                        styles.orderItemCard,
+                        { backgroundColor: colors.surface, borderColor: colors.cardBorder },
+                      ]}
+                    >
+                      <View style={styles.orderHeaderRow}>
+                        <ThemedText style={[styles.orderCodeText, { color: colors.primary }]}>
+                          {o.id.slice(0, 12)}
+                        </ThemedText>
+                        <OrderStatusBadge status={o.status} size="sm" />
+                      </View>
+
+                      <View style={styles.orderMetaRow}>
+                        <View style={{ gap: 2 }}>
+                          <ThemedText style={styles.orderPlanCode}>{o.planCode}</ThemedText>
+                          <ThemedText style={styles.orderDateText}>
+                            {new Date(o.createdAt).toLocaleString('vi-VN')}
+                          </ThemedText>
+                        </View>
+
+                        <ThemedText style={styles.orderAmountText}>
+                          {formatCurrency(o.amountMinor, o.currency)}
+                        </ThemedText>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
             </View>
           )}
         </ScrollView>
+        <AppBottomNavBar activeTab="profile" />
       </SafeAreaView>
     </ThemedView>
   );

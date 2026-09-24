@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
@@ -11,14 +11,10 @@ import { starApi } from '@/api/star.api';
 import { speechService } from '@/services/speech';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/star-builder.styles';
-
-const SAMPLE_QUESTIONS = [
-  'Kể về một lần bạn gặp xung đột ý kiến trong nhóm và cách bạn xử lý.',
-  'Hãy mô tả một sự cố kĩ thuật nghiêm trọng bạn từng giải quyết.',
-  'Kể về một project bạn phải hoàn thành dưới áp lực thời gian gấp rút.',
-  'Hãy đưa ra ví dụ về một lần bạn thuyết phục thành công stakeholder.',
-];
+import { safeBack } from '@/utils/navigation';
 
 export default function StarBuilderScreen() {
   const router = useRouter();
@@ -27,10 +23,18 @@ export default function StarBuilderScreen() {
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  const [question, setQuestion] = useState(SAMPLE_QUESTIONS[0]);
+  const params = useLocalSearchParams<{ question?: string; scenario?: string }>();
+  const [question, setQuestion] = useState(params.question || '');
   const [answer, setAnswer] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const [attemptId, setAttemptId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (params.question) {
+      setQuestion(params.question);
+    } else if (params.scenario) {
+      setQuestion(`Tình huống phỏng vấn: ${params.scenario}`);
+    }
+  }, [params.question, params.scenario]);
 
   const { data: starAttempts } = useQuery({
     queryKey: ['star-attempts'],
@@ -50,29 +54,10 @@ export default function StarBuilderScreen() {
     }
   });
 
-  const toggleSpeech = () => {
-    if (isRecording) {
-      speechService.stopListening();
-      setIsRecording(false);
-    } else {
-      setIsRecording(true);
-      speechService.startListening({
-        onResult: (transcript) => {
-          setAnswer((prev) => (prev ? `${prev} ${transcript}` : transcript));
-        },
-        onError: (err) => {
-          Alert.alert('Lỗi thu âm', err);
-          setIsRecording(false);
-        },
-        onEnd: () => setIsRecording(false),
-      });
-    }
-  };
-
   const createStarMutation = useMutation({
     mutationFn: async () => {
-      if (!question.trim()) throw new Error('Vui lòng nhập hoặc chọn câu hỏi');
-      if (!answer.trim()) throw new Error('Vui lòng nhập hoặc thu âm câu trả lời');
+      if (!question.trim()) throw new Error('Vui lòng nhập câu hỏi phỏng vấn');
+      if (!answer.trim()) throw new Error('Vui lòng nhập câu trả lời');
 
       const res = await starApi.create({
         question: question.trim(),
@@ -82,7 +67,6 @@ export default function StarBuilderScreen() {
     },
     onSuccess: (data) => {
       setAttemptId(data.id);
-      setIsRecording(false);
       queryClient.invalidateQueries({ queryKey: ['star-attempts'] });
     },
     onError: (err: any) => {
@@ -90,28 +74,21 @@ export default function StarBuilderScreen() {
     }
   });
 
-  const evaluation = activeAttempt?.evaluation;
+  const evaluation = activeAttempt?.evaluation || (activeAttempt as any)?.Evaluation;
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <ThemedText type="title" style={styles.title}>Chuẩn Hóa STAR Builder AI</ThemedText>
-        </View>
+        <AppScreenHeader title="Chuẩn Hóa STAR Builder AI" fallbackRoute="/(tabs)/practice" />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <SampleQuestionPickerCard question={question} setQuestion={setQuestion} colors={colors} />
+          <StarQuestionInputCard question={question} setQuestion={setQuestion} colors={colors} />
 
           <StarAnswerInputCard
             colors={colors}
             answer={answer}
             setAnswer={setAnswer}
-            isRecording={isRecording}
-            toggleSpeech={toggleSpeech}
             onSubmit={() => createStarMutation.mutate()}
             isSubmitting={createStarMutation.isPending}
           />
@@ -145,12 +122,13 @@ export default function StarBuilderScreen() {
             </View>
           )}
         </ScrollView>
+        <AppBottomNavBar activeTab="practice" />
       </SafeAreaView>
     </ThemedView>
   );
 }
 
-const SampleQuestionPickerCard = React.memo(({
+const StarQuestionInputCard = React.memo(({
   question,
   setQuestion,
   colors,
@@ -162,37 +140,18 @@ const SampleQuestionPickerCard = React.memo(({
   <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
     <View style={styles.cardHeaderRow}>
       <Ionicons name="help-circle-outline" size={22} color={colors.primary} />
-      <ThemedText type="subtitle" style={styles.cardTitle}>Câu Hỏi Tình Huống Phỏng Vấn</ThemedText>
+      <ThemedText type="subtitle" style={styles.cardTitle}>Tình Huống Phỏng Vấn (Question / Scenario)</ThemedText>
     </View>
 
-    <View style={{ gap: Spacing.two }}>
-      {SAMPLE_QUESTIONS.map((q) => (
-        <TouchableOpacity
-          key={q}
-          style={[
-            styles.sampleRow,
-            { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
-            question === q && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
-          ]}
-          onPress={() => setQuestion(q)}
-        >
-          <Ionicons
-            name={question === q ? 'radio-button-on' : 'radio-button-off'}
-            size={18}
-            color={question === q ? colors.primary : colors.textMuted}
-          />
-          <ThemedText style={[styles.sampleText, question === q && { color: colors.primary, fontWeight: '600' }]}>
-            {q}
-          </ThemedText>
-        </TouchableOpacity>
-      ))}
-    </View>
-
-    <ThemedText style={styles.inputLabel}>Hoặc tự nhập câu hỏi tình huống khác:</ThemedText>
     <TextInput
-      style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement }]}
-      placeholder="Nhập nội dung câu hỏi..."
+      style={[
+        styles.textArea,
+        { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.backgroundElement, height: 90 }
+      ]}
+      placeholder="Nhập câu hỏi hoặc tình huống phỏng vấn bạn muốn rèn luyện..."
       placeholderTextColor={colors.textMuted}
+      multiline
+      numberOfLines={3}
       value={question}
       onChangeText={setQuestion}
     />
@@ -203,16 +162,12 @@ const StarAnswerInputCard = React.memo(({
   colors,
   answer,
   setAnswer,
-  isRecording,
-  toggleSpeech,
   onSubmit,
   isSubmitting,
 }: {
   colors: any;
   answer: string;
   setAnswer: (text: string) => void;
-  isRecording: boolean;
-  toggleSpeech: () => void;
   onSubmit: () => void;
   isSubmitting: boolean;
 }) => (
@@ -223,7 +178,7 @@ const StarAnswerInputCard = React.memo(({
     </View>
 
     <ThemedText style={styles.subTip}>
-      💡 Nhập một câu trả lời tự nhiên dạng văn bản hoặc giọng nói. AI sẽ tự bóc tách thành 4 thành phần S-T-A-R.
+      💡 Nhập một câu trả lời tự nhiên dạng văn bản. AI sẽ tự bóc tách thành 4 thành phần S-T-A-R.
     </ThemedText>
 
     <TextInput
@@ -241,17 +196,9 @@ const StarAnswerInputCard = React.memo(({
 
     <View style={styles.actionRow}>
       <TouchableOpacity
-        style={[styles.micButton, isRecording && { backgroundColor: colors.danger }]}
-        onPress={toggleSpeech}
-      >
-        <Ionicons name={isRecording ? 'mic-off' : 'mic'} size={20} color="#fff" />
-        <ThemedText style={styles.micButtonText}>{isRecording ? 'Dừng' : 'Thu Giọng Nói'}</ThemedText>
-      </TouchableOpacity>
-
-      <TouchableOpacity
         style={[
           styles.submitButton,
-          { backgroundColor: colors.primary },
+          { backgroundColor: colors.primary, width: '100%' },
           (!answer.trim() || isSubmitting) && styles.disabledButton
         ]}
         onPress={onSubmit}
@@ -270,52 +217,259 @@ const StarAnswerInputCard = React.memo(({
   </View>
 ));
 
+export interface NormalizedStarComponent {
+  label: string;
+  key: 'S' | 'T' | 'A' | 'R';
+  title: string;
+  content: string;
+  evidence?: string;
+  feedback?: string;
+  score?: number | null;
+  detected?: boolean;
+}
+
+export interface NormalizedStarEvaluation {
+  overallScore: number | null;
+  situation: NormalizedStarComponent;
+  task: NormalizedStarComponent;
+  action: NormalizedStarComponent;
+  result: NormalizedStarComponent;
+  missingElements: string[];
+  strengths: string[];
+  coachingTips: string[];
+  applicable: boolean;
+}
+
+function parseStarComponent(
+  raw: any,
+  key: 'S' | 'T' | 'A' | 'R',
+  title: string,
+  fallbackEmptyText: string
+): NormalizedStarComponent {
+  const labelMap = { S: 'Situation', T: 'Task', A: 'Action', R: 'Result' };
+  const label = labelMap[key];
+
+  if (!raw) {
+    return {
+      key,
+      label,
+      title,
+      content: fallbackEmptyText,
+      detected: false,
+    };
+  }
+
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    return {
+      key,
+      label,
+      title,
+      content: trimmed || fallbackEmptyText,
+      detected: !!trimmed,
+    };
+  }
+
+  if (typeof raw === 'object') {
+    const feedback = raw.feedback || raw.Feedback || raw.text || raw.Text || raw.content || raw.Content || '';
+    const evidence = raw.evidence || raw.Evidence || '';
+    const score = typeof raw.score === 'number' ? raw.score : typeof raw.Score === 'number' ? raw.Score : null;
+    const detected = typeof raw.detected === 'boolean' ? raw.detected : typeof raw.Detected === 'boolean' ? raw.Detected : true;
+
+    return {
+      key,
+      label,
+      title,
+      content: feedback || evidence || (detected ? 'Đã ghi nhận trong câu trả lời' : fallbackEmptyText),
+      evidence,
+      feedback,
+      score,
+      detected,
+    };
+  }
+
+  return {
+    key,
+    label,
+    title,
+    content: fallbackEmptyText,
+    detected: false,
+  };
+}
+
+function normalizeStarEvaluation(raw: any): NormalizedStarEvaluation | null {
+  if (!raw) return null;
+
+  const situationRaw = raw.situation || raw.Situation;
+  const taskRaw = raw.task || raw.Task;
+  const actionRaw = raw.action || raw.Action;
+  const resultRaw = raw.result || raw.Result;
+
+  const situation = parseStarComponent(situationRaw, 'S', 'Bối Cảnh (Situation)', 'Chưa phát hiện rõ bối cảnh tình huống.');
+  const task = parseStarComponent(taskRaw, 'T', 'Nhiệm Vụ (Task)', 'Chưa phát hiện rõ mục tiêu / nhiệm vụ.');
+  const action = parseStarComponent(actionRaw, 'A', 'Hành Động (Action)', 'Chưa phát hiện rõ hành động xử lý.');
+  const result = parseStarComponent(resultRaw, 'R', 'Kết Quả (Result)', 'Chưa phát hiện chỉ số / kết quả đạt được.');
+
+  const rawMissing = raw.missingElements || raw.MissingElements || [];
+  const missingElements: string[] = Array.isArray(rawMissing)
+    ? rawMissing.filter((m: any) => typeof m === 'string' && m.trim())
+    : [];
+
+  const rawStrengths = raw.strengths || raw.Strengths || [];
+  const strengths: string[] = Array.isArray(rawStrengths)
+    ? rawStrengths.filter((s: any) => typeof s === 'string' && s.trim())
+    : [];
+
+  const rawTips = raw.coachingTips || raw.CoachingTips || raw.improvements || raw.Improvements || raw.recommendedApproach || raw.RecommendedApproach || [];
+  const coachingTips: string[] = Array.isArray(rawTips)
+    ? rawTips.filter((t: any) => typeof t === 'string' && t.trim())
+    : [];
+
+  const rawScore = raw.overallScore ?? raw.OverallScore ?? raw.score ?? raw.Score ?? null;
+
+  return {
+    overallScore: typeof rawScore === 'number' ? rawScore : null,
+    situation,
+    task,
+    action,
+    result,
+    missingElements,
+    strengths,
+    coachingTips,
+    applicable: typeof raw.applicable === 'boolean' ? raw.applicable : true,
+  };
+}
+
 const StarEvaluationDetailsContent = React.memo(({
   evaluation,
   colors,
 }: {
   evaluation: any;
   colors: any;
-}) => (
-  <View style={{ gap: Spacing.three }}>
-    <View style={styles.successRow}>
-      <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
-      <ThemedText style={[styles.successText, { color: colors.accent }]}>Hoàn tất phân tích!</ThemedText>
-    </View>
+}) => {
+  const normEval = useMemo(() => normalizeStarEvaluation(evaluation), [evaluation]);
 
-    <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
-      <ThemedText style={[styles.starLabel, { color: colors.primary }]}>S - Situation (Bối cảnh / Tình huống):</ThemedText>
-      <ThemedText style={styles.starText}>{evaluation.situation || evaluation.Situation || 'Chưa phát hiện rõ bối cảnh'}</ThemedText>
-    </View>
+  if (!normEval) return null;
 
-    <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
-      <ThemedText style={[styles.starLabel, { color: colors.secondary }]}>T - Task (Nhiệm vụ / Mục tiêu):</ThemedText>
-      <ThemedText style={styles.starText}>{evaluation.task || evaluation.Task || 'Chưa phát hiện rõ mục tiêu'}</ThemedText>
-    </View>
+  const components = [normEval.situation, normEval.task, normEval.action, normEval.result];
+  const colorMap = {
+    S: { tagBg: '#e0f2fe', tagText: '#0369a1' },
+    T: { tagBg: '#fef3c7', tagText: '#b45309' },
+    A: { tagBg: '#fce7f3', tagText: '#be185d' },
+    R: { tagBg: '#dcfce7', tagText: '#15803d' },
+  };
 
-    <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
-      <ThemedText style={[styles.starLabel, { color: colors.warning }]}>A - Action (Hành động thực hiện):</ThemedText>
-      <ThemedText style={styles.starText}>{evaluation.action || evaluation.Action || 'Chưa phát hiện rõ hành động'}</ThemedText>
-    </View>
-
-    <View style={[styles.starBox, { backgroundColor: colors.backgroundElement }]}>
-      <ThemedText style={[styles.starLabel, { color: colors.accent }]}>R - Result (Kết quả đạt được):</ThemedText>
-      <ThemedText style={styles.starText}>{evaluation.result || evaluation.Result || 'Chưa có chỉ số / kết quả rõ ràng'}</ThemedText>
-    </View>
-
-    {evaluation.missingElements && Array.isArray(evaluation.missingElements) && evaluation.missingElements.length > 0 && (
-      <View style={[styles.warningBox, { backgroundColor: colors.warningLight }]}>
-        <Ionicons name="warning-outline" size={20} color={colors.warning} />
-        <View style={{ flex: 1 }}>
-          <ThemedText style={[styles.warningHeader, { color: colors.warning }]}>⚠️ Yếu tố STAR còn thiếu:</ThemedText>
-          {evaluation.missingElements.map((m: string) => (
-            <ThemedText key={m} style={styles.bulletText}>• {m}</ThemedText>
-          ))}
+  return (
+    <View style={{ gap: Spacing.three }}>
+      {/* Overall Score Banner (if available) */}
+      {normEval.overallScore !== null && (
+        <View style={[styles.evalScoreHero, { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' }]}>
+          <View style={[styles.scoreGauge, { backgroundColor: '#059669' }]}>
+            <ThemedText style={styles.scoreGaugeText}>{normEval.overallScore}</ThemedText>
+            <ThemedText style={styles.scoreGaugeLabel}>/100</ThemedText>
+          </View>
+          <View style={{ flex: 1 }}>
+            <ThemedText style={[styles.evalScoreTitle, { color: '#065f46' }]}>Đánh Giá Cấu Trúc STAR</ThemedText>
+            <ThemedText style={[styles.evalScoreFeedback, { color: '#047857' }]}>
+              {normEval.applicable
+                ? 'AI đã phân tích đầy đủ các thành phần bối cảnh, mục tiêu, hành động và kết quả trong câu trả lời.'
+                : 'Câu trả lời chưa đầy đủ thành phần STAR tiêu chuẩn.'}
+            </ThemedText>
+          </View>
         </View>
-      </View>
-    )}
-  </View>
-));
+      )}
+
+      {/* 4 STAR Component Cards */}
+      {components.map((comp) => {
+        const theme = colorMap[comp.key];
+        return (
+          <View
+            key={comp.key}
+            style={[
+              styles.starBox,
+              {
+                backgroundColor: colors.backgroundElement,
+                borderColor: colors.cardBorder,
+                borderWidth: 1,
+              },
+            ]}
+          >
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={[styles.starBadgeTag, { backgroundColor: theme.tagBg }]}>
+                  <ThemedText style={[styles.starBadgeTagText, { color: theme.tagText }]}>{comp.key}</ThemedText>
+                </View>
+                <ThemedText style={[styles.starLabel, { color: colors.text }]}>{comp.title}</ThemedText>
+              </View>
+
+              {comp.score !== null && comp.score !== undefined ? (
+                <View style={[styles.scoreBadgePill, { backgroundColor: comp.score >= 80 ? '#dcfce7' : comp.score >= 60 ? '#fef3c7' : '#fee2e2' }]}>
+                  <ThemedText style={{ fontSize: 11, fontWeight: '700', color: comp.score >= 80 ? '#15803d' : comp.score >= 60 ? '#b45309' : '#b91c1c' }}>
+                    {comp.score}/100
+                  </ThemedText>
+                </View>
+              ) : comp.detected === false ? (
+                <View style={[styles.scoreBadgePill, { backgroundColor: '#fee2e2' }]}>
+                  <ThemedText style={{ fontSize: 11, fontWeight: '700', color: '#b91c1c' }}>Chưa phát hiện</ThemedText>
+                </View>
+              ) : null}
+            </View>
+
+            {/* Evidence blockquote if present */}
+            {comp.evidence ? (
+              <View style={[styles.evidenceBox, { backgroundColor: colors.card, borderLeftColor: theme.tagText }]}>
+                <ThemedText style={[styles.evidenceText, { color: colors.text }]}>
+                  &ldquo;{comp.evidence}&rdquo;
+                </ThemedText>
+              </View>
+            ) : null}
+
+            <ThemedText style={[styles.starText, { color: colors.text }]}>{comp.content}</ThemedText>
+          </View>
+        );
+      })}
+
+      {/* Missing Elements */}
+      {normEval.missingElements.length > 0 && (
+        <View style={[styles.warningBox, { backgroundColor: '#fffbeb', borderColor: '#fde68a', borderWidth: 1 }]}>
+          <Ionicons name="warning" size={18} color="#b45309" />
+          <View style={{ flex: 1, gap: 4 }}>
+            <ThemedText style={[styles.warningHeader, { color: '#b45309' }]}>⚠️ Yếu tố STAR còn thiếu:</ThemedText>
+            {normEval.missingElements.map((m: string, idx: number) => (
+              <ThemedText key={`m-${idx}`} style={[styles.bulletText, { color: '#78350f' }]}>• {m}</ThemedText>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Strengths */}
+      {normEval.strengths.length > 0 && (
+        <View style={[styles.warningBox, { backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', borderWidth: 1 }]}>
+          <Ionicons name="checkmark-circle" size={18} color="#047857" />
+          <View style={{ flex: 1, gap: 4 }}>
+            <ThemedText style={[styles.warningHeader, { color: '#047857' }]}>👍 Điểm mạnh ghi nhận:</ThemedText>
+            {normEval.strengths.map((s: string, idx: number) => (
+              <ThemedText key={`s-${idx}`} style={[styles.bulletText, { color: '#065f46' }]}>• {s}</ThemedText>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Coaching Tips */}
+      {normEval.coachingTips.length > 0 && (
+        <View style={[styles.warningBox, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe', borderWidth: 1 }]}>
+          <Ionicons name="bulb" size={18} color="#1d4ed8" />
+          <View style={{ flex: 1, gap: 4 }}>
+            <ThemedText style={[styles.warningHeader, { color: '#1d4ed8' }]}>💡 Lời khuyên cải thiện chuyên gia:</ThemedText>
+            {normEval.coachingTips.map((t: string, idx: number) => (
+              <ThemedText key={`t-${idx}`} style={[styles.bulletText, { color: '#1e40af' }]}>• {t}</ThemedText>
+            ))}
+          </View>
+        </View>
+      )}
+    </View>
+  );
+});
 
 const StarEvaluationResultCard = React.memo(({
   activeAttempt,
@@ -341,8 +495,8 @@ const StarEvaluationResultCard = React.memo(({
       </View>
     )}
 
-    {activeAttempt.status === 'completed' && evaluation && (
-      <StarEvaluationDetailsContent evaluation={evaluation} colors={colors} />
+    {activeAttempt.status === 'completed' && (evaluation || (activeAttempt as any).Evaluation) && (
+      <StarEvaluationDetailsContent evaluation={evaluation || (activeAttempt as any).Evaluation} colors={colors} />
     )}
   </View>
 ));

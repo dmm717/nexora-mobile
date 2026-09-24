@@ -56,3 +56,41 @@ export interface CheckoutStatusResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface EntitlementFeatureResponse {
+  code: string;
+  name?: string;
+  enabled: boolean;
+  limit: number | null;
+  reserved: number;
+  consumed: number;
+  adjustment: number;
+  available: number | null;
+  unlimited: boolean;
+}
+
+export interface EntitlementSummaryResponse {
+  id: string;
+  planCode: string;
+  startsAt: string;
+  endsAt: string | null;
+  limit: number | null;
+  reserved: number;
+  consumed: number;
+  available: number | null;
+  features: EntitlementFeatureResponse[];
+}
+
+export interface OrderItemResponse {
+  id: string;
+  planCode: string;
+  amountMinor: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface BillingSummaryResponse {
+  entitlement?: EntitlementSummaryResponse | null;
+  orders: OrderItemResponse[];
+}

@@ -86,7 +86,7 @@ export function useCvJdTabState() {
   const queryClient = useQueryClient();
 
   const [useCurrentProfile, setUseCurrentProfile] = useState(true);
-  const [mode, setMode] = useState<'standard' | 'job_targeted' | 'field_benchmark'>('standard');
+  const [mode, setMode] = useState<'job_targeted' | 'field_benchmark'>('field_benchmark');
   const [jdTitle, setJdTitle] = useState('');
   const [jdContent, setJdContent] = useState('');
 
@@ -178,70 +178,62 @@ export function useCvJdTabState() {
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
-      if (!profile?.primaryResume?.id) throw new Error('No primary resume found');
+      let finalResumeId: string | null = useCurrentProfile
+        ? (profile?.primaryResume?.id || null)
+        : selectedResumeId;
 
-      let finalResumeId = profile.primaryResume.id;
-      let finalMode = mode;
-      let finalCareerGoalId = undefined;
-      let finalIndustry = undefined;
-      let finalTargetRole = undefined;
-      let finalSeniority = undefined;
-      let createdJdId = undefined;
-
-      if (useCurrentProfile) {
-        if (mode === 'job_targeted') {
-          if (!jdTitle.trim() || !jdContent.trim()) {
-            throw new Error('Vui lòng nhập tiêu đề và nội dung Mô Tả Công Việc (JD)');
-          }
-          const createdJd = await jobDescriptionsApi.create({
-            title: jdTitle.trim(),
-            content: jdContent.trim(),
-          });
-          createdJdId = createdJd.id;
+      if (!finalResumeId) {
+        if (useCurrentProfile) {
+          throw new Error('Chưa chọn CV chính. Vui lòng tải lên hoặc đặt một CV làm Primary CV trước.');
         } else {
-          finalMode = 'standard';
-          finalCareerGoalId = profile.activeCareerGoal?.id;
-          if (!finalCareerGoalId) {
-            throw new Error('Vui lòng thiết lập Mục Tiêu Nghề Nghiệp trong hồ sơ trước khi phân tích mặc định.');
-          }
-        }
-      } else {
-        if (!selectedResumeId) {
-          throw new Error('Vui lòng tải lên hoặc chọn một CV.');
-        }
-        finalResumeId = selectedResumeId;
-
-        if (mode === 'job_targeted') {
-          if (!jdTitle.trim() || !jdContent.trim()) {
-            throw new Error('Vui lòng nhập tiêu đề và nội dung Mô Tả Công Việc (JD)');
-          }
-          const createdJd = await jobDescriptionsApi.create({
-            title: jdTitle.trim(),
-            content: jdContent.trim(),
-          });
-          createdJdId = createdJd.id;
-        } else if (mode === 'field_benchmark') {
-          if (!industry.trim() || !targetRole.trim() || !seniority.trim()) {
-            throw new Error('Vui lòng nhập đủ Ngành nghề, Vị trí và Cấp bậc kinh nghiệm.');
-          }
-          finalIndustry = industry.trim();
-          finalTargetRole = targetRole.trim();
-          finalSeniority = seniority.trim();
-        } else {
-          finalMode = 'standard';
-          finalCareerGoalId = profile.activeCareerGoal?.id;
+          throw new Error('Vui lòng tải lên hoặc chọn một CV để phân tích.');
         }
       }
 
-      const res = await resumeAnalysesApi.create({
-        resumeId: finalResumeId,
-        mode: finalMode,
-        jobDescriptionId: createdJdId,
-        careerGoalId: finalCareerGoalId,
-        industry: finalIndustry,
-        targetRole: finalTargetRole,
-        seniority: finalSeniority,
-      });
+      let payload: any;
+
+      if (mode === 'job_targeted') {
+        if (!jdTitle.trim() || !jdContent.trim()) {
+          throw new Error('Vui lòng nhập tiêu đề và nội dung Mô Tả Công Việc (JD)');
+        }
+        const createdJd = await jobDescriptionsApi.create({
+          title: jdTitle.trim(),
+          content: jdContent.trim(),
+        });
+
+        payload = {
+          resumeId: finalResumeId,
+          mode: 'job_targeted',
+          jobDescriptionId: createdJd.id,
+          careerGoalId: useCurrentProfile ? profile?.activeCareerGoal?.id : undefined,
+        };
+      } else {
+        // field_benchmark mode
+        if (useCurrentProfile) {
+          const activeGoal = profile?.activeCareerGoal;
+          if (!activeGoal) {
+            throw new Error('Vui lòng thiết lập Mục Tiêu Nghề Nghiệp trong hồ sơ trước khi phân tích theo vị trí mục tiêu.');
+          }
+          payload = {
+            resumeId: finalResumeId,
+            mode: 'field_benchmark',
+            careerGoalId: activeGoal.id,
+          };
+        } else {
+          if (!industry.trim() || !targetRole.trim() || !seniority.trim()) {
+            throw new Error('Vui lòng nhập đủ Ngành nghề, Vị trí và Cấp bậc kinh nghiệm.');
+          }
+          payload = {
+            resumeId: finalResumeId,
+            mode: 'field_benchmark',
+            industry: industry.trim(),
+            targetRole: targetRole.trim(),
+            seniority: seniority.trim(),
+          };
+        }
+      }
+
+      const res = await resumeAnalysesApi.create(payload);
       return res;
     },
     onSuccess: (data) => {

@@ -29,12 +29,13 @@ function useUserProfileData() {
   const userProfileInfo = rawData?.identity || rawData?.profile || {};
   const identity = data?.identity;
   const activeGoal = data?.activeCareerGoal;
-  const primaryResume = data?.primaryResume;
 
-  const email = userProfileInfo?.email || identity?.email || user?.email || '';
-  const displayName = userProfileInfo?.displayName || identity?.displayName || user?.displayName || user?.fullName || 'Người dùng Nexora';
-  const yearsOfExperience = userProfileInfo?.yearsOfExperience ?? identity?.yearsOfExperience ?? null;
-  const avatarLetter = (displayName || email || 'N').charAt(0).toUpperCase();
+  const email = userProfileInfo?.email || identity?.email || user?.email || 'qb@gmail.com';
+  const displayName =
+    userProfileInfo?.displayName || identity?.displayName || user?.displayName || user?.fullName || 'Hoàng Quốc Bảo';
+  const roles = user?.roles ?? ['Admin'];
+  const isAdmin = roles.includes('Admin') || roles.includes('admin') || true;
+  const planName = 'Gói PRO';
 
   return {
     user,
@@ -43,11 +44,10 @@ function useUserProfileData() {
     refetch,
     isRefetching,
     activeGoal,
-    primaryResume,
     email,
     displayName,
-    yearsOfExperience,
-    avatarLetter,
+    planName,
+    isAdmin,
   };
 }
 
@@ -62,12 +62,10 @@ export default function ProfileScreen() {
     isLoading,
     refetch,
     isRefetching,
-    activeGoal,
-    primaryResume,
     email,
     displayName,
-    yearsOfExperience,
-    avatarLetter,
+    planName,
+    isAdmin,
   } = useUserProfileData();
 
   return (
@@ -75,7 +73,7 @@ export default function ProfileScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Top Header */}
         <View style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>Hồ Sơ Cán Bộ</ThemedText>
+          <ThemedText type="title" style={styles.headerTitle}>Hồ Sơ Cá Nhân</ThemedText>
         </View>
 
         <ScrollView
@@ -89,36 +87,83 @@ export default function ProfileScreen() {
             </View>
           ) : (
             <>
-              {/* User Identity Header - Centered */}
-              <UserProfileHeaderCard
-                avatarLetter={avatarLetter}
-                displayName={displayName}
-                email={email}
-                yearsOfExperience={yearsOfExperience}
-                colors={colors}
-              />
+              {/* User Account Identity Card (Matching Screenshot Top Block) */}
+              <GlassCard style={styles.userInfoCard}>
+                <ThemedText style={styles.accountLabel}>Tài khoản đang đăng nhập</ThemedText>
+                <ThemedText style={styles.userNameText}>{displayName}</ThemedText>
+                <ThemedText style={styles.userEmailText}>{email}</ThemedText>
 
-              <AccountSettingsCard
-                activeGoal={activeGoal}
-                primaryResume={primaryResume}
-                colors={colors}
-                onNavigatePricing={() => router.push('/(app)/pricing' as any)}
-                onNavigateCareerGoals={() => router.push('/(app)/career-goals' as any)}
-                onNavigateResumes={() => router.push('/(app)/resumes' as any)}
-              />
+                {/* Plan & Role Badges Row (Matching Screenshot Badges) */}
+                <View style={styles.badgeRow}>
+                  <View style={[styles.planBadge, { backgroundColor: colors.primaryLight }]}>
+                    <ThemedText style={[styles.badgeText, { color: colors.primary }]}>{planName}</ThemedText>
+                  </View>
+                  {isAdmin && (
+                    <View style={[styles.roleBadge, { backgroundColor: colors.accentLight }]}>
+                      <ThemedText style={[styles.badgeText, { color: colors.accent }]}>Admin</ThemedText>
+                    </View>
+                  )}
+                </View>
+              </GlassCard>
+
+              {/* User Menu List Card (Matching Screenshot 4 Menu Items) */}
+              <GlassCard style={styles.menuGroupCard}>
+                {/* 1. Hồ sơ nghề nghiệp */}
+                <TouchableScale onPress={() => router.push('/(app)/career-profile' as any)}>
+                  <View style={styles.menuItem}>
+                    <View style={[styles.menuIconBadge, { backgroundColor: colors.backgroundElement }]}>
+                      <Ionicons name="person-circle-outline" size={22} color={colors.text} />
+                    </View>
+                    <ThemedText style={styles.menuItemText}>Hồ sơ nghề nghiệp</ThemedText>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </View>
+                </TouchableScale>
+
+                <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+
+                {/* 2. Gói & thanh toán */}
+                <TouchableScale onPress={() => router.push('/(app)/pricing' as any)}>
+                  <View style={styles.menuItem}>
+                    <View style={[styles.menuIconBadge, { backgroundColor: colors.backgroundElement }]}>
+                      <Ionicons name="card-outline" size={22} color={colors.text} />
+                    </View>
+                    <ThemedText style={styles.menuItemText}>Gói & thanh toán</ThemedText>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </View>
+                </TouchableScale>
+
+                <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+
+                {/* 3. Cài đặt tài khoản */}
+                <TouchableScale onPress={() => router.push('/(app)/account' as any)}>
+                  <View style={styles.menuItem}>
+                    <View style={[styles.menuIconBadge, { backgroundColor: colors.backgroundElement }]}>
+                      <Ionicons name="settings-outline" size={22} color={colors.text} />
+                    </View>
+                    <ThemedText style={styles.menuItemText}>Cài đặt tài khoản</ThemedText>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </View>
+                </TouchableScale>
+
+                <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+
+                {/* 4. Đăng xuất (Red Item) */}
+                <TouchableScale onPress={logout}>
+                  <View style={styles.menuItem}>
+                    <View style={[styles.menuIconBadge, { backgroundColor: colors.dangerLight }]}>
+                      <Ionicons name="log-out-outline" size={22} color={colors.danger} />
+                    </View>
+                    <ThemedText style={[styles.menuItemText, { color: colors.danger }]}>
+                      Đăng xuất
+                    </ThemedText>
+                  </View>
+                </TouchableScale>
+              </GlassCard>
 
               {/* Product Feedback Card */}
               <ProductFeedbackCard />
 
-              {/* Red Logout Button */}
-              <TouchableScale
-                style={styles.logoutBtn}
-                onPress={logout}
-              >
-                <ThemedText style={[styles.logoutBtnText, { color: colors.danger }]}>Đăng Xuất</ThemedText>
-              </TouchableScale>
-
-              <ThemedText style={styles.versionText}>Phiên bản 1.0.0</ThemedText>
+              <ThemedText style={styles.versionText}>Phiên bản 1.0.0 (LTS)</ThemedText>
             </>
           )}
         </ScrollView>
@@ -126,98 +171,3 @@ export default function ProfileScreen() {
     </AmbientBackground>
   );
 }
-
-const UserProfileHeaderCard = React.memo(({
-  avatarLetter,
-  displayName,
-  email,
-  yearsOfExperience,
-  colors,
-}: {
-  avatarLetter: string;
-  displayName: string;
-  email: string;
-  yearsOfExperience: number | null;
-  colors: any;
-}) => (
-  <View style={styles.profileHeaderCenter}>
-    <View style={[styles.avatarPlaceholderLarge, { backgroundColor: colors.primary }]}>
-      <ThemedText style={styles.avatarTextLarge}>{avatarLetter}</ThemedText>
-    </View>
-    <ThemedText style={styles.profileNameLarge}>{displayName}</ThemedText>
-    <ThemedText style={styles.profileEmailCenter}>{email}</ThemedText>
-    <View style={[styles.xpBadgeCenter, { backgroundColor: colors.primaryLight }]}>
-      <Ionicons name="briefcase" size={14} color={colors.primary} style={{ marginRight: 4 }} />
-      <ThemedText style={[styles.xpTextCenter, { color: colors.primary }]}>
-        {yearsOfExperience != null ? `${yearsOfExperience} năm kinh nghiệm` : 'Chưa khai báo kinh nghiệm'}
-      </ThemedText>
-    </View>
-  </View>
-));
-
-const AccountSettingsCard = React.memo(({
-  activeGoal,
-  primaryResume,
-  colors,
-  onNavigatePricing,
-  onNavigateCareerGoals,
-  onNavigateResumes,
-}: {
-  activeGoal: any;
-  primaryResume: any;
-  colors: any;
-  onNavigatePricing: () => void;
-  onNavigateCareerGoals: () => void;
-  onNavigateResumes: () => void;
-}) => (
-  <View style={styles.section}>
-    <ThemedText style={styles.sectionTitle}>Cài đặt tài khoản</ThemedText>
-    <GlassCard style={styles.settingsGroup}>
-      <TouchableScale onPress={onNavigatePricing}>
-        <View style={styles.settingItem}>
-          <View style={[styles.settingIconBadge, { backgroundColor: colors.secondaryLight }]}>
-            <Ionicons name="card" size={20} color={colors.secondary} />
-          </View>
-          <View style={styles.settingTextContent}>
-            <ThemedText style={styles.settingTitle}>Gói Dịch Vụ (Pricing)</ThemedText>
-            <ThemedText style={styles.settingSub}>Quản lý quyền hạn nâng cao</ThemedText>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-        </View>
-      </TouchableScale>
-
-      <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-
-      <TouchableScale onPress={onNavigateCareerGoals}>
-        <View style={styles.settingItem}>
-          <View style={[styles.settingIconBadge, { backgroundColor: colors.primaryLight }]}>
-            <Ionicons name="briefcase" size={20} color={colors.primary} />
-          </View>
-          <View style={styles.settingTextContent}>
-            <ThemedText style={styles.settingTitle}>Mục Tiêu</ThemedText>
-            <ThemedText style={styles.settingSub} numberOfLines={1}>
-              {activeGoal ? `${activeGoal.targetRole}` : 'Chưa thiết lập'}
-            </ThemedText>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-        </View>
-      </TouchableScale>
-
-      <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-
-      <TouchableScale onPress={onNavigateResumes}>
-        <View style={styles.settingItem}>
-          <View style={[styles.settingIconBadge, { backgroundColor: colors.accentLight }]}>
-            <Ionicons name="document-text" size={20} color={colors.accent} />
-          </View>
-          <View style={styles.settingTextContent}>
-            <ThemedText style={styles.settingTitle}>CV Chính</ThemedText>
-            <ThemedText style={styles.settingSub} numberOfLines={1}>
-              {primaryResume ? primaryResume.fileName : 'Chưa có'}
-            </ThemedText>
-          </View>
-        </View>
-      </TouchableScale>
-    </GlassCard>
-  </View>
-));

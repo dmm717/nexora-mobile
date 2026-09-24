@@ -1,7 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useQueryClient, QueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import { authApi } from '@/api/auth.api';
-import { onAuthError } from '@/api/client';
+import { API_BASE_URL, onAuthError } from '@/api/client';
 import { LoginRequest, RegisterRequest, UserDto } from '@/api/types';
 import { tokenStorage } from '@/services/storage';
 
@@ -24,10 +25,41 @@ async function hydrateSessionAsync(
   setUser: (u: UserDto | null) => void,
   setIsLoading: (v: boolean) => void,
 ) {
-  const token = await tokenStorage.getAccessToken();
+  let token = await tokenStorage.getAccessToken();
+  if (!token) {
+    try {
+      const refreshResponse = await axios.post<{
+        data?: { accessToken: string };
+        accessToken?: string;
+      }>(
+        `${API_BASE_URL}/auth/refresh`,
+        {},
+        {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+      const newAccessToken =
+        refreshResponse.data?.data?.accessToken || refreshResponse.data?.accessToken;
+      if (newAccessToken) {
+        await tokenStorage.setAccessToken(newAccessToken);
+        token = newAccessToken;
+      }
+    } catch {
+      await tokenStorage.clearTokens();
+    }
+  }
+
   if (token) {
-    const me = await authApi.getMe();
-    if (signal.mounted) setUser(me);
+    try {
+      const me = await authApi.getMe();
+      if (signal.mounted) setUser(me);
+    } catch {
+      if (signal.mounted) {
+        await tokenStorage.clearTokens();
+        setUser(null);
+      }
+    }
   }
   if (signal.mounted) setIsLoading(false);
 }

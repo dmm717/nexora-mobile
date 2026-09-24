@@ -15,7 +15,7 @@ interface MaterialInputProps extends TextInputProps {
   label: string;
   error?: string;
   isPassword?: boolean;
-  leftIcon?: keyof typeof Ionicons.glyphMap;
+  leftIcon?: string;
 }
 
 export const MaterialInput: React.FC<MaterialInputProps> = ({
@@ -88,7 +88,7 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
       <Animated.View style={[styles.inputContainer, animatedContainerStyle, { backgroundColor: colors.surface }]}>
         {leftIcon && (
           <Ionicons
-            name={leftIcon}
+            name={leftIcon as any}
             size={20}
             color={isFocused ? colors.primary : colors.textSecondary}
             style={styles.leftIcon}

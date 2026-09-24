@@ -11,6 +11,9 @@ import { resumeAnalysesApi } from '@/api/resume-analyses.api';
 import { CVAnalysisResultView } from '@/components/cv-analysis/CVAnalysisResultView';
 import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppScreenHeader } from '@/components/navigation/app-screen-header';
+import { safeBack } from '@/utils/navigation';
 
 export default function CVAnalysisDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,12 +41,7 @@ export default function CVAnalysisDetailScreen() {
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <ThemedText type="title" style={styles.title}>Báo Cáo Phân Tích</ThemedText>
-        </View>
+        <AppScreenHeader title="Báo Cáo Phân Tích" fallbackRoute="/(tabs)/cv-jd" />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <CVAnalysisResultView
@@ -54,6 +52,7 @@ export default function CVAnalysisDetailScreen() {
             colors={colors}
           />
         </ScrollView>
+        <AppBottomNavBar activeTab="cv-jd" />
       </SafeAreaView>
     </ThemedView>
   );

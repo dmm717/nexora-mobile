@@ -9,6 +9,7 @@ import { AmbientBackground as SolidBackground } from '@/components/ui/ambient-ba
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { useHomeState } from '@/components/home/useHomeState';
 import {
   ExecutiveDashboardCard,
@@ -68,10 +69,10 @@ export default function HomeScreen() {
             </TouchableScale>
 
             <TouchableScale
-              style={[styles.headerBtnSecondaryCompact, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}
+              style={{ borderRadius: 16 }}
               onPress={() => router.push('/(tabs)/profile' as any)}
             >
-              <Ionicons name="person" size={12} color={colors.textPrimary} />
+              <UserAvatar name={user?.displayName || user?.fullName} email={user?.email} size={32} />
             </TouchableScale>
           </View>
         </View>

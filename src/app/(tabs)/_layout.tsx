@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Redirect, Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/auth-context';
@@ -47,8 +47,8 @@ export default function TabsLayout() {
 
   // Dynamic safe area calculations for Web & Mobile Go (iOS/Android home bar indicator)
   const isWeb = Platform.OS === 'web';
-  const bottomPadding = isWeb ? 8 : Math.max(insets.bottom, 6);
-  const calculatedHeight = isWeb ? 66 : 54 + insets.bottom;
+  const bottomPadding = isWeb ? 8 : Math.max(insets.bottom, 8);
+  const calculatedHeight = isWeb ? 70 : 60 + insets.bottom;
 
   return (
     <>
@@ -76,17 +76,18 @@ export default function TabsLayout() {
             backgroundColor: colorScheme === 'dark' ? 'rgba(19, 26, 41, 0.95)' : 'rgba(255, 255, 255, 0.95)',
             borderTopWidth: 1,
             borderTopColor: colors.cardBorder,
-            paddingTop: 6,
+            paddingTop: 4,
             paddingBottom: bottomPadding,
             height: calculatedHeight,
           },
           tabBarItemStyle: {
-            paddingVertical: 2,
+            justifyContent: 'center',
+            alignItems: 'center',
           },
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: '600',
-            marginTop: 2,
+            marginTop: 1,
           },
           headerShown: false,
         }}

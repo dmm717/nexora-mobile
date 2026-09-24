@@ -1,199 +1,172 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { ThemedText } from '@/components/themed-text';
-import { Typography } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
-interface RadialScoreProps {
+export interface RadialScoreProps {
   score: number | null;
-  size?: number;
+  label?: string;
+  sublabel?: string;
+  size?: 'sm' | 'md' | 'lg' | number;
   strokeWidth?: number;
-  primaryColor?: string;
-  trackColor?: string;
 }
 
-export function RadialScoreRing({
+export const RadialScore: React.FC<RadialScoreProps> = ({
   score,
+  label,
+  sublabel,
   size = 110,
-  strokeWidth = 8,
-  primaryColor,
-  trackColor,
-}: RadialScoreProps) {
-  const colors = useTheme();
-  const mainColor = primaryColor || colors.primary || '#1b33c7';
-  const bgTrackColor = trackColor || colors.backgroundElement || '#eaedff';
+  strokeWidth,
+}) => {
+  const colorScheme = useColorScheme();
+  const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
+  const colors = Colors[themeKey];
 
-  const radius = (size - strokeWidth) / 2;
+  let numericSize = 110;
+  let computedStrokeWidth = strokeWidth ?? 9;
+
+  if (typeof size === 'string') {
+    if (size === 'sm') {
+      numericSize = 68;
+      computedStrokeWidth = strokeWidth ?? 5;
+    } else if (size === 'md') {
+      numericSize = 96;
+      computedStrokeWidth = strokeWidth ?? 7;
+    } else {
+      // lg
+      numericSize = 120;
+      computedStrokeWidth = strokeWidth ?? 9;
+    }
+  } else {
+    numericSize = size;
+  }
+
+  const radius = (numericSize - computedStrokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset =
+    score !== null && score !== undefined
+      ? circumference - (Math.min(100, Math.max(0, score)) / 100) * circumference
+      : circumference;
 
-  // Animated display score (starts at 0 on mount and animates smoothly to target score)
-  const [displayScore, setDisplayScore] = useState(0);
-  const targetScore = score != null ? Math.min(Math.max(score, 0), 100) : 0;
+  const scoreColor =
+    score === null || score === undefined
+      ? colors.cardBorder
+      : score >= 80
+        ? colors.accent
+        : score < 50
+          ? colors.danger
+          : colors.primary;
 
-  useEffect(() => {
-    if (score == null) return;
-
-    let startTime: number | null = null;
-    const duration = 1000; // 1 second duration
-
-    let frameId: number;
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // Cubic ease-out curve for smooth deceleration
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-      const current = Math.round(easeOut * targetScore);
-
-      setDisplayScore(current);
-
-      if (progress < 1) {
-        frameId = requestAnimationFrame(animate);
-      }
-    };
-
-    frameId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameId);
-  }, [score, targetScore]);
-
-  const effectiveScore = score == null ? 0 : displayScore;
-  const strokeDashoffset = circumference - (effectiveScore / 100) * circumference;
-
-  if (Platform.OS === 'web') {
-    return (
-      <View style={[styles.container, { width: size, height: size }]}>
-        <svg
-          width={size}
-          height={size}
-          style={{ transform: 'rotate(-90deg)' }}
-          viewBox={`0 0 ${size} ${size}`}
-        >
-          {/* Background Track Circle */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
+  return (
+    <View style={styles.outerContainer}>
+      <View style={[styles.container, { width: numericSize, height: numericSize }]}>
+        <Svg width={numericSize} height={numericSize} style={styles.svg}>
+          {/* Background track */}
+          <Circle
+            cx={numericSize / 2}
+            cy={numericSize / 2}
             r={radius}
+            stroke={colors.cardBorder}
+            strokeWidth={computedStrokeWidth}
             fill="none"
-            stroke={bgTrackColor}
-            strokeWidth={strokeWidth}
           />
-          {/* Progress Arc Circle */}
-          {score != null && (
-            <circle
-              cx={size / 2}
-              cy={size / 2}
+          {/* Progress ring */}
+          {score !== null && score !== undefined && (
+            <Circle
+              cx={numericSize / 2}
+              cy={numericSize / 2}
               r={radius}
+              stroke={scoreColor}
+              strokeWidth={computedStrokeWidth}
               fill="none"
-              stroke={mainColor}
-              strokeWidth={strokeWidth}
-              strokeDasharray={circumference}
+              strokeDasharray={`${circumference} ${circumference}`}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              style={{ transition: 'stroke-dashoffset 0.05s linear' }}
+              origin={`${numericSize / 2}, ${numericSize / 2}`}
+              rotation="-90"
             />
           )}
-        </svg>
+        </Svg>
 
-        <View style={styles.innerTextContainer}>
-          {score != null ? (
-            <View style={styles.scoreRow}>
-              <ThemedText style={[styles.scoreNumber, { color: colors.textPrimary }]}>
-                {effectiveScore}
-              </ThemedText>
-              <ThemedText style={[styles.scoreTotal, { color: colors.textSecondary }]}>
-                /100
-              </ThemedText>
-            </View>
+        <View style={styles.innerContent}>
+          {score !== null && score !== undefined ? (
+            <>
+              <ThemedText style={[styles.scoreText, { color: colors.text, fontSize: numericSize > 90 ? 26 : 18 }]}>{score}</ThemedText>
+              <ThemedText style={styles.maxText}>/100</ThemedText>
+            </>
           ) : (
-            <ThemedText style={[styles.noDataText, { color: colors.textSecondary }]}>
-              --
-            </ThemedText>
+            <ThemedText style={styles.nullText}>Chưa đủ dữ liệu</ThemedText>
           )}
         </View>
       </View>
-    );
-  }
 
-  // Pure React Native fallback (iOS / Android)
-  const percent = effectiveScore / 100;
-  return (
-    <View
-      style={[
-        styles.container,
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          borderWidth: strokeWidth,
-          borderColor: bgTrackColor,
-        },
-      ]}
-    >
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            borderRadius: size / 2,
-            borderWidth: strokeWidth,
-            borderColor: mainColor,
-            borderTopColor: percent > 0.1 ? mainColor : 'transparent',
-            borderRightColor: percent > 0.35 ? mainColor : 'transparent',
-            borderBottomColor: percent > 0.6 ? mainColor : 'transparent',
-            borderLeftColor: percent > 0.85 ? mainColor : 'transparent',
-            transform: [{ rotate: '-45deg' }],
-          },
-        ]}
-      />
-
-      <View style={styles.innerTextContainer}>
-        {score != null ? (
-          <View style={styles.scoreRow}>
-            <ThemedText style={[styles.scoreNumber, { color: colors.textPrimary }]}>
-              {effectiveScore}
+      {(label || sublabel) && (
+        <View style={styles.labelContainer}>
+          {label && (
+            <ThemedText style={[styles.label, { color: scoreColor }]}>
+              {label}
             </ThemedText>
-            <ThemedText style={[styles.scoreTotal, { color: colors.textSecondary }]}>
-              /100
+          )}
+          {sublabel && (
+            <ThemedText style={[styles.sublabel, { color: colors.textSecondary }]}>
+              {sublabel}
             </ThemedText>
-          </View>
-        ) : (
-          <ThemedText style={[styles.noDataText, { color: colors.textSecondary }]}>
-            --
-          </ThemedText>
-        )}
-      </View>
+          )}
+        </View>
+      )}
     </View>
   );
-}
+};
+
+export const RadialScoreRing = RadialScore;
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    marginVertical: 10,
   },
-  innerTextContainer: {
-    ...(StyleSheet.absoluteFill as any),
-    justifyContent: 'center',
+  svg: {
+    position: 'absolute',
+  },
+  innerContent: {
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+  scoreText: {
+    fontSize: 26,
+    fontWeight: '900',
+    lineHeight: 30,
   },
-  scoreNumber: {
-    fontSize: 28,
-    fontFamily: Typography.fontFamily.bold,
-    lineHeight: 34,
+  maxText: {
+    fontSize: 11,
+    opacity: 0.6,
+    fontWeight: '600',
   },
-  scoreTotal: {
-    fontSize: 13,
-    fontFamily: Typography.fontFamily.medium,
-    marginLeft: 2,
+  nullText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingHorizontal: 4,
+    opacity: 0.7,
   },
-  noDataText: {
-    fontSize: 14,
-    fontFamily: Typography.fontFamily.semibold,
+  labelContainer: {
+    marginTop: 12,
+    alignItems: 'center',
+    gap: 4,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  sublabel: {
+    fontSize: 12,
+    textAlign: 'center',
   },
 });

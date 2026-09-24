@@ -148,4 +148,65 @@ export const styles = StyleSheet.create({
     opacity: 0.6,
     marginTop: 2,
   },
+  starBadgeTag: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  starBadgeTagText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  scoreBadgePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  evidenceBox: {
+    padding: Spacing.two,
+    borderRadius: Radius.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: '#cbd5e1',
+    marginVertical: 4,
+  },
+  evidenceText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    lineHeight: 17,
+  },
+  evalScoreHero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    padding: Spacing.three,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  scoreGauge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scoreGaugeText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  scoreGaugeLabel: {
+    color: '#d1fae5',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  evalScoreTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  evalScoreFeedback: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
 });

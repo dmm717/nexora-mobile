@@ -10,8 +10,8 @@ import { ResumeView } from '@/api/types';
 import { styles } from './CVAnalysisForms.styles';
 
 interface AnalysisTypeSelectorProps {
-  mode: 'standard' | 'job_targeted' | 'field_benchmark';
-  setMode: (mode: 'standard' | 'job_targeted' | 'field_benchmark') => void;
+  mode: 'job_targeted' | 'field_benchmark';
+  setMode: (mode: 'job_targeted' | 'field_benchmark') => void;
   colors: any;
   colorScheme: any;
   defaultTargetRole?: string;
@@ -22,7 +22,7 @@ export const AnalysisTypeSelector = ({ mode, setMode, colors, colorScheme, defau
   const isJobTargeted = mode === 'job_targeted';
   
   const handleSelectFieldBenchmark = () => {
-    setMode(isCustomProfile ? 'field_benchmark' : 'standard');
+    setMode('field_benchmark');
   };
 
   return (
