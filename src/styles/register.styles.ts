@@ -1,71 +1,125 @@
 import { StyleSheet } from 'react-native';
-import { Spacing, Radius } from '@/constants/theme';
+import { Typography, Colors } from '@/constants/theme';
+
+const SYSTEM_PRIMARY = Colors.light.primary;
 
 export const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   scrollContent: {
     flexGrow: 1,
-    padding: Spacing.four,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
   },
-  brandHeader: {
-    alignItems: 'center',
-    marginBottom: Spacing.four,
+  headerWrapper: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
   },
-  logoImage: {
-    width: 60,
-    height: 60,
-    marginBottom: Spacing.two,
+  contentArea: {
+    flex: 1,
+    paddingHorizontal: 28,
+    paddingTop: 8,
+    paddingBottom: 32,
+    justifyContent: 'space-between',
   },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    textAlign: 'center',
+  
+  /* Register Section */
+  registerSection: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingTop: 4,
   },
-  subtitle: {
-    opacity: 0.7,
-    textAlign: 'center',
-    fontSize: 14,
+  registerHeader: {
+    marginBottom: 20,
+    alignSelf: 'flex-start',
+  },
+  registerTitle: {
+    fontSize: 32,
+    fontFamily: Typography.fontFamily.extrabold,
+    color: '#131b2e',
+    lineHeight: 40,
+  },
+  registerUnderline: {
+    width: 76,
+    height: 3,
+    backgroundColor: SYSTEM_PRIMARY,
     marginTop: 4,
-    maxWidth: 320,
-    lineHeight: 19,
+    borderRadius: 2,
   },
-  card: {
-    padding: Spacing.four,
-    gap: Spacing.three,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: Spacing.one,
-  },
+  
+  /* Form Inputs */
   formStack: {
-    gap: Spacing.two,
+    gap: 18,
   },
+  fieldGroup: {
+    marginBottom: 2,
+  },
+  fieldLabel: {
+    fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: '#131b2e',
+    marginBottom: 8,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#c5c5d7',
+    paddingBottom: 10,
+  },
+  inputRowFocused: {
+    borderBottomColor: SYSTEM_PRIMARY,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: Typography.fontFamily.regular,
+    color: '#131b2e',
+    paddingVertical: 0,
+    paddingHorizontal: 8,
+  },
+  eyeIcon: {
+    padding: 4,
+  },
+
+  /* Primary Button */
   submitButton: {
     height: 52,
-    borderRadius: Radius.sm,
+    borderRadius: 14,
+    backgroundColor: SYSTEM_PRIMARY,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.two,
+    marginTop: 18,
+    shadowColor: SYSTEM_PRIMARY,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 4,
   },
   submitButtonText: {
-    color: '#ffffff',
-    fontWeight: '800',
+    color: '#FFFFFF',
+    fontFamily: Typography.fontFamily.bold,
     fontSize: 16,
+    letterSpacing: 0.3,
   },
+
+  /* Bottom Sign In Link */
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: Spacing.three,
+    marginTop: 24,
   },
   footerText: {
-    opacity: 0.7,
     fontSize: 14,
+    fontFamily: Typography.fontFamily.regular,
+    color: '#757686',
   },
   linkText: {
-    fontWeight: '800',
     fontSize: 14,
+    fontFamily: Typography.fontFamily.bold,
+    color: SYSTEM_PRIMARY,
   },
 });
+
