@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { Typography, Colors } from '@/constants/theme';
 
 const SYSTEM_PRIMARY = Colors.light.primary;
@@ -92,11 +92,16 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 18,
-    shadowColor: SYSTEM_PRIMARY,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
+    ...(Platform.select({
+      web: { boxShadow: '0px 6px 10px rgba(27, 51, 199, 0.35)' },
+      default: {
+        shadowColor: SYSTEM_PRIMARY,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.35,
+        shadowRadius: 10,
+        elevation: 4,
+      },
+    }) as any),
   },
   submitButtonText: {
     color: '#FFFFFF',

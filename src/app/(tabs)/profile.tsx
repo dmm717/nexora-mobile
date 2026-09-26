@@ -14,6 +14,7 @@ import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AmbientBackground } from '@/components/ui/ambient-background';
 import { ProductFeedbackCard } from '@/components/profile/ProductFeedbackCard';
+import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
 import { styles } from '@/styles/profile.styles';
 
 function useUserProfileData() {
@@ -56,6 +57,9 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
+
+  const [isLegalModalVisible, setIsLegalModalVisible] = React.useState(false);
+  const [legalModalTab, setLegalModalTab] = React.useState<PolicyTab>('privacy');
 
   const {
     logout,
@@ -148,7 +152,7 @@ export default function ProfileScreen() {
                 <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
 
                 {/* 4. Pháp lý & Điều khoản */}
-                <TouchableScale onPress={() => router.push('/(app)/account' as any)}>
+                <TouchableScale onPress={() => setIsLegalModalVisible(true)}>
                   <View style={styles.menuItem}>
                     <View style={[styles.menuIconBadge, { backgroundColor: colors.backgroundElement }]}>
                       <Ionicons name="shield-checkmark-outline" size={22} color={colors.text} />
@@ -180,6 +184,13 @@ export default function ProfileScreen() {
             </>
           )}
         </ScrollView>
+
+        {/* Legal Policy Modal */}
+        <LegalPolicyModal
+          visible={isLegalModalVisible}
+          initialTab={legalModalTab}
+          onClose={() => setIsLegalModalVisible(false)}
+        />
       </SafeAreaView>
     </AmbientBackground>
   );

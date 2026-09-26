@@ -56,7 +56,7 @@ export function AnimatedHandTrigger({ size = 22 }: AnimatedHandTriggerProps) {
   }));
 
   return (
-    <View style={[styles.wrapper, { width: size, height: size }]} pointerEvents="none">
+    <View style={[styles.wrapper, { width: size, height: size, pointerEvents: 'none' }]}>
       <Animated.View style={[styles.container, animatedStyle]}>
         <Ionicons name="hand-left-outline" size={size * 0.8} color={colors.primary} />
       </Animated.View>

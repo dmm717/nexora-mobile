@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { Colors, Radius, Spacing, Shadows } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
@@ -162,11 +162,16 @@ export const styles = StyleSheet.create({
   },
   highlightedPlanCard: {
     borderWidth: 2,
-    shadowColor: '#1b33c7',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 4,
+    ...(Platform.select({
+      web: { boxShadow: '0px 6px 16px rgba(27, 51, 199, 0.1)' },
+      default: {
+        shadowColor: '#1b33c7',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.1,
+        shadowRadius: 16,
+        elevation: 4,
+      },
+    }) as any),
   },
 
   topBadgeContainer: {

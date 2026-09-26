@@ -96,13 +96,13 @@ export const MaterialInput: React.FC<MaterialInputProps> = ({
         )}
 
         <Animated.Text
-          pointerEvents="none"
           style={[
             styles.label,
             animatedLabelStyle,
             {
               backgroundColor: colors.surface,
               left: leftIcon ? 42 : 14,
+              pointerEvents: 'none',
             },
           ]}
         >

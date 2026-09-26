@@ -43,21 +43,25 @@ export const RadialScore: React.FC<RadialScoreProps> = ({
     numericSize = size;
   }
 
+  const isValidScore =
+    typeof score === 'number' &&
+    !Number.isNaN(score) &&
+    score !== null &&
+    score !== undefined;
+
   const radius = (numericSize - computedStrokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset =
-    score !== null && score !== undefined
-      ? circumference - (Math.min(100, Math.max(0, score)) / 100) * circumference
-      : circumference;
+  const strokeDashoffset = isValidScore
+    ? circumference - (Math.min(100, Math.max(0, score)) / 100) * circumference
+    : circumference;
 
-  const scoreColor =
-    score === null || score === undefined
-      ? colors.cardBorder
-      : score >= 80
-        ? colors.accent
-        : score < 50
-          ? colors.danger
-          : colors.primary;
+  const scoreColor = !isValidScore
+    ? colors.cardBorder
+    : score >= 80
+      ? colors.accent
+      : score < 50
+        ? colors.danger
+        : colors.primary;
 
   return (
     <View style={styles.outerContainer}>
@@ -73,7 +77,7 @@ export const RadialScore: React.FC<RadialScoreProps> = ({
             fill="none"
           />
           {/* Progress ring */}
-          {score !== null && score !== undefined && (
+          {isValidScore && (
             <Circle
               cx={numericSize / 2}
               cy={numericSize / 2}
@@ -91,9 +95,11 @@ export const RadialScore: React.FC<RadialScoreProps> = ({
         </Svg>
 
         <View style={styles.innerContent}>
-          {score !== null && score !== undefined ? (
+          {isValidScore ? (
             <>
-              <ThemedText style={[styles.scoreText, { color: colors.text, fontSize: numericSize > 90 ? 26 : 18 }]}>{score}</ThemedText>
+              <ThemedText style={[styles.scoreText, { color: colors.text, fontSize: numericSize > 90 ? 26 : 18 }]}>
+                {Math.round(score)}
+              </ThemedText>
               <ThemedText style={styles.maxText}>/100</ThemedText>
             </>
           ) : (

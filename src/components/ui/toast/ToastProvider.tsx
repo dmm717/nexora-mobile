@@ -121,7 +121,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <ToastContext.Provider value={{ show, hide }}>
       {children}
       {currentToast && (
-        <SafeAreaView style={styles.safeContainer} pointerEvents="box-none">
+        <SafeAreaView style={[styles.safeContainer, { pointerEvents: 'box-none' }]}>
           <Animated.View
             entering={FadeInUp.duration(300).springify()}
             exiting={FadeOutUp.duration(200)}
@@ -176,11 +176,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 16,
     borderWidth: 1.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 6,
+    ...(Platform.select({
+      web: { boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.12)' },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
+        elevation: 6,
+      },
+    }) as any),
   },
   messageText: {
     flex: 1,

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
@@ -35,13 +35,33 @@ import { getAvatarColor, formatDate } from '@/utils/career-goal-contract';
 import { formatCurrency, getOrderStatusPresentation } from '@/utils/billing-presentation';
 import { styles } from '@/styles/account.styles';
 
+
 export default function AccountScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ openLegal?: string; tab?: string }>();
   const { user: authUser, logout } = useAuth();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
   const queryClient = useQueryClient();
+
+  // Legal Modal State
+  const [isLegalModalVisible, setIsLegalModalVisible] = useState(params.openLegal === 'true');
+  const [legalModalTab, setLegalModalTab] = useState<PolicyTab>((params.tab as PolicyTab) || 'privacy');
+
+  useEffect(() => {
+    if (params.openLegal === 'true') {
+      setIsLegalModalVisible(true);
+      if (params.tab) {
+        setLegalModalTab(params.tab as PolicyTab);
+      }
+    }
+  }, [params.openLegal, params.tab]);
+
+  const openLegalModal = (tab: PolicyTab) => {
+    setLegalModalTab(tab);
+    setIsLegalModalVisible(true);
+  };
 
   // 1. Fetch Current User (canonical profile, entitlement & orders)
   const {
@@ -77,15 +97,6 @@ export default function AccountScreen() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  // Legal Modal State
-  const [isLegalModalVisible, setIsLegalModalVisible] = useState(false);
-  const [legalModalTab, setLegalModalTab] = useState<PolicyTab>('privacy');
-
-  const openLegalModal = (tab: PolicyTab) => {
-    setLegalModalTab(tab);
-    setIsLegalModalVisible(true);
-  };
 
   // --- MUTATIONS ---
 

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { memo, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, TextInput, TouchableOpacity, View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { interviewApi } from '@/api/interview.api';
@@ -725,11 +725,16 @@ const MicCheckCard = memo(({ colors, onModeChange }: { colors: any; onModeChange
             justifyContent: 'center',
             gap: 8,
             marginTop: 4,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 2,
-            elevation: 1,
+            ...(Platform.select({
+              web: { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' },
+              default: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+                elevation: 1,
+              },
+            }) as any),
           }}
           onPress={handleTest}
           disabled={micStatus === 'testing'}

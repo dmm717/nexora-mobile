@@ -83,7 +83,7 @@ const AnimatedWavePath: React.FC<AnimatedWavePathProps> = React.memo(({
   }));
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, animStyle]} pointerEvents="none">
+    <Animated.View style={[StyleSheet.absoluteFill, animStyle, { pointerEvents: 'none' }]}>
       <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         <Path d={d} stroke={stroke} strokeWidth={strokeWidth} fill={fill} />
       </Svg>

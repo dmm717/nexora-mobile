@@ -109,29 +109,36 @@ export const Typography = {
   }
 };
 
-export const Shadows = {
-  sm: {
-    shadowColor: '#131b2e',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 2,
+export const Shadows = Platform.select({
+  web: {
+    sm: { boxShadow: '0px 1px 2px rgba(19, 27, 46, 0.04)' },
+    md: { boxShadow: '0px 10px 26px rgba(19, 27, 46, 0.08)' },
+    lg: { boxShadow: '0px 22px 48px rgba(19, 27, 46, 0.12)' },
   },
-  md: { // Matches --shadow-card on web
-    shadowColor: '#131b2e',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 26,
-    elevation: 5,
+  default: {
+    sm: {
+      shadowColor: '#131b2e',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.04,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    md: {
+      shadowColor: '#131b2e',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.08,
+      shadowRadius: 26,
+      elevation: 5,
+    },
+    lg: {
+      shadowColor: '#131b2e',
+      shadowOffset: { width: 0, height: 22 },
+      shadowOpacity: 0.12,
+      shadowRadius: 48,
+      elevation: 10,
+    },
   },
-  lg: { // Matches --shadow-floating on web
-    shadowColor: '#131b2e',
-    shadowOffset: { width: 0, height: 22 },
-    shadowOpacity: 0.12,
-    shadowRadius: 48,
-    elevation: 10,
-  }
-};
+})!;
 
 export const Fonts = Platform.select({
   ios: {

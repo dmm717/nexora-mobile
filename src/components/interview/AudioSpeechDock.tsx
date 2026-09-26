@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -530,11 +531,16 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.one,
     paddingBottom: Spacing.two + 10,
     gap: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 20,
+    ...(Platform.select({
+      web: { boxShadow: '0px -4px 16px rgba(0, 0, 0, 0.15)' },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+        elevation: 20,
+      },
+    }) as any),
   },
   sheetHandleBox: {
     alignItems: 'center',
