@@ -45,6 +45,7 @@ export default function HomeScreen() {
     isLoadingLearningPath,
   } = useHomeState();
 
+
   return (
     <SolidBackground>
       <SafeAreaView style={styles.safeArea}>

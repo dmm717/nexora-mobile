@@ -1,174 +1,458 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Redirect, Tabs, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  FileText,
+  Home,
+  LineChart,
+  Mic,
+  User,
+  Wrench,
+} from 'lucide-react-native';
 import { useAuth } from '@/context/auth-context';
-import { ActivityIndicator, Platform, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '@/constants/theme';
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ExitConfirmationModal } from '@/components/interview/InterviewSubComponents';
+import { ThemedText } from '@/components/themed-text';
+import Svg, {
+  Circle,
+  Defs,
+  LinearGradient as SvgGradient,
+  Path,
+  Rect,
+  Stop,
+} from 'react-native-svg';
 
-export default function TabsLayout() {
-  const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
-  const insets = useSafeAreaInsets();
+// ─── Layout constants ─────────────────────────────────────────────────────────
+const TAB_BAR_HEIGHT = 60;
+/** How high the arch crown rises above the flat top edge. */
+const ARCH_RISE      = 28;
+/** Half-span of the arch. Narrower = more visible hump, still smooth. */
+const ARCH_HALF_SPAN = 100;
+const ICON_NORMAL    = 22;
+const ICON_CENTER    = 26;
+/** Diameter of the circular icon background on the centre tab. */
+const CENTER_BTN     = 54;
+
+/** Routes that must never appear as visible tab items. */
+const HIDDEN_TABS = new Set(['profile']);
+
+// ─── SVG path helpers ─────────────────────────────────────────────────────────
+function barShapePath(w: number, h: number): string {
+  const cx = w / 2;
+  const lx = cx - ARCH_HALF_SPAN;
+  const rx = cx + ARCH_HALF_SPAN;
+  const cp1 = ARCH_HALF_SPAN * 0.5;
+  const cp2 = ARCH_HALF_SPAN * 0.4;
+  return [
+    `M 0 ${ARCH_RISE}`,
+    `L ${lx} ${ARCH_RISE}`,
+    `C ${lx + cp1} ${ARCH_RISE} ${cx - cp2} 0 ${cx} 0`,
+    `C ${cx + cp2} 0 ${rx - cp1} ${ARCH_RISE} ${rx} ${ARCH_RISE}`,
+    `L ${w} ${ARCH_RISE}`,
+    `L ${w} ${h}`,
+    `L 0 ${h}`,
+    `Z`,
+  ].join(' ');
+}
+
+function topEdgePath(w: number): string {
+  const cx = w / 2;
+  const lx = cx - ARCH_HALF_SPAN;
+  const rx = cx + ARCH_HALF_SPAN;
+  const cp1 = ARCH_HALF_SPAN * 0.5;
+  const cp2 = ARCH_HALF_SPAN * 0.4;
+  return [
+    `M 0 ${ARCH_RISE}`,
+    `L ${lx} ${ARCH_RISE}`,
+    `C ${lx + cp1} ${ARCH_RISE} ${cx - cp2} 0 ${cx} 0`,
+    `C ${cx + cp2} 0 ${rx - cp1} ${ARCH_RISE} ${rx} ${ARCH_RISE}`,
+    `L ${w} ${ARCH_RISE}`,
+  ].join(' ');
+}
+
+// ─── Shimmer centre icon ───────────────────────────────────────────────────────
+/**
+ * Circular icon button for the centre (interview) tab:
+ *   • gradient background (system primary, lighter variant)
+ *   • round border
+ *   • shimmer shine that runs every 1.5 s
+ */
+function CenterTabIcon({
+  focused,
+  iconSize,
+}: {
+  focused: boolean;
+  iconSize: number;
+}) {
   const colorScheme = useColorScheme();
-  const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
-  const colors = Colors[themeKey];
+  const isDark      = colorScheme === 'dark';
+  const colors      = Colors[isDark ? 'dark' : 'light'];
 
-  // State for exit confirmation modal when tapping bottom tabs from interview screen
+  // Shimmer cycle: 600ms sweep + 900ms pause = 1500ms total
+  const shimmerProgress = useSharedValue(0);
+
+  useEffect(() => {
+    shimmerProgress.value = withRepeat(
+      withTiming(1, { duration: 1500, easing: Easing.linear }),
+      -1,
+      false,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const shimmerStyle = useAnimatedStyle(() => {
+    const x = interpolate(shimmerProgress.value, [0, 0.4, 0.401, 1], [-CENTER_BTN, CENTER_BTN * 1.2, -CENTER_BTN, -CENTER_BTN]);
+    const opacity = interpolate(shimmerProgress.value, [0, 0.1, 0.3, 0.4, 0.401, 1], [0, 0.55, 0.55, 0, 0, 0]);
+    return { transform: [{ translateX: x }, { skewX: '-18deg' }], opacity };
+  });
+
+  // Gradient uses a slightly lighter blue down to the solid primary blue
+  const gradStart = '#4d65ff';
+  const gradEnd   = colors.primary;
+
+  return (
+    <View style={{ width: CENTER_BTN, height: CENTER_BTN, justifyContent: 'center', alignItems: 'center' }}>
+      <View
+        style={[
+          s.centerBtn,
+          {
+            width: CENTER_BTN,
+            height: CENTER_BTN,
+            borderRadius: CENTER_BTN / 2,
+            borderWidth: 0,
+          },
+        ]}
+      >
+        {/* SVG gradient fill */}
+      <Svg width={CENTER_BTN} height={CENTER_BTN} style={StyleSheet.absoluteFill}>
+        <Defs>
+          <SvgGradient id="ctrGrad" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor={gradStart} />
+            <Stop offset="1" stopColor={gradEnd} />
+          </SvgGradient>
+        </Defs>
+        <Circle
+          cx={CENTER_BTN / 2}
+          cy={CENTER_BTN / 2}
+          r={CENTER_BTN / 2}
+          fill="url(#ctrGrad)"
+        />
+      </Svg>
+
+      {/* Premium Shimmer overlay (clipped by overflow: hidden on parent) */}
+      <Animated.View
+        style={[
+          s.shimmerStrip,
+          { width: CENTER_BTN * 0.8, height: CENTER_BTN, zIndex: 5 },
+          shimmerStyle,
+        ]}
+      >
+        <Svg width="100%" height="100%">
+          <Defs>
+            <SvgGradient id="shimmer" x1="0" y1="0" x2="1" y2="0">
+              <Stop offset="0" stopColor="#ffffff" stopOpacity="0" />
+              <Stop offset="0.5" stopColor="#ffffff" stopOpacity="0.6" />
+              <Stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+            </SvgGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100%" height="100%" fill="url(#shimmer)" />
+        </Svg>
+      </Animated.View>
+
+      {/* Icon with zIndex to render above SVG on Web */}
+      <View style={{ zIndex: 10 }}>
+        <Mic size={iconSize + 4} color="#ffffff" strokeWidth={2.2} />
+      </View>
+    </View>
+    </View>
+  );
+}
+
+// ─── MoMo-style tab bar ───────────────────────────────────────────────────────
+function MoMoTabBar({ state, descriptors, navigation, insets }: any) {
+  const colorScheme  = useColorScheme();
+  const isDark       = colorScheme === 'dark';
+  const colors       = Colors[isDark ? 'dark' : 'light'];
+  const { width: W } = useWindowDimensions();
+
+  const bottomPad = Platform.OS === 'web'
+    ? Spacing.two
+    : Math.max(insets.bottom, Spacing.two);
+
+  const barH     = TAB_BAR_HEIGHT + bottomPad;
+  const wrapperH = barH + ARCH_RISE;
+
+  const bgColor  = isDark ? colors.surface : colors.card;
+  const border   = isDark ? colors.cardBorder : colors.cardBorder;
+  const inactive = colors.textMuted;
+
+  const visibleRoutes = state.routes.filter(
+    (r: any) => !HIDDEN_TABS.has(r.name),
+  );
+
+  return (
+    <View style={[s.wrapper, { height: wrapperH }]}>
+      {/* ── SVG background ──────────────────────────────────────────────── */}
+      <Svg width={W} height={wrapperH} style={StyleSheet.absoluteFill}>
+        {/* shadow layer */}
+        <Path
+          d={barShapePath(W, wrapperH)}
+          fill={isDark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.05)'}
+          y={1.5}
+        />
+        {/* background fill */}
+        <Path d={barShapePath(W, wrapperH)} fill={bgColor} />
+        {/* top-edge border */}
+        <Path
+          d={topEdgePath(W)}
+          fill="none"
+          stroke={border}
+          strokeWidth={StyleSheet.hairlineWidth * 2}
+        />
+      </Svg>
+
+      {/* ── Tab items ───────────────────────────────────────────────────── */}
+      {/* The row is strictly the height of the flat tab bar part */}
+      <View style={[s.row, { height: barH, paddingBottom: bottomPad }]}>
+        {visibleRoutes.map((route: any) => {
+          const { options } = descriptors[route.key];
+          const focused     = state.routes.indexOf(route) === state.index;
+          const isCenter    = route.name === 'interview';
+          const iconColor   = focused ? colors.primary : inactive;
+          const iconSize    = isCenter ? ICON_CENTER : ICON_NORMAL;
+
+          const handlePress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (!focused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          return (
+            <TouchableOpacity
+              key={route.key}
+              activeOpacity={0.7}
+              onPress={handlePress}
+              style={[s.tabItem]}
+            >
+              {isCenter ? (
+                // Wrapper to fake the size of a normal icon for flex layout
+                <View style={{ height: ICON_NORMAL, width: ICON_NORMAL, justifyContent: 'center', alignItems: 'center', zIndex: 10 }}>
+                  {/* Absolute position the giant circle so it doesn't push the label down */}
+                  <View style={{ position: 'absolute', bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+                    <CenterTabIcon
+                      focused={focused}
+                      iconSize={iconSize}
+                    />
+                  </View>
+                </View>
+              ) : (
+                options.tabBarIcon?.({ color: iconColor, focused, size: iconSize })
+              )}
+              {isCenter ? null : (
+                <ThemedText
+                  style={[
+                    s.label,
+                    {
+                      color: iconColor,
+                      fontFamily: focused
+                        ? Typography.fontFamily.bold
+                        : Typography.fontFamily.medium,
+                    },
+                  ]}
+                >
+                  {options.title}
+                </ThemedText>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  wrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  row: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.half,
+  },
+  centerBtn: {
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shimmerStrip: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  label: {
+    fontSize: Typography.sizes.xs,
+  },
+});
+
+// ─── Root layout ──────────────────────────────────────────────────────────────
+export default function TabsLayout() {
+  const router      = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
+  const insets      = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
+  const isDark      = colorScheme === 'dark';
+  const colors      = Colors[isDark ? 'dark' : 'light'];
+
   const [showExitModal, setShowExitModal] = useState(false);
-  const [pendingTargetRoute, setPendingTargetRoute] = useState<string | null>(null);
+  const [pendingTarget,  setPendingTarget]  = useState<string | null>(null);
 
-  const handleStayInInterview = () => {
+  const handleStay = () => {
     setShowExitModal(false);
-    setPendingTargetRoute(null);
+    setPendingTarget(null);
   };
 
-  const handleConfirmExitTab = () => {
+  const handleLeave = () => {
     setShowExitModal(false);
-    if (pendingTargetRoute) {
-      router.push(pendingTargetRoute as any);
-      setPendingTargetRoute(null);
+    if (pendingTarget) {
+      router.push(pendingTarget as any);
+      setPendingTarget(null);
     }
   };
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+      <View style={[root.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login" />;
-  }
-
-  // Dynamic safe area calculations for Web & Mobile Go (iOS/Android home bar indicator)
-  const isWeb = Platform.OS === 'web';
-  const bottomPadding = isWeb ? 8 : Math.max(insets.bottom, 8);
-  const calculatedHeight = isWeb ? 70 : 60 + insets.bottom;
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
 
   return (
     <>
       <Tabs
+        tabBar={(props) => <MoMoTabBar {...props} insets={insets} />}
         screenListeners={({ navigation }) => ({
           tabPress: (e) => {
-            const state = navigation.getState();
-            const currentRoute = state.routes[state.index];
-            if (currentRoute?.name === 'interview') {
-              if (currentRoute.key !== e.target) {
-                e.preventDefault();
-                const targetRoute = state.routes.find((r: any) => r.key === e.target);
-                if (targetRoute?.name && targetRoute.name !== 'interview') {
-                  setPendingTargetRoute(`/(tabs)/${targetRoute.name}`);
-                  setShowExitModal(true);
-                }
+            const navState = navigation.getState();
+            const current  = navState.routes[navState.index];
+            if (current?.name === 'interview' && current.key !== e.target) {
+              e.preventDefault();
+              const dest = navState.routes.find((r: any) => r.key === e.target);
+              if (dest?.name && dest.name !== 'interview') {
+                setPendingTarget(`/(tabs)/${dest.name}`);
+                setShowExitModal(true);
               }
             }
           },
         })}
-        screenOptions={{
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textMuted,
-          tabBarStyle: {
-            backgroundColor: colorScheme === 'dark' ? 'rgba(19, 26, 41, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-            borderTopWidth: 1,
-            borderTopColor: colors.cardBorder,
-            paddingTop: 4,
-            paddingBottom: bottomPadding,
-            height: calculatedHeight,
-          },
-          tabBarItemStyle: {
-            justifyContent: 'center',
-            alignItems: 'center',
-          },
-          tabBarLabelStyle: {
-            fontSize: 11,
-            fontWeight: '600',
-            marginTop: 1,
-          },
-          headerShown: false,
-        }}
+        screenOptions={{ headerShown: false }}
       >
-        {/* Tab 1: Home */}
         <Tabs.Screen
           name="home"
           options={{
             title: 'Tổng quan',
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? 'home' : 'home-outline'} size={20} color={color} />
+            // weight="bold" when active for thicker stroke; regular when inactive
+            tabBarIcon: ({ color, focused, size }) => (
+              <Home size={size} strokeWidth={focused ? 2.5 : 2} color={color as string} />
             ),
           }}
         />
-
-        {/* Tab 2: CV & JD */}
         <Tabs.Screen
           name="cv-jd"
           options={{
             title: 'CV & JD',
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? 'document-text' : 'document-text-outline'} size={20} color={color} />
+            tabBarIcon: ({ color, focused, size }) => (
+              <FileText size={size} strokeWidth={focused ? 2.5 : 2} color={color as string} />
             ),
           }}
         />
-
-        {/* Tab 3: Phỏng vấn AI */}
         <Tabs.Screen
           name="interview"
           options={{
             title: 'Phỏng vấn',
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? 'mic' : 'mic-outline'} size={20} color={color} />
+            tabBarIcon: ({ color, focused, size }) => (
+              <Mic size={size} strokeWidth={focused ? 2.5 : 2} color={color as string} />
             ),
           }}
         />
-
-        {/* Tab 4: Luyện tập (Scenarios & STAR) */}
         <Tabs.Screen
           name="practice"
           options={{
             title: 'Luyện tập',
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? 'construct' : 'construct-outline'} size={20} color={color} />
+            tabBarIcon: ({ color, focused, size }) => (
+              <Wrench size={size} strokeWidth={focused ? 2.5 : 2} color={color as string} />
             ),
           }}
         />
-
-        {/* Tab 5: Growth & Progress */}
         <Tabs.Screen
           name="growth"
           options={{
             title: 'Tiến độ',
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? 'analytics' : 'analytics-outline'} size={20} color={color} />
+            tabBarIcon: ({ color, focused, size }) => (
+              <LineChart size={size} strokeWidth={focused ? 2.5 : 2} color={color as string} />
             ),
           }}
         />
-
-        {/* Tab 6: Profile */}
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Hồ sơ',
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? 'person' : 'person-outline'} size={20} color={color} />
+            title: 'Cá nhân',
+            href: null,
+            tabBarIcon: ({ color, focused, size }) => (
+              <User size={size} strokeWidth={focused ? 2.5 : 2} color={color as string} />
             ),
           }}
         />
       </Tabs>
 
-      {/* Exit Confirmation Modal for Tab Bar Swaps */}
       <ExitConfirmationModal
         visible={showExitModal}
         colors={colors}
-        onStay={handleStayInInterview}
-        onLeave={handleConfirmExitTab}
+        onStay={handleStay}
+        onLeave={handleLeave}
       />
     </>
   );
 }
 
-
-
+const root = StyleSheet.create({
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+});
