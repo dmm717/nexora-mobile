@@ -68,6 +68,7 @@ export interface InterviewView {
   continuation?: InterviewContinuationView | null;
   reportState?: 'none' | 'processing' | 'ready' | 'failed';
   resultState?: 'collecting' | 'processing' | 'ready' | 'failed';
+  questionPreparationState?: 'pending' | 'processing' | 'completed' | 'failed';
   evaluationProgress?: EvaluationProgressView | null;
 }
 
@@ -113,12 +114,24 @@ export interface RubricScore {
   feedback?: string;
 }
 
+export interface StarComponentEvaluation {
+  score: number;
+  detected: boolean;
+  evidence: string;
+  feedback: string;
+}
+
 export interface StarEvaluation {
-  situation?: string;
-  task?: string;
-  action?: string;
-  result?: string;
-  missingElements?: string[];
+  applicable: boolean;
+  overallScore?: number | null;
+  situation?: StarComponentEvaluation | null;
+  task?: StarComponentEvaluation | null;
+  action?: StarComponentEvaluation | null;
+  result?: StarComponentEvaluation | null;
+  missingElements: string[];
+  strengths: string[];
+  coachingTips: string[];
+  scoreScale?: string | null;
 }
 
 export interface SampleInterviewAnswer {

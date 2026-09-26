@@ -124,6 +124,19 @@ const CombinedPreflightCard = memo(({
   selectedGoalId,
   onSelectGoal,
   colors,
+  interviewType,
+  resumes,
+  selectedResumeId,
+  setSelectedResumeId,
+  jobDescriptions,
+  jdMode,
+  setJdMode,
+  selectedJdId,
+  setSelectedJdId,
+  newJdTitle,
+  setNewJdTitle,
+  newJdContent,
+  setNewJdContent,
 }: {
   role: string;
   setRole: (r: string) => void;
@@ -135,10 +148,25 @@ const CombinedPreflightCard = memo(({
   selectedGoalId: string | null;
   onSelectGoal: (goal: any) => void;
   colors: any;
+  interviewType?: string;
+  resumes?: any[];
+  selectedResumeId?: string | null;
+  setSelectedResumeId?: (id: string | null) => void;
+  jobDescriptions?: any[];
+  jdMode?: 'select' | 'new';
+  setJdMode?: (mode: 'select' | 'new') => void;
+  selectedJdId?: string | null;
+  setSelectedJdId?: (id: string | null) => void;
+  newJdTitle?: string;
+  setNewJdTitle?: (val: string) => void;
+  newJdContent?: string;
+  setNewJdContent?: (val: string) => void;
 }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const currentSeniorityLabel = SENIORITIES.find((s) => s.id.toLowerCase() === seniority.toLowerCase())?.label || seniority;
+  const currentResumeLabel = resumes?.find((r) => r.id === selectedResumeId)?.fileName || 'Chưa chọn CV';
+  const currentJdLabel = jobDescriptions?.find((j) => j.id === selectedJdId)?.title || 'Chưa chọn JD';
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder, gap: Spacing.four }]}>
@@ -170,9 +198,21 @@ const CombinedPreflightCard = memo(({
         {/* Compact View when not editing */}
         {!isEditing && (
           <View style={{ backgroundColor: colors.backgroundElement, padding: 12, borderRadius: 12, gap: 8, marginTop: 4 }}>
+            {interviewType === 'cv_targeted' && (
+              <>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <ThemedText style={{ fontSize: 12, color: colors.textMuted }}>CV:</ThemedText>
+                  <ThemedText style={{ fontSize: 13, fontWeight: '600', color: colors.text, maxWidth: '70%' }} numberOfLines={1}>
+                    {currentResumeLabel}
+                  </ThemedText>
+                </View>
+                <View style={{ height: 1, backgroundColor: colors.cardBorder }} />
+              </>
+            )}
+
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <ThemedText style={{ fontSize: 12, color: colors.textMuted }}>Vị trí:</ThemedText>
-              <ThemedText style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
+              <ThemedText style={{ fontSize: 14, fontWeight: '700', color: colors.text, maxWidth: '70%' }} numberOfLines={1}>
                 {role || 'Chưa chọn vị trí'}
               </ThemedText>
             </View>
@@ -185,6 +225,18 @@ const CombinedPreflightCard = memo(({
                 </ThemedText>
               </View>
             </View>
+
+            {interviewType === 'jd_targeted' && (
+              <>
+                <View style={{ height: 1, backgroundColor: colors.cardBorder }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <ThemedText style={{ fontSize: 12, color: colors.textMuted }}>JD:</ThemedText>
+                  <ThemedText style={{ fontSize: 13, fontWeight: '600', color: colors.text, maxWidth: '70%' }} numberOfLines={1}>
+                    {jdMode === 'select' ? currentJdLabel : (newJdTitle || 'JD Mới')}
+                  </ThemedText>
+                </View>
+              </>
+            )}
           </View>
         )}
 
@@ -227,6 +279,45 @@ const CombinedPreflightCard = memo(({
                       </TouchableOpacity>
                     );
                   })}
+                </View>
+              </View>
+            )}
+
+            {interviewType === 'cv_targeted' && (
+              <View style={{ gap: 6 }}>
+                <ThemedText style={styles.inputLabel}>CV sử dụng:</ThemedText>
+                <View style={{ gap: 8 }}>
+                  {resumes?.filter(r => r.status === 'ready').map((r) => {
+                    const isSelected = selectedResumeId === r.id;
+                    return (
+                      <TouchableOpacity
+                        key={r.id}
+                        style={[
+                          styles.selectionRow,
+                          {
+                            borderColor: isSelected ? colors.primary : colors.cardBorder,
+                            backgroundColor: isSelected ? colors.primaryLight : colors.backgroundElement,
+                            paddingVertical: 10,
+                          },
+                        ]}
+                        onPress={() => setSelectedResumeId?.(r.id)}
+                      >
+                        <Ionicons
+                          name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={20}
+                          color={isSelected ? colors.primary : colors.textMuted}
+                        />
+                        <View style={{ flex: 1, marginLeft: 8 }}>
+                          <ThemedText style={{ fontSize: 13, fontWeight: '600', color: isSelected ? colors.primary : colors.text }} numberOfLines={1}>
+                            {r.fileName}
+                          </ThemedText>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  {(!resumes || resumes.filter(r => r.status === 'ready').length === 0) && (
+                    <ThemedText style={{ fontSize: 12, color: colors.textMuted }}>Không có CV nào sẵn sàng.</ThemedText>
+                  )}
                 </View>
               </View>
             )}
@@ -278,6 +369,92 @@ const CombinedPreflightCard = memo(({
                 })}
               </View>
             </View>
+
+            {interviewType === 'jd_targeted' && (
+              <View style={{ gap: 12, backgroundColor: colors.backgroundElement, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.cardBorder }}>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.chip,
+                      { flex: 1, borderColor: jdMode === 'select' ? colors.primary : colors.cardBorder, backgroundColor: jdMode === 'select' ? colors.primaryLight : colors.card }
+                    ]}
+                    onPress={() => setJdMode?.('select')}
+                  >
+                    <ThemedText style={{ fontSize: 12, fontWeight: jdMode === 'select' ? '700' : '500', color: jdMode === 'select' ? colors.primary : colors.text }}>JD đã lưu</ThemedText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.chip,
+                      { flex: 1, borderColor: jdMode === 'new' ? colors.primary : colors.cardBorder, backgroundColor: jdMode === 'new' ? colors.primaryLight : colors.card }
+                    ]}
+                    onPress={() => setJdMode?.('new')}
+                  >
+                    <ThemedText style={{ fontSize: 12, fontWeight: jdMode === 'new' ? '700' : '500', color: jdMode === 'new' ? colors.primary : colors.text }}>Tạo JD mới</ThemedText>
+                  </TouchableOpacity>
+                </View>
+
+                {jdMode === 'select' ? (
+                  <View style={{ gap: 8 }}>
+                    {jobDescriptions?.map((jd) => {
+                      const isSelected = selectedJdId === jd.id;
+                      return (
+                        <TouchableOpacity
+                          key={jd.id}
+                          style={[
+                            styles.selectionRow,
+                            {
+                              borderColor: isSelected ? colors.primary : colors.cardBorder,
+                              backgroundColor: isSelected ? colors.primaryLight : colors.card,
+                              paddingVertical: 10,
+                            },
+                          ]}
+                          onPress={() => setSelectedJdId?.(jd.id)}
+                        >
+                          <Ionicons
+                            name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                            size={20}
+                            color={isSelected ? colors.primary : colors.textMuted}
+                          />
+                          <View style={{ flex: 1, marginLeft: 8 }}>
+                            <ThemedText style={{ fontSize: 13, fontWeight: '600', color: isSelected ? colors.primary : colors.text }} numberOfLines={1}>
+                              {jd.title}
+                            </ThemedText>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    {(!jobDescriptions || jobDescriptions.length === 0) && (
+                      <ThemedText style={{ fontSize: 12, color: colors.textMuted }}>Không có JD nào.</ThemedText>
+                    )}
+                  </View>
+                ) : (
+                  <View style={{ gap: 10 }}>
+                    <View style={{ gap: 6 }}>
+                      <ThemedText style={styles.inputLabel}>Tiêu đề JD:</ThemedText>
+                      <TextInput
+                        style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.card }]}
+                        placeholder="Ví dụ: Senior Backend Engineer"
+                        placeholderTextColor={colors.textMuted}
+                        value={newJdTitle}
+                        onChangeText={setNewJdTitle}
+                      />
+                    </View>
+                    <View style={{ gap: 6 }}>
+                      <ThemedText style={styles.inputLabel}>Nội dung JD:</ThemedText>
+                      <TextInput
+                        style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.card, height: 100, textAlignVertical: 'top' }]}
+                        placeholder="Dán nội dung JD vào đây..."
+                        placeholderTextColor={colors.textMuted}
+                        multiline
+                        value={newJdContent}
+                        onChangeText={setNewJdContent}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+
           </View>
         )}
       </View>
@@ -908,15 +1085,32 @@ export default function PreflightScreen() {
     mutationFn: async () => {
       let finalJdId = selectedJdId;
 
-      if (jdMode === 'new') {
-        if (!newJdTitle.trim() || !newJdContent.trim()) {
-          throw new Error('Vui lòng nhập tiêu đề và nội dung Job Description mới');
+      if (!role.trim()) {
+        throw new Error('Vui lòng nhập vai trò mục tiêu cho phiên phỏng vấn.');
+      }
+
+      if (interviewType === 'cv_targeted') {
+        const resume = resumes?.find(r => r.id === selectedResumeId);
+        if (!resume || resume.status !== 'ready') {
+           throw new Error('Chủ đề phỏng vấn theo CV yêu cầu bạn phải chọn một bản CV ở trạng thái Sẵn sàng (Ready).');
         }
-        const createdJd = await jobDescriptionsApi.create({
-          title: newJdTitle.trim(),
-          content: newJdContent.trim(),
-        });
-        finalJdId = createdJd.id;
+      }
+
+      if (interviewType === 'jd_targeted') {
+        if (jdMode === 'new') {
+          if (!newJdTitle.trim() || !newJdContent.trim()) {
+            throw new Error('Vui lòng nhập tiêu đề và nội dung Job Description mới');
+          }
+          const createdJd = await jobDescriptionsApi.create({
+            title: newJdTitle.trim(),
+            content: newJdContent.trim(),
+          });
+          finalJdId = createdJd.id;
+        } else {
+          if (!finalJdId) {
+            throw new Error('Vui lòng chọn một Job Description đã lưu hoặc tạo JD mới.');
+          }
+        }
       }
 
       const res = await interviewApi.start({
@@ -924,9 +1118,9 @@ export default function PreflightScreen() {
         seniority: seniority || undefined,
         interviewType: interviewType,
         difficulty: difficulty,
-        resumeId: selectedResumeId,
-        jobDescriptionId: finalJdId,
-        careerGoalId: selectedGoalId,
+        resumeId: interviewType === 'cv_targeted' ? selectedResumeId! : undefined,
+        jobDescriptionId: interviewType === 'jd_targeted' ? finalJdId! : undefined,
+        careerGoalId: selectedGoalId || undefined,
       });
       return res;
     },
@@ -975,6 +1169,19 @@ export default function PreflightScreen() {
                 selectedGoalId={selectedGoalId}
                 onSelectGoal={handleSelectGoal}
                 colors={colors}
+                interviewType={interviewType}
+                resumes={resumes}
+                selectedResumeId={selectedResumeId}
+                setSelectedResumeId={setSelectedResumeId}
+                jobDescriptions={jobDescriptions}
+                jdMode={jdMode}
+                setJdMode={setJdMode}
+                selectedJdId={selectedJdId}
+                setSelectedJdId={setSelectedJdId}
+                newJdTitle={newJdTitle}
+                setNewJdTitle={setNewJdTitle}
+                newJdContent={newJdContent}
+                setNewJdContent={setNewJdContent}
               />
 
 

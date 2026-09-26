@@ -17,16 +17,48 @@ import { starApi } from '@/api/star.api';
 import { growthApi } from '@/api/growth.api';
 import { profileApi } from '@/api/profile.api';
 import { styles } from '@/styles/practice.styles';
+import { useAuth } from '@/context/auth-context';
 
 type HistoryFilter = 'all' | 'interview' | 'scenario' | 'star';
+type PracticeFeatureState = 'enabled' | 'locked' | 'unknown';
+
+function getFeatureState(
+  features: Array<{
+    code: string;
+    enabled: boolean;
+    available: number | null;
+    unlimited: boolean;
+  }> | undefined,
+  code: string
+): PracticeFeatureState {
+  if (!Array.isArray(features)) return 'unknown';
+  const feature = features.find((item) => item.code === code);
+  if (!feature) return 'unknown';
+  if (!feature.enabled) return 'locked';
+  if (!feature.unlimited && feature.available !== null && feature.available <= 0) return 'locked';
+  return 'enabled';
+}
 
 export default function PracticeTabScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
+  const { user } = useAuth();
 
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
+
+  const features = user?.billing?.entitlement?.features;
+  const scenarioState = getFeatureState(features, 'scenario');
+  const starState = getFeatureState(features, 'star_builder');
+
+  const goToTrack = (destination: string, isLocked: boolean) => {
+    if (isLocked) {
+      router.push(`/(app)/pricing?returnTo=${encodeURIComponent(destination)}` as any);
+    } else {
+      router.push(destination as any);
+    }
+  };
 
   // Fetch Next Best Action Recommendation & Profiles
   const { data: recommendation } = useQuery({
@@ -45,9 +77,10 @@ export default function PracticeTabScreen() {
   });
 
   // Fetch Learning Path summary
-  const { data: learningPath } = useQuery({
+  const { data: learningPath, isError: isLearningPathError, error: learningPathError } = useQuery({
     queryKey: ['learning-path'],
     queryFn: growthApi.getLearningPath,
+    retry: false,
   });
 
   // Fetch practice histories
@@ -167,7 +200,7 @@ export default function PracticeTabScreen() {
         subtitle: st.question || 'Câu hỏi STAR',
         date: st.createdAt,
         score: st.evaluation?.overallScore ?? null,
-        actionUrl: '/(app)/star-builder',
+        actionUrl: `/(app)/star-builder?attempt=${st.id}`,
         actionLabel: 'Chi tiết',
       });
     });
@@ -284,11 +317,19 @@ export default function PracticeTabScreen() {
             {/* Card 2: Scenarios */}
             <TouchableScale
               style={{ width: 200 }}
-              onPress={() => router.push('/(app)/scenarios' as any)}
+              onPress={() => goToTrack('/(app)/scenarios', scenarioState === 'locked')}
             >
               <GlassCard style={styles.gridCard}>
-                <View style={[styles.gridIconBadge, { backgroundColor: colors.accentLight }]}>
-                  <Ionicons name="construct" size={24} color={colors.accent} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <View style={[styles.gridIconBadge, { backgroundColor: colors.accentLight }]}>
+                    <Ionicons name="construct" size={24} color={colors.accent} />
+                  </View>
+                  {scenarioState === 'locked' && (
+                    <View style={{ backgroundColor: '#FEF2F2', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                      <Ionicons name="lock-closed" size={10} color="#EF4444" />
+                      <ThemedText style={{ fontSize: 10, color: '#EF4444', fontWeight: 'bold' }}>Khóa</ThemedText>
+                    </View>
+                  )}
                 </View>
                 <ThemedText style={styles.gridTitle}>Kho Kịch Bản</ThemedText>
                 <ThemedText style={styles.gridSub} numberOfLines={2}>
@@ -300,11 +341,19 @@ export default function PracticeTabScreen() {
             {/* Card 3: STAR Builder */}
             <TouchableScale
               style={{ width: 200 }}
-              onPress={() => router.push('/(app)/star-builder' as any)}
+              onPress={() => goToTrack('/(app)/star-builder', starState === 'locked')}
             >
               <GlassCard style={styles.gridCard}>
-                <View style={[styles.gridIconBadge, { backgroundColor: colors.warningLight }]}>
-                  <Ionicons name="star" size={24} color={colors.warning} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <View style={[styles.gridIconBadge, { backgroundColor: colors.warningLight }]}>
+                    <Ionicons name="star" size={24} color={colors.warning} />
+                  </View>
+                  {starState === 'locked' && (
+                    <View style={{ backgroundColor: '#FEF2F2', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                      <Ionicons name="lock-closed" size={10} color="#EF4444" />
+                      <ThemedText style={{ fontSize: 10, color: '#EF4444', fontWeight: 'bold' }}>Khóa</ThemedText>
+                    </View>
+                  )}
                 </View>
                 <ThemedText style={styles.gridTitle}>Mô hình STAR</ThemedText>
                 <ThemedText style={styles.gridSub} numberOfLines={2}>
@@ -319,8 +368,19 @@ export default function PracticeTabScreen() {
 
     if (item.type === 'learning_path') {
       const percentage = learningPath?.progress?.percentage ?? 0;
+      const hasLearningPath = !!learningPath?.id;
+      const isCareerGoalRequired = isLearningPathError && ((learningPathError as any)?.response?.data?.code === 'ACTIVE_CAREER_GOAL_REQUIRED' || (learningPathError as any)?.status === 400);
+
+      const subtitleText = hasLearningPath 
+        ? 'Tiếp tục hoàn thành các bài tập và thử thách được cá nhân hóa.'
+        : 'Bạn cần cập nhật định hướng và tải lên CV để hệ thống cá nhân hóa hành trình.';
+        
+      const routeDestination = hasLearningPath || (!hasLearningPath && !isCareerGoalRequired)
+        ? '/(app)/growth/learning-path'
+        : '/(app)/profile';
+
       return (
-        <TouchableScale onPress={() => router.push('/(app)/growth/learning-path' as any)}>
+        <TouchableScale onPress={() => router.push(routeDestination as any)}>
           <GlassCard style={{ padding: Spacing.four, borderRadius: Radius.lg, backgroundColor: colors.card, borderColor: colors.cardBorder }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three }}>
               <View style={{ width: 44, height: 44, borderRadius: Radius.md, backgroundColor: colors.secondaryLight, justifyContent: 'center', alignItems: 'center' }}>
@@ -336,7 +396,7 @@ export default function PracticeTabScreen() {
                   )}
                 </View>
                 <ThemedText style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
-                  Theo dõi các cột mốc & bài học cá nhân hóa
+                  {subtitleText}
                 </ThemedText>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />

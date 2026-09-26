@@ -56,6 +56,7 @@ export default function InterviewRoomScreen() {
     submitAnswerMutation,
     completeMutation,
     continueMutation,
+    retryQuestionPreparationMutation,
     isMicAllowed,
   } = useInterviewSession(id);
 
@@ -71,7 +72,7 @@ export default function InterviewRoomScreen() {
   }
 
   // 1. Preparing State (status === 'starting')
-  if (interview.status === 'starting') {
+  if (interview.status === 'starting' && interview.questionPreparationState !== 'failed') {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
@@ -117,8 +118,62 @@ export default function InterviewRoomScreen() {
     );
   }
 
-  // 2. Processing / Completing State (status === 'completing' || status === 'processing')
-  if (interview.status === 'completing' || interview.status === 'processing') {
+  // 1.5. Preparation Failed State
+  if (interview.status === 'starting' && interview.questionPreparationState === 'failed') {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
+            <TouchableOpacity onPress={() => setShowExitModal(true)} style={styles.exitSessionBtn}>
+              <Ionicons name="log-out-outline" size={16} color={colors.danger} />
+              <ThemedText style={[styles.exitSessionText, { color: colors.danger }]}>Thoát phiên</ThemedText>
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="title" style={styles.title}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
+              <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {(interview.interviewType || '').toUpperCase()}</ThemedText>
+            </View>
+          </View>
+
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.four }}>
+            <GlassCard style={{ padding: Spacing.five, borderRadius: 24, alignItems: 'center', width: '100%', maxWidth: 450, gap: Spacing.three, borderColor: colors.danger }}>
+              <Ionicons name="warning" size={48} color={colors.danger} />
+              <ThemedText type="title" style={{ textAlign: 'center', fontSize: 18, fontWeight: '700', color: colors.danger }}>
+                Lỗi chuẩn bị câu hỏi
+              </ThemedText>
+              <ThemedText style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
+                Đã có sự cố khi AI sinh câu hỏi phỏng vấn. Vui lòng thử lại.
+              </ThemedText>
+
+              <TouchableOpacity
+                style={[styles.primaryButton, { backgroundColor: colors.danger, marginTop: Spacing.three, width: '100%' }]}
+                onPress={() => retryQuestionPreparationMutation.mutate()}
+                disabled={retryQuestionPreparationMutation.isPending}
+              >
+                {retryQuestionPreparationMutation.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <ThemedText style={styles.primaryButtonText}>Thử lại chuẩn bị câu hỏi</ThemedText>
+                )}
+              </TouchableOpacity>
+            </GlassCard>
+          </View>
+
+          <ExitConfirmationModal
+            visible={showExitModal}
+            colors={colors}
+            onStay={() => setShowExitModal(false)}
+            onLeave={() => {
+              setShowExitModal(false);
+              router.replace('/(app)/interview/history' as any);
+            }}
+          />
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
+  // 2. Processing / Completing State (status === 'completing' || status === 'evaluating')
+  if (interview.status === 'completing' || interview.status === 'evaluating') {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
@@ -216,13 +271,38 @@ export default function InterviewRoomScreen() {
             colors={colors}
           />
 
-          {/* Current Question Card */}
-          <CurrentQuestionCard
-            currentQuestion={currentQuestion}
-            colors={colors}
-            onComplete={() => completeMutation.mutate()}
-            isCompleting={completeMutation.isPending}
-          />
+          {/* Current Question Card or Question Preparation Status */}
+          {!currentQuestion && interview.questionPreparationState === 'processing' ? (
+            <GlassCard style={{ padding: Spacing.four, borderRadius: 16, alignItems: 'center', marginVertical: Spacing.two }}>
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginBottom: Spacing.two }} />
+              <ThemedText type="subtitle" style={{ fontSize: 16, textAlign: 'center' }}>Đang chuẩn bị câu hỏi tiếp theo...</ThemedText>
+              <ThemedText style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 13, marginTop: Spacing.one }}>
+                Nexora AI đang tạo câu hỏi tiếp theo dựa trên diễn biến phỏng vấn thực tế của bạn.
+              </ThemedText>
+            </GlassCard>
+          ) : !currentQuestion && interview.questionPreparationState === 'failed' ? (
+            <GlassCard style={{ padding: Spacing.four, borderRadius: 16, alignItems: 'center', marginVertical: Spacing.two, borderColor: colors.danger, borderWidth: 1 }}>
+              <ThemedText type="subtitle" style={{ fontSize: 16, color: colors.danger, textAlign: 'center' }}>Chưa thể chuẩn bị câu hỏi tiếp theo.</ThemedText>
+              <TouchableOpacity
+                style={[styles.primaryButton, { backgroundColor: colors.danger, marginTop: Spacing.three, width: '100%' }]}
+                onPress={() => retryQuestionPreparationMutation.mutate()}
+                disabled={retryQuestionPreparationMutation.isPending}
+              >
+                {retryQuestionPreparationMutation.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <ThemedText style={styles.primaryButtonText}>Thử lại</ThemedText>
+                )}
+              </TouchableOpacity>
+            </GlassCard>
+          ) : (
+            <CurrentQuestionCard
+              currentQuestion={currentQuestion}
+              colors={colors}
+              onComplete={() => completeMutation.mutate()}
+              isCompleting={completeMutation.isPending}
+            />
+          )}
 
           {/* AI Coach Tip Card */}
           {currentQuestion && (
@@ -250,7 +330,7 @@ export default function InterviewRoomScreen() {
             onSubmit={() => submitAnswerMutation.mutate()}
             isSubmitting={submitAnswerMutation.isPending}
             onFinishEarly={handleEarlyExit}
-            canFinishEarly={answeredCount > 0}
+            canFinishEarly={interview.continuation?.canFinishNow === true}
             colors={colors}
             isMicEnabled={isMicEnabled}
             isCameraOn={isCameraOn}

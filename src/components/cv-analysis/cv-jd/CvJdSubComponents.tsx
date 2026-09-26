@@ -111,9 +111,19 @@ export const AnalysisHistoryItemCard = React.memo(({
             </Badge>
           )}
         </View>
-        <Badge variant="success" size="sm" style={{ backgroundColor: '#DCFCE7' }}>
-          <ThemedText style={{ fontSize: 10, fontFamily: Typography.fontFamily.bold, color: '#15803D' }}>Hoàn thành</ThemedText>
-        </Badge>
+        {item.status === 'completed' ? (
+          <Badge variant="success" size="sm" style={{ backgroundColor: '#DCFCE7' }}>
+            <ThemedText style={{ fontSize: 10, fontFamily: Typography.fontFamily.bold, color: '#15803D' }}>Hoàn thành</ThemedText>
+          </Badge>
+        ) : item.status === 'failed' ? (
+          <Badge variant="error" size="sm" style={{ backgroundColor: '#FEE2E2' }}>
+            <ThemedText style={{ fontSize: 10, fontFamily: Typography.fontFamily.bold, color: '#991B1B' }}>Lỗi</ThemedText>
+          </Badge>
+        ) : (
+          <Badge variant="warning" size="sm" style={{ backgroundColor: '#FEF3C7' }}>
+            <ThemedText style={{ fontSize: 10, fontFamily: Typography.fontFamily.bold, color: '#D97706' }}>Đang xử lý</ThemedText>
+          </Badge>
+        )}
       </View>
 
       <View style={styles.nestedContextBox}>
@@ -173,6 +183,7 @@ export const CvJdHistorySection = React.memo(({
   colors,
   setPrimaryResumeMutation,
   router,
+  onLayout,
 }: {
   isHistoryLoading: boolean;
   currentHistoryItems: any[];
@@ -180,8 +191,9 @@ export const CvJdHistorySection = React.memo(({
   colors: any;
   setPrimaryResumeMutation: any;
   router: any;
+  onLayout?: (event: any) => void;
 }) => (
-  <View style={styles.historySection}>
+  <View style={styles.historySection} onLayout={onLayout}>
     <View style={styles.historyHeader}>
       <Ionicons name="time" size={20} color={colors.text} />
       <ThemedText style={styles.historyTitle}>Lịch sử phân tích</ThemedText>
@@ -272,7 +284,7 @@ export const CvJdFloatingPagination = React.memo(({
 });
 
 export const CurrentProfileSection = React.memo(({
-  profile, colorScheme, colors, mode, setMode, jdTitle, setJdTitle, jdContent, setJdContent, analyzeMutation, handleStartAnalysis,
+  profile, colorScheme, colors, mode, setMode, jdTitle, setJdTitle, jdContent, setJdContent, analyzeMutation, handleStartAnalysis, isResumeReady
 }: any) => (
   <View style={{ gap: Spacing.four }}>
     <PrimaryCvSpotlightCard profile={profile} colorScheme={colorScheme} colors={colors} />
@@ -281,9 +293,9 @@ export const CurrentProfileSection = React.memo(({
       <JobDescriptionCard jdTitle={jdTitle} setJdTitle={setJdTitle} jdContent={jdContent} setJdContent={setJdContent} colors={colors} />
     )}
     <TouchableScale
-      style={[styles.primaryButtonPremium, (analyzeMutation.isPending || !profile?.primaryResume) && styles.disabledButtonPremium]}
+      style={[styles.primaryButtonPremium, (analyzeMutation.isPending || !profile?.primaryResume || !isResumeReady) && styles.disabledButtonPremium]}
       onPress={handleStartAnalysis}
-      disabled={analyzeMutation.isPending || !profile?.primaryResume}
+      disabled={analyzeMutation.isPending || !profile?.primaryResume || !isResumeReady}
     >
       {analyzeMutation.isPending ? <ActivityIndicator color="#fff" /> : (
         <>
@@ -296,7 +308,7 @@ export const CurrentProfileSection = React.memo(({
 ));
 
 export const CustomProfileSection = React.memo(({
-  isUploading, colors, colorScheme, handleUploadResume, userResumes, selectedResumeId, setSelectedResumeId, currentFileName, setCurrentFileName, mode, setMode, jdTitle, setJdTitle, jdContent, setJdContent, industry, setIndustry, targetRole, setTargetRole, seniority, setSeniority, analyzeMutation, handleStartAnalysis,
+  isUploading, colors, colorScheme, handleUploadResume, userResumes, selectedResumeId, setSelectedResumeId, currentFileName, setCurrentFileName, mode, setMode, jdTitle, setJdTitle, jdContent, setJdContent, industry, setIndustry, targetRole, setTargetRole, seniority, setSeniority, analyzeMutation, handleStartAnalysis, isResumeReady
 }: any) => (
   <View style={{ gap: Spacing.four }}>
     <ResumeUploadCard
@@ -317,9 +329,9 @@ export const CustomProfileSection = React.memo(({
       <FieldBenchmarkCard industry={industry} setIndustry={setIndustry} targetRole={targetRole} setTargetRole={setTargetRole} seniority={seniority} setSeniority={setSeniority} colors={colors} />
     )}
     <TouchableScale
-      style={[styles.primaryButtonPremium, (analyzeMutation.isPending || !selectedResumeId) && styles.disabledButtonPremium]}
+      style={[styles.primaryButtonPremium, (analyzeMutation.isPending || !selectedResumeId || !isResumeReady) && styles.disabledButtonPremium]}
       onPress={handleStartAnalysis}
-      disabled={analyzeMutation.isPending || !selectedResumeId}
+      disabled={analyzeMutation.isPending || !selectedResumeId || !isResumeReady}
     >
       {analyzeMutation.isPending ? <ActivityIndicator color="#fff" /> : (
         <>
@@ -446,6 +458,7 @@ export const CvJdFormContent = React.memo(({
         setJdContent={state.setJdContent}
         analyzeMutation={state.analyzeMutation}
         handleStartAnalysis={state.handleStartAnalysis}
+        isResumeReady={state.isResumeReady}
       />
     ) : (
       <CustomProfileSection
@@ -472,6 +485,7 @@ export const CvJdFormContent = React.memo(({
         setSeniority={state.setSeniority}
         analyzeMutation={state.analyzeMutation}
         handleStartAnalysis={state.handleStartAnalysis}
+        isResumeReady={state.isResumeReady}
       />
     )}
 
@@ -482,6 +496,11 @@ export const CvJdFormContent = React.memo(({
       colors={colors}
       setPrimaryResumeMutation={state.setPrimaryResumeMutation}
       router={state.router}
+      onLayout={(e) => {
+        if (state.setHistorySectionY) {
+          state.setHistorySectionY(e.nativeEvent.layout.y);
+        }
+      }}
     />
   </View>
 ));

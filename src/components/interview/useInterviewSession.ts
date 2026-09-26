@@ -49,11 +49,14 @@ export function useInterviewSession(id: string | undefined) {
     refetchInterval: (query) => {
       const status = query.state.data?.status;
       const reportState = query.state.data?.reportState;
+      const questionPrep = query.state.data?.questionPreparationState;
       if (
         status === 'starting' ||
         status === 'completing' ||
         status === 'evaluating' ||
-        reportState === 'processing'
+        reportState === 'processing' ||
+        questionPrep === 'pending' ||
+        questionPrep === 'processing'
       ) {
         return 3000;
       }
@@ -194,16 +197,20 @@ export function useInterviewSession(id: string | undefined) {
       setIsTtsSpeaking(false);
       ttsService.stop();
 
+      const isMaxReached = data.isComplete === true && !data.nextQuestion && data.continuation?.state === 'max_questions_reached';
+      if (isMaxReached) {
+        completeMutation.mutate();
+        return;
+      }
+
       const evalData = data.answer?.evaluation || data.answer?.evaluation?.coachingFeedback;
-      if (evalData) {
+      const isUpgradeRequired = !data.nextQuestion && data.continuation?.state === 'upgrade_required';
+
+      if (isUpgradeRequired) {
+        setShowQ3BoundaryModal(true);
+      } else if (evalData) {
         setLastCoaching(evalData);
         setShowCoachingModal(true);
-      } else {
-        // Match Web FE: Seamless transition without forced Q2/Q3 popups
-        const isUpgradeRequired = !data.nextQuestion && data.continuation?.state === 'upgrade_required';
-        if (isUpgradeRequired) {
-          setShowQ3BoundaryModal(true);
-        }
       }
 
       refetch();
@@ -261,6 +268,19 @@ export function useInterviewSession(id: string | undefined) {
     }
   });
 
+  const retryQuestionPreparationMutation = useMutation({
+    mutationFn: async () => {
+      const res = await interviewApi.retryQuestionPreparation(id!);
+      return res;
+    },
+    onSuccess: () => {
+      refetch();
+    },
+    onError: (err: any) => {
+      Alert.alert('Lỗi', err.message || 'Không thể thử lại chuẩn bị câu hỏi.');
+    }
+  });
+
   return {
     router,
     interview,
@@ -285,6 +305,7 @@ export function useInterviewSession(id: string | undefined) {
     submitAnswerMutation,
     completeMutation,
     continueMutation,
+    retryQuestionPreparationMutation,
     isMicAllowed,
   };
 }

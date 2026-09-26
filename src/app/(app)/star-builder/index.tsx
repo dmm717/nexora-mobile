@@ -23,10 +23,10 @@ export default function StarBuilderScreen() {
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  const params = useLocalSearchParams<{ question?: string; scenario?: string }>();
+  const params = useLocalSearchParams<{ question?: string; scenario?: string; attempt?: string }>();
   const [question, setQuestion] = useState(params.question || '');
   const [answer, setAnswer] = useState('');
-  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [attemptId, setAttemptId] = useState<string | null>(params.attempt || null);
 
   useEffect(() => {
     if (params.question) {
@@ -53,6 +53,13 @@ export default function StarBuilderScreen() {
       return false;
     }
   });
+
+  useEffect(() => {
+    if (activeAttempt) {
+      if (activeAttempt.question) setQuestion(activeAttempt.question);
+      if (activeAttempt.answer) setAnswer(activeAttempt.answer);
+    }
+  }, [activeAttempt]);
 
   const createStarMutation = useMutation({
     mutationFn: async () => {

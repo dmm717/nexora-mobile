@@ -102,12 +102,13 @@ export function useCvJdTabState() {
   const [historyPage, setHistoryPage] = useState(1);
   const itemsPerPage = 6;
   const [showFloatingNav, setShowFloatingNav] = useState(false);
+  const [historySectionY, setHistorySectionY] = useState(1050);
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
-    const shouldShow = offsetY > 1050;
+    const shouldShow = offsetY > (historySectionY - 200);
     setShowFloatingNav((prev) => (prev !== shouldShow ? shouldShow : prev));
-  }, []);
+  }, [historySectionY]);
 
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['career-profile'],
@@ -115,13 +116,23 @@ export function useCvJdTabState() {
   });
 
   const { data: historyData, isLoading: isHistoryLoading } = useQuery({
-    queryKey: ['resume-analysis-history'],
-    queryFn: () => resumeAnalysesApi.list(1, 20),
+    queryKey: ['resume-analysis-history', historyPage],
+    queryFn: () => resumeAnalysesApi.list(historyPage, itemsPerPage),
+    refetchInterval: (query) => {
+      if (!query.state.data) return false;
+      const hasPending = query.state.data.items.some((r: any) => r.status === 'pending' || r.status === 'processing' || r.status === 'queued');
+      return hasPending ? 3000 : false;
+    }
   });
 
   const { data: userResumes } = useQuery({
     queryKey: ['resumes-list'],
     queryFn: () => resumesApi.list(),
+    refetchInterval: (query) => {
+      if (!query.state.data) return false;
+      const hasPending = query.state.data.some((r: any) => r.status === 'pending' || r.status === 'processing');
+      return hasPending ? 3000 : false;
+    }
   });
 
   const latestCompletedAnalysis = useMemo(() => {
@@ -130,13 +141,22 @@ export function useCvJdTabState() {
   }, [historyData]);
 
   const currentHistoryItems = useMemo(() => {
-    if (!historyData?.items) return [];
-    const startIndex = (historyPage - 1) * itemsPerPage;
-    return historyData.items.slice(startIndex, startIndex + itemsPerPage);
-  }, [historyData, historyPage]);
+    return historyData?.items || [];
+  }, [historyData]);
 
-  const totalHistoryPages = Math.ceil((historyData?.items?.length || 0) / itemsPerPage);
-  const hasNextPage = historyPage < totalHistoryPages;
+  const totalHistoryPages = historyData?.totalCount 
+    ? Math.ceil(historyData.totalCount / itemsPerPage) 
+    : 0;
+  const hasNextPage = historyData?.hasNextPage || false;
+
+  const isResumeReady = useMemo(() => {
+    if (useCurrentProfile) {
+      return profile?.primaryResume?.status === 'ready';
+    } else {
+      const selected = userResumes?.find(r => r.id === selectedResumeId);
+      return selected?.status === 'ready';
+    }
+  }, [useCurrentProfile, profile, userResumes, selectedResumeId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -242,7 +262,15 @@ export function useCvJdTabState() {
       router.push(`/(app)/cv-analysis/${data.id}` as any);
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể bắt đầu phân tích CV. Vui lòng thử lại.');
+      if (err?.code === 'FEATURE_QUOTA_EXCEEDED' || err?.code === 'FEATURE_NOT_AVAILABLE') {
+        Alert.alert('Đã hết lượt sử dụng', 'Bạn đã sử dụng hết lượt phân tích CV trong gói hiện tại. Vui lòng nâng cấp gói để tiếp tục.');
+      } else if (err?.code === 'RESUME_NOT_READY') {
+        Alert.alert('CV chưa sẵn sàng', 'CV của bạn đang được hệ thống xử lý (trích xuất văn bản). Vui lòng đợi vài giây và thử lại.');
+      } else if (err?.code === 'RESUME_ANALYSIS_CONTEXT_INVALID') {
+        Alert.alert('Lỗi', 'Mục tiêu nghề nghiệp hiện tại của bạn chưa có đủ thông tin cho phương thức này. Vui lòng thiết lập lại mục tiêu hoặc chọn Phân tích theo mục tiêu khác.');
+      } else {
+        Alert.alert('Lỗi', err.message || 'Không thể bắt đầu phân tích CV. Vui lòng thử lại.');
+      }
     }
   });
 
@@ -298,11 +326,13 @@ export function useCvJdTabState() {
     setHistoryPage,
     showFloatingNav,
     handleScroll,
+    setHistorySectionY,
     profile,
     isProfileLoading,
     historyData,
     isHistoryLoading,
     userResumes,
+    isResumeReady,
     latestCompletedAnalysis,
     currentHistoryItems,
     totalHistoryPages,
