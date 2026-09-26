@@ -94,12 +94,10 @@ export const styles = StyleSheet.create({
 
   /* Sign In Screen */
   signInSection: {
-    flex: 1,
-    justifyContent: 'space-between',
     paddingTop: 4,
   },
   signInHeader: {
-    marginBottom: 20,
+    marginBottom: 32,
     alignSelf: 'flex-start',
   },
   signInTitle: {
@@ -154,7 +152,7 @@ export const styles = StyleSheet.create({
   /* Options Row */
   optionsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginVertical: 12,
   },

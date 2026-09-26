@@ -33,7 +33,7 @@ function useUserProfileData() {
 
   const email = userProfileInfo?.email || identity?.email || user?.email || 'qb@gmail.com';
   const displayName =
-    userProfileInfo?.displayName || identity?.displayName || user?.displayName || user?.fullName || 'Hoàng Quốc Bảo';
+    userProfileInfo?.displayName || identity?.displayName || user?.displayName || user?.displayName || 'Hoàng Quốc Bảo';
   const roles = user?.roles ?? ['Admin'];
   const isAdmin = roles.includes('Admin') || roles.includes('admin') || true;
   const planName = 'Gói PRO';

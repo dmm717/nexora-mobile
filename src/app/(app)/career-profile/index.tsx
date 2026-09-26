@@ -96,7 +96,7 @@ export default function CareerProfileScreen() {
   const topCompetencies = skillSummary?.topCompetencies ?? [];
   const topWeaknessSignals = skillSummary?.topWeaknessSignals ?? [];
 
-  const displayName = identity?.displayName || user?.displayName || user?.fullName || 'Chưa cập nhật tên';
+  const displayName = identity?.displayName || user?.displayName || user?.displayName || 'Chưa cập nhật tên';
   const email = identity?.email || user?.email || 'Chưa cập nhật email';
   const avatarChar = (displayName || email || 'N').charAt(0).toUpperCase();
 

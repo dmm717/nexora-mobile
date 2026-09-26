@@ -1,39 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   TextInput,
-  View,
-  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { userApi } from '@/api/user.api';
-import { useAuth } from '@/context/auth-context';
-import { Colors, Radius, Spacing } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { GlassCard } from '@/components/ui/glass-card';
-import { TouchableScale } from '@/components/ui/touchable-scale';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { ProductFeedbackCard } from '@/components/profile/ProductFeedbackCard';
 import { PlanUsageStatsGrid } from '@/components/profile/plan-usage-stats-grid';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { GlassCard } from '@/components/ui/glass-card';
+import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
 import { OrderStatusBadge } from '@/components/ui/order-status-badge';
 import { PasswordInput } from '@/components/ui/password-input';
+import { TouchableScale } from '@/components/ui/touchable-scale';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
-import { safeBack } from '@/utils/navigation';
-import { getAvatarColor, formatDate } from '@/utils/career-goal-contract';
-import { formatCurrency, getOrderStatusPresentation } from '@/utils/billing-presentation';
+import { Colors, Spacing } from '@/constants/theme';
+import { useAuth } from '@/context/auth-context';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { styles } from '@/styles/account.styles';
+import { formatCurrency } from '@/utils/billing-presentation';
+import { formatDate } from '@/utils/career-goal-contract';
 
 
 export default function AccountScreen() {
@@ -84,7 +81,7 @@ export default function AccountScreen() {
 
   useEffect(() => {
     if (currentUserData) {
-      setDisplayName(currentUserData.displayName || currentUserData.fullName || '');
+      setDisplayName(currentUserData.displayName || currentUserData.displayName || '');
       setYearsOfExperience(
         (currentUserData as any).yearsOfExperience != null
           ? String((currentUserData as any).yearsOfExperience)
@@ -471,15 +468,15 @@ export default function AccountScreen() {
                       </ThemedText>
                       <OrderStatusBadge status={o.status} size="sm" />
                     </View>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-                        <ThemedText style={{ fontSize: 11, opacity: 0.7 }}>
-                          {o.planCode} · {formatDate(o.createdAt)}
-                        </ThemedText>
-                        <ThemedText style={{ fontSize: 12, fontWeight: '800' }}>
-                          {formatCurrency(o.amountMinor, o.currency)}
-                        </ThemedText>
-                      </View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                      <ThemedText style={{ fontSize: 11, opacity: 0.7 }}>
+                        {o.planCode} · {formatDate(o.createdAt)}
+                      </ThemedText>
+                      <ThemedText style={{ fontSize: 12, fontWeight: '800' }}>
+                        {formatCurrency(o.amountMinor, o.currency)}
+                      </ThemedText>
                     </View>
+                  </View>
                 ))}
               </View>
             )}

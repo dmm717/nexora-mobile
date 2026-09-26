@@ -3,7 +3,6 @@ import { BillingSummaryResponse } from './billing.types';
 export interface UserDto {
   id: string;
   email: string;
-  fullName?: string;
   displayName?: string;
   avatarUrl?: string;
   emailVerified?: boolean;
@@ -20,7 +19,7 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
-  fullName?: string;
+  displayName: string;
 }
 
 export interface VerifyEmailRequest {

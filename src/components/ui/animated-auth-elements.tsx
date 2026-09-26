@@ -54,10 +54,13 @@ const StaggeredLetter: React.FC<StaggeredLetterProps> = React.memo(({
     );
   }, [globalIndex, letterDelay, triggerKey]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      opacity: opacity.value,
+      transform: [{ translateY: translateY.value }],
+    };
+  }, []);
 
   return (
     <Animated.View style={animatedStyle}>
@@ -138,10 +141,13 @@ export const CenterExpandView: React.FC<CenterExpandViewProps> = React.memo(({
     );
   }, [delay, triggerKey]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scaleX: scaleX.value }],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      opacity: opacity.value,
+      transform: [{ scaleX: scaleX.value }],
+    };
+  }, []);
 
   return (
     <Animated.View style={[{ width: '100%' }, style, animatedStyle]}>

@@ -9,7 +9,9 @@ import {
   TextInput,
   StatusBar,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -33,7 +35,6 @@ export type AuthStep =
   | 'signin'
   | 'signup'
   | 'forgot_request'
-  | 'forgot_reset'
   | 'forgot_done';
 
 export default function LoginScreen() {
@@ -54,21 +55,20 @@ export default function LoginScreen() {
     setIsLegalModalVisible(true);
   };
 
+  const closeLegalModal = React.useCallback(() => {
+    setIsLegalModalVisible(false);
+  }, []);
+
   // Form Fields State
-  const [fullName, setFullName] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState(params.email || '');
   const [password, setPassword] = useState('');
-  const [otpCode, setOtpCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
   // Input Focus States
   const [nameFocused, setNameFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  const [otpFocused, setOtpFocused] = useState(false);
-  const [newPasswordFocused, setNewPasswordFocused] = useState(false);
 
   useEffect(() => {
     if (isDirectSignIn) {
@@ -120,7 +120,7 @@ export default function LoginScreen() {
       registerApi({
         email: email.trim(),
         password: password.trim(),
-        fullName: fullName.trim() || undefined,
+        displayName: displayName.trim(),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries();
@@ -138,13 +138,12 @@ export default function LoginScreen() {
     },
   });
 
-  // Send Forgot Password OTP Mutation
+  // Send Forgot Password Request Mutation
   const sendRequestMutation = useMutation({
     mutationFn: () => authApi.forgotPassword({ email: email.trim() }),
     onSuccess: () => {
       queryClient.invalidateQueries();
-      setStep('forgot_reset');
-      Alert.alert('Thành công', 'Mã xác thực đã được gửi tới email của bạn.');
+      setStep('forgot_done');
     },
     onError: (error) => {
       if (error instanceof AppError) {
@@ -155,42 +154,53 @@ export default function LoginScreen() {
     },
   });
 
-  // Reset Password Mutation
-  const resetPasswordMutation = useMutation({
-    mutationFn: () =>
-      authApi.resetPassword({
-        email: email.trim(),
-        code: otpCode.trim(),
-        newPassword: newPassword.trim(),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries();
-      setStep('forgot_done');
-    },
-    onError: (error) => {
-      if (error instanceof AppError) {
-        Alert.alert('Lỗi', `[${error.code}] ${error.message}`);
-      } else {
-        Alert.alert('Lỗi', 'Đặt lại mật khẩu thất bại. Vui lòng kiểm tra lại mã OTP.');
-      }
-    },
-  });
+  const validatePassword = (pass: string) => {
+    if (pass.length < 8) return 'Mật khẩu phải có ít nhất 8 ký tự';
+    if (!/[A-Z]/.test(pass)) return 'Mật khẩu phải chứa ít nhất một chữ viết hoa';
+    if (!/[a-z]/.test(pass)) return 'Mật khẩu phải chứa ít nhất một chữ viết thường';
+    if (!/[0-9]/.test(pass)) return 'Mật khẩu phải chứa ít nhất một chữ số';
+    if (!/[^a-zA-Z0-9]/.test(pass)) return 'Mật khẩu phải chứa ít nhất một ký tự đặc biệt';
+    return null;
+  };
+
+  const validateEmail = (emailStr: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailStr)) {
+      return 'Vui lòng nhập định dạng email hợp lệ';
+    }
+    return null;
+  };
 
   const handleLogin = () => {
     if (!email.trim() || !password.trim()) {
       Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ email và mật khẩu');
       return;
     }
+    const emailError = validateEmail(email.trim());
+    if (emailError) {
+      Alert.alert('Lỗi', emailError);
+      return;
+    }
     loginMutation.mutate();
   };
 
   const handleRegister = () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ Email và Mật khẩu');
+    if (!displayName.trim() || !email.trim() || !password.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
       return;
     }
-    if (password.length < 6) {
-      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
+    if (displayName.trim().length < 2) {
+      Alert.alert('Lỗi', 'Tên hiển thị phải có ít nhất 2 ký tự');
+      return;
+    }
+    const emailError = validateEmail(email.trim());
+    if (emailError) {
+      Alert.alert('Lỗi', emailError);
+      return;
+    }
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      Alert.alert('Lỗi', passwordError);
       return;
     }
     registerMutation.mutate();
@@ -201,16 +211,14 @@ export default function LoginScreen() {
       Alert.alert('Lỗi', 'Vui lòng nhập Địa chỉ Email');
       return;
     }
+    const emailError = validateEmail(email.trim());
+    if (emailError) {
+      Alert.alert('Lỗi', emailError);
+      return;
+    }
     sendRequestMutation.mutate();
   };
 
-  const handleResetPassword = () => {
-    if (!otpCode.trim() || !newPassword.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập Mã xác thực (OTP) và Mật khẩu mới.');
-      return;
-    }
-    resetPasswordMutation.mutate();
-  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
@@ -228,11 +236,15 @@ export default function LoginScreen() {
       )}
 
       {!isSplash && (
-        <ScrollView
+        <KeyboardAwareScrollView
+          style={{ flex: 1 }}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           bounces={false}
+          enableOnAndroid={true}
+          enableAutomaticScroll={true}
+          extraScrollHeight={20}
         >
           {/* Top Topographic Wave Header */}
           <View style={styles.headerWrapper}>
@@ -339,19 +351,8 @@ export default function LoginScreen() {
                     </View>
                   </CenterExpandView>
 
-                  {/* Options Row: Remember Me + Forgot Password */}
+                  {/* Options Row: Forgot Password */}
                   <CenterExpandView delay={320} triggerKey={step} style={styles.optionsRow}>
-                    <Pressable
-                      style={styles.rememberMeBox}
-                      onPress={() => setRememberMe(!rememberMe)}
-                      hitSlop={8}
-                    >
-                      <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                        {rememberMe && <Ionicons name="checkmark" size={13} color="#FFFFFF" />}
-                      </View>
-                      <ThemedText style={styles.rememberText}>Ghi nhớ đăng nhập</ThemedText>
-                    </Pressable>
-
                     <Pressable hitSlop={8} onPress={() => setStep('forgot_request')}>
                       <ThemedText style={styles.forgotText}>Quên mật khẩu?</ThemedText>
                     </Pressable>
@@ -405,8 +406,8 @@ export default function LoginScreen() {
                       />
                       <TextInput
                         style={styles.textInput}
-                        value={fullName}
-                        onChangeText={setFullName}
+                        value={displayName}
+                        onChangeText={setDisplayName}
                         placeholder="Nguyễn Văn A"
                         placeholderTextColor="#9CA3AF"
                         autoCapitalize="words"
@@ -560,138 +561,12 @@ export default function LoginScreen() {
                       {sendRequestMutation.isPending ? (
                         <ActivityIndicator color="#FFFFFF" />
                       ) : (
-                        <ThemedText style={styles.submitButtonText}>Gửi mã OTP khôi phục</ThemedText>
+                        <ThemedText style={styles.submitButtonText}>Gửi yêu cầu khôi phục</ThemedText>
                       )}
                     </TouchableScale>
-                  </CenterExpandView>
-
-                  <CenterExpandView delay={340} triggerKey={step}>
-                    <TouchableOpacity onPress={() => setStep('forgot_reset')} style={styles.subLink}>
-                      <ThemedText style={styles.linkText}>
-                        Đã có mã OTP? Đặt lại mật khẩu
-                      </ThemedText>
-                    </TouchableOpacity>
                   </CenterExpandView>
 
                   <CenterExpandView delay={420} triggerKey={step} style={styles.footerRow}>
-                    <Pressable hitSlop={8} onPress={() => setStep('signin')}>
-                      <ThemedText style={styles.footerText}>Quay lại Đăng nhập</ThemedText>
-                    </Pressable>
-                  </CenterExpandView>
-                </View>
-              </View>
-            )}
-
-            {/* STEP 5: RESET PASSWORD WITH OTP */}
-            {step === 'forgot_reset' && (
-              <View style={styles.signInSection}>
-                <View style={styles.signInHeader}>
-                  <StaggeredTitle text="Đặt lại mật khẩu" style={styles.signInTitle} triggerKey={step} />
-                </View>
-
-                <View style={styles.formStack}>
-                  {/* Email Field */}
-                  <CenterExpandView delay={120} triggerKey={step} style={styles.fieldGroup}>
-                    <ThemedText style={styles.fieldLabel}>Địa chỉ Email</ThemedText>
-                    <View style={[styles.inputRow, emailFocused && styles.inputRowFocused]}>
-                      <Ionicons
-                        name="mail-outline"
-                        size={18}
-                        color={emailFocused ? colors.primary : '#9CA3AF'}
-                      />
-                      <TextInput
-                        style={styles.textInput}
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="demo@email.com"
-                        placeholderTextColor="#9CA3AF"
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        onFocus={() => setEmailFocused(true)}
-                        onBlur={() => setEmailFocused(false)}
-                      />
-                    </View>
-                  </CenterExpandView>
-
-                  {/* OTP Code Field */}
-                  <CenterExpandView delay={220} triggerKey={step} style={styles.fieldGroup}>
-                    <ThemedText style={styles.fieldLabel}>Mã OTP (6 chữ số)</ThemedText>
-                    <View style={[styles.inputRow, otpFocused && styles.inputRowFocused]}>
-                      <Ionicons
-                        name="key-outline"
-                        size={18}
-                        color={otpFocused ? colors.primary : '#9CA3AF'}
-                      />
-                      <TextInput
-                        style={styles.textInput}
-                        value={otpCode}
-                        onChangeText={setOtpCode}
-                        placeholder="123456"
-                        placeholderTextColor="#9CA3AF"
-                        keyboardType="number-pad"
-                        onFocus={() => setOtpFocused(true)}
-                        onBlur={() => setOtpFocused(false)}
-                      />
-                    </View>
-                  </CenterExpandView>
-
-                  {/* New Password Field */}
-                  <CenterExpandView delay={320} triggerKey={step} style={styles.fieldGroup}>
-                    <ThemedText style={styles.fieldLabel}>Mật khẩu mới</ThemedText>
-                    <View style={[styles.inputRow, newPasswordFocused && styles.inputRowFocused]}>
-                      <Ionicons
-                        name="lock-closed-outline"
-                        size={18}
-                        color={newPasswordFocused ? colors.primary : '#9CA3AF'}
-                      />
-                      <TextInput
-                        style={styles.textInput}
-                        value={newPassword}
-                        onChangeText={setNewPassword}
-                        placeholder="••••••••••••"
-                        placeholderTextColor="#9CA3AF"
-                        secureTextEntry={!showPassword}
-                        autoCapitalize="none"
-                        onFocus={() => setNewPasswordFocused(true)}
-                        onBlur={() => setNewPasswordFocused(false)}
-                      />
-                      <Pressable
-                        onPress={() => setShowPassword(!showPassword)}
-                        style={styles.eyeIcon}
-                        hitSlop={8}
-                      >
-                        <Ionicons
-                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                          size={18}
-                          color="#9CA3AF"
-                        />
-                      </Pressable>
-                    </View>
-                  </CenterExpandView>
-
-                  {/* Primary Reset Button */}
-                  <CenterExpandView delay={420} triggerKey={step}>
-                    <TouchableScale
-                      style={styles.submitButton}
-                      onPress={handleResetPassword}
-                      disabled={resetPasswordMutation.isPending}
-                      scaleTo={0.96}
-                    >
-                      {resetPasswordMutation.isPending ? (
-                        <ActivityIndicator color="#FFFFFF" />
-                      ) : (
-                        <ThemedText style={styles.submitButtonText}>Xác nhận đặt lại mật khẩu</ThemedText>
-                      )}
-                    </TouchableScale>
-                  </CenterExpandView>
-
-                  <CenterExpandView delay={500} triggerKey={step}>
-                    <TouchableOpacity onPress={() => setStep('forgot_request')} style={styles.subLink}>
-                      <ThemedText style={styles.linkText}>Gửi lại mã OTP mới</ThemedText>
-                    </TouchableOpacity>
-                  </CenterExpandView>
-
-                  <CenterExpandView delay={560} triggerKey={step} style={styles.footerRow}>
                     <Pressable hitSlop={8} onPress={() => setStep('signin')}>
                       <ThemedText style={styles.footerText}>Quay lại Đăng nhập</ThemedText>
                     </Pressable>
@@ -710,27 +585,27 @@ export default function LoginScreen() {
                 </CenterExpandView>
                 <CenterExpandView delay={200} triggerKey={step}>
                   <ThemedText style={styles.successText}>
-                    Mật khẩu của bạn đã được cập nhật thành công. Bạn có thể đăng nhập ngay bây giờ bằng mật khẩu mới.
+                    Nếu email thuộc một tài khoản hợp lệ, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến địa chỉ này. Vui lòng kiểm tra cả hòm thư Spam hoặc Thư rác.
                   </ThemedText>
                 </CenterExpandView>
 
                 <CenterExpandView delay={320} triggerKey={step}>
                   <TouchableScale style={styles.submitButton} onPress={() => setStep('signin')} scaleTo={0.96}>
-                    <ThemedText style={styles.submitButtonText}>Đăng nhập ngay</ThemedText>
+                    <ThemedText style={styles.submitButtonText}>Quay lại đăng nhập</ThemedText>
                   </TouchableScale>
                 </CenterExpandView>
               </View>
             )}
 
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       )}
 
       {/* Legal Policy Modal */}
       <LegalPolicyModal
         visible={isLegalModalVisible}
         initialTab={legalModalTab}
-        onClose={() => setIsLegalModalVisible(false)}
+        onClose={closeLegalModal}
       />
     </SafeAreaView>
   );

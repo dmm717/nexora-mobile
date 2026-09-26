@@ -88,8 +88,7 @@ export const RadialScore: React.FC<RadialScoreProps> = ({
               strokeDasharray={`${circumference} ${circumference}`}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              origin={`${numericSize / 2}, ${numericSize / 2}`}
-              rotation="-90"
+              transform={`rotate(-90 ${numericSize / 2} ${numericSize / 2})`}
             />
           )}
         </Svg>
