@@ -139,11 +139,14 @@ export function useHomeState() {
     };
   }, [progressData]);
 
-  const nextAction = useMemo(() => resolveNextBestAction({
-    recommendation,
-    targetRole: activeGoal?.targetRole,
-    hasInsufficientEvidence,
-  }), [recommendation, activeGoal?.targetRole, hasInsufficientEvidence]);
+  const nextAction = useMemo(() => {
+    const rec = (progressData as any)?.nextRecommendedPractice || recommendation;
+    return resolveNextBestAction({
+      recommendation: rec,
+      targetRole: activeGoal?.targetRole,
+      hasInsufficientEvidence,
+    });
+  }, [recommendation, progressData, activeGoal?.targetRole, hasInsufficientEvidence]);
 
   const recentActivities = useMemo(() => {
     const activities: Array<{

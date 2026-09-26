@@ -55,7 +55,7 @@ export default function HomeScreen() {
               Xin chào,
             </ThemedText>
             <ThemedText style={styles.appName} numberOfLines={1}>
-              {user?.displayName || user?.displayName || 'Ứng viên'}
+              {user?.displayName || 'Ứng viên'}
             </ThemedText>
           </View>
 
@@ -72,7 +72,7 @@ export default function HomeScreen() {
               style={{ borderRadius: 16 }}
               onPress={() => router.push('/(tabs)/profile' as any)}
             >
-              <UserAvatar name={user?.displayName || user?.displayName} email={user?.email} size={32} />
+              <UserAvatar name={user?.displayName} email={user?.email} size={32} />
             </TouchableScale>
           </View>
         </View>

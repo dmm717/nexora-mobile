@@ -347,7 +347,7 @@ export const GroupedNavInsetCard = React.memo(({
         <View style={{ flex: 1, gap: 2 }}>
           <ThemedText style={styles.navCardTitle}>1. HỒ SƠ CỦA TÔI</ThemedText>
           <ThemedText style={styles.navCardValue} numberOfLines={1}>
-            {userProfileInfo?.displayName || user?.displayName || user?.fullName || 'Chưa cập nhật tên'}
+            {userProfileInfo?.displayName || user?.displayName || 'Chưa cập nhật tên'}
           </ThemedText>
           <ThemedText style={[styles.navCardSub, { color: colors.textSecondary }]} numberOfLines={1}>
             Kinh nghiệm: {yearsOfExperience != null ? `${yearsOfExperience} năm` : 'Chưa khai báo'} · CV: {primaryResume ? primaryResume.fileName : 'Chưa chọn'}
@@ -385,6 +385,8 @@ export const GroupedNavInsetCard = React.memo(({
           <ThemedText style={styles.navCardValue} numberOfLines={1}>
             {isLoadingLearningPath ? (
               'Đang tải lộ trình...'
+            ) : !activeGoal ? (
+              'Chưa thiết lập mục tiêu nghề nghiệp'
             ) : learningProgress ? (
               `Hoàn thành ${learningProgress.completedActivityCount}/${learningProgress.totalActivityCount} bài (${learningProgress.percentage}%)`
             ) : (
