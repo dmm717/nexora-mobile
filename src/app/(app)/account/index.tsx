@@ -29,6 +29,7 @@ import { PlanUsageStatsGrid } from '@/components/profile/plan-usage-stats-grid';
 import { OrderStatusBadge } from '@/components/ui/order-status-badge';
 import { PasswordInput } from '@/components/ui/password-input';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
 import { safeBack } from '@/utils/navigation';
 import { getAvatarColor, formatDate } from '@/utils/career-goal-contract';
 import { formatCurrency, getOrderStatusPresentation } from '@/utils/billing-presentation';
@@ -76,6 +77,15 @@ export default function AccountScreen() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Legal Modal State
+  const [isLegalModalVisible, setIsLegalModalVisible] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<PolicyTab>('privacy');
+
+  const openLegalModal = (tab: PolicyTab) => {
+    setLegalModalTab(tab);
+    setIsLegalModalVisible(true);
+  };
 
   // --- MUTATIONS ---
 
@@ -540,7 +550,63 @@ export default function AccountScreen() {
             </View>
           </GlassCard>
 
-          {/* CARD 7: KHU VỰC NGUY HIỂM (DangerZoneCard) */}
+          {/* CARD 7: PHÁP LÝ & ĐIỀU KHOẢN (LegalComplianceCard - CH Play Compliance) */}
+          <GlassCard style={styles.card}>
+            <View>
+              <ThemedText style={styles.cardTitle}>Pháp lý & Điều khoản</ThemedText>
+              <ThemedText style={styles.cardSubtitle}>
+                Các điều khoản sử dụng, chính sách bảo mật và quyền lợi dữ liệu người dùng.
+              </ThemedText>
+            </View>
+
+            <View style={{ gap: Spacing.two, marginTop: 4 }}>
+              <TouchableScale
+                style={[styles.btnOutline, { borderColor: colors.cardBorder, justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center' }]}
+                onPress={() => openLegalModal('privacy')}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />
+                  <ThemedText style={[styles.btnText, { color: colors.text }]}>Chính sách bảo mật</ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableScale>
+
+              <TouchableScale
+                style={[styles.btnOutline, { borderColor: colors.cardBorder, justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center' }]}
+                onPress={() => openLegalModal('terms')}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="document-text-outline" size={18} color={colors.primary} />
+                  <ThemedText style={[styles.btnText, { color: colors.text }]}>Điều khoản dịch vụ</ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableScale>
+
+              <TouchableScale
+                style={[styles.btnOutline, { borderColor: colors.cardBorder, justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center' }]}
+                onPress={() => openLegalModal('payment')}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="card-outline" size={18} color={colors.primary} />
+                  <ThemedText style={[styles.btnText, { color: colors.text }]}>Chính sách thanh toán & hoàn tiền</ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableScale>
+
+              <TouchableScale
+                style={[styles.btnOutline, { borderColor: colors.cardBorder, justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center' }]}
+                onPress={() => openLegalModal('deletion')}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="trash-bin-outline" size={18} color={colors.primary} />
+                  <ThemedText style={[styles.btnText, { color: colors.text }]}>Quy trình xóa dữ liệu (Google Play)</ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableScale>
+            </View>
+          </GlassCard>
+
+          {/* CARD 8: KHU VỰC NGUY HIỂM (DangerZoneCard) */}
           <View style={[styles.dangerZoneContainer, { backgroundColor: '#fef2f2', borderColor: '#fca5a5' }]}>
             <View style={styles.dangerHeaderRow}>
               <Ionicons name="warning" size={20} color="#dc2626" />
@@ -573,6 +639,13 @@ export default function AccountScreen() {
           </View>
         </ScrollView>
         <AppBottomNavBar activeTab="profile" />
+
+        {/* Legal Policy Modal */}
+        <LegalPolicyModal
+          visible={isLegalModalVisible}
+          initialTab={legalModalTab}
+          onClose={() => setIsLegalModalVisible(false)}
+        />
       </SafeAreaView>
     </ThemedView>
   );

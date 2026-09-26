@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "nexora-mobile",
+    "name": "Nexora AI",
     "slug": "nexora-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,14 +8,20 @@
     "scheme": "nexoramobile",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.nexora.app",
+      "buildNumber": "1.0.0",
       "icon": "./assets/expo.icon",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Nexora cần quyền truy cập microphone để bạn thực hành phỏng vấn qua giọng nói."
       }
     },
     "android": {
+      "package": "com.nexora.app",
+      "versionCode": 1,
       "permissions": [
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "INTERNET",
+        "MODIFY_AUDIO_SETTINGS"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",

@@ -147,7 +147,20 @@ export default function ProfileScreen() {
 
                 <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
 
-                {/* 4. Đăng xuất (Red Item) */}
+                {/* 4. Pháp lý & Điều khoản */}
+                <TouchableScale onPress={() => router.push('/(app)/account' as any)}>
+                  <View style={styles.menuItem}>
+                    <View style={[styles.menuIconBadge, { backgroundColor: colors.backgroundElement }]}>
+                      <Ionicons name="shield-checkmark-outline" size={22} color={colors.text} />
+                    </View>
+                    <ThemedText style={styles.menuItemText}>Pháp lý & Điều khoản</ThemedText>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </View>
+                </TouchableScale>
+
+                <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+
+                {/* 5. Đăng xuất (Red Item) */}
                 <TouchableScale onPress={logout}>
                   <View style={styles.menuItem}>
                     <View style={[styles.menuIconBadge, { backgroundColor: colors.dangerLight }]}>

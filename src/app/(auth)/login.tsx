@@ -25,6 +25,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { TopographicHeader } from '@/components/ui/topographic-header';
 import { StaggeredTitle, CenterExpandView } from '@/components/ui/animated-auth-elements';
+import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
 import { styles } from '@/styles/login.styles';
 
 export type AuthStep =
@@ -43,6 +44,15 @@ export default function LoginScreen() {
 
   const [step, setStep] = useState<AuthStep>(initialStep);
   const [isSplash, setIsSplash] = useState(!isDirectSignIn);
+
+  // Legal Modal State
+  const [isLegalModalVisible, setIsLegalModalVisible] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<PolicyTab>('terms');
+
+  const openLegalModal = (tab: PolicyTab) => {
+    setLegalModalTab(tab);
+    setIsLegalModalVisible(true);
+  };
 
   // Form Fields State
   const [fullName, setFullName] = useState('');
@@ -465,6 +475,21 @@ export default function LoginScreen() {
                     </View>
                   </CenterExpandView>
 
+                  {/* Legal Consent Text */}
+                  <CenterExpandView delay={390} triggerKey={step} style={styles.legalConsentRow}>
+                    <ThemedText style={styles.legalConsentText}>
+                      Bằng việc đăng ký, bạn đồng ý với{' '}
+                      <ThemedText style={styles.legalLink} onPress={() => openLegalModal('terms')}>
+                        Điều khoản dịch vụ
+                      </ThemedText>{' '}
+                      và{' '}
+                      <ThemedText style={styles.legalLink} onPress={() => openLegalModal('privacy')}>
+                        Chính sách bảo mật
+                      </ThemedText>{' '}
+                      của Nexora.
+                    </ThemedText>
+                  </CenterExpandView>
+
                   {/* Primary Register Button */}
                   <CenterExpandView delay={420} triggerKey={step}>
                     <TouchableScale
@@ -700,6 +725,13 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       )}
+
+      {/* Legal Policy Modal */}
+      <LegalPolicyModal
+        visible={isLegalModalVisible}
+        initialTab={legalModalTab}
+        onClose={() => setIsLegalModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }

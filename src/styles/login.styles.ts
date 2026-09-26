@@ -245,6 +245,25 @@ export const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 20,
   },
+
+  /* Legal Consent */
+  legalConsentRow: {
+    marginTop: 12,
+    marginBottom: 4,
+    paddingHorizontal: 4,
+  },
+  legalConsentText: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.regular,
+    color: '#757686',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  legalLink: {
+    fontFamily: Typography.fontFamily.bold,
+    color: SYSTEM_PRIMARY,
+    textDecorationLine: 'underline',
+  },
 });
 
 
