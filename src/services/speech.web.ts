@@ -6,7 +6,7 @@ export interface SpeechRecognitionListener {
   onEnd: () => void;
 }
 
-class SpeechService {
+class WebSpeechAPI {
   private recognition: any = null;
   private isListening = false;
   private userRequestedStop = false;
@@ -45,7 +45,7 @@ class SpeechService {
           const status = await navigator.permissions.query({ name: 'microphone' as any });
           return status.state as 'granted' | 'denied' | 'prompt';
         }
-      } catch (e) {
+      } catch {
         // Fallback for browsers that don't support permissions.query for microphone
       }
     }
@@ -67,7 +67,7 @@ class SpeechService {
         this.recognition.start();
         this.isListening = true;
       } catch (err: any) {
-        console.warn('Failed to start speech recognition:', err);
+        // console.warn('Failed to start speech recognition:', err);
         // If start throws because instance was in wrong state, re-init and retry
         this.initRecognition();
         if (this.recognition) {
@@ -133,7 +133,7 @@ class SpeechService {
     };
 
     this.recognition.onerror = (event: any) => {
-      console.warn('Speech recognition error:', event.error);
+      // console.warn('Speech recognition error:', event.error);
       
       // Ignore 'no-speech' error if user is still recording in continuous session
       if (event.error === 'no-speech' && !this.userRequestedStop) {
@@ -182,11 +182,11 @@ class SpeechService {
       try {
         this.recognition.stop();
       } catch (e) {
-        console.warn(e);
+        // console.warn(e);
       }
     }
     this.isListening = false;
   }
 }
 
-export const speechService = new SpeechService();
+export const webSpeechInstance = new WebSpeechAPI();

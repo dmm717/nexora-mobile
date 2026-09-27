@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { starApi } from '@/api/star.api';
-import { speechService } from '@/services/speech';
+
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';

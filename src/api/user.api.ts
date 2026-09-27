@@ -35,7 +35,18 @@ export const userApi = {
     return res.data;
   },
 
-  requestDeletion: async (): Promise<void> => {
-    await apiClient.post('/me/deletion-requests');
+  deleteAccount: async (): Promise<void> => {
+    // SECURITY (Phase 3.2): Immediate deletion endpoint per Apple review requirements
+    await apiClient.delete('/me');
+  },
+
+  uploadAvatar: async (uploadToken: string): Promise<string> => {
+    const res = await apiClient.put('/me/avatar', { uploadToken });
+    const data = 'data' in res.data && res.data.data ? res.data.data : res.data;
+    return (data as any).avatarUrl;
+  },
+
+  deleteAvatar: async (): Promise<void> => {
+    await apiClient.delete('/me/avatar');
   },
 };

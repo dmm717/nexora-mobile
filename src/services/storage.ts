@@ -10,62 +10,49 @@ const memoryStorage = new Map<string, string>();
 
 async function getValue(key: string): Promise<string | null> {
   if (Platform.OS === 'web') {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        return window.localStorage.getItem(key);
-      }
-    } catch {
-      // Fallback to memory storage if localStorage is blocked
+    if (key === ACCESS_TOKEN_KEY || key === REFRESH_TOKEN_KEY) {
+      // SECURITY: Tokens must NOT be stored in localStorage on web to prevent XSS theft.
+      return memoryStorage.get(key) ?? null;
     }
-    return memoryStorage.get(key) ?? null;
+    return typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
   }
 
   try {
     return await SecureStore.getItemAsync(key);
   } catch (error) {
-    console.error(`Error reading ${key} from SecureStore:`, error);
     return null;
   }
 }
 
 async function setValue(key: string, value: string): Promise<void> {
   if (Platform.OS === 'web') {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem(key, value);
-        return;
-      }
-    } catch {
-      // Fallback to memory storage
+    if (key === ACCESS_TOKEN_KEY || key === REFRESH_TOKEN_KEY) {
+      memoryStorage.set(key, value);
+    } else if (typeof window !== 'undefined') {
+      window.localStorage.setItem(key, value);
     }
-    memoryStorage.set(key, value);
     return;
   }
 
   try {
     await SecureStore.setItemAsync(key, value);
   } catch (error) {
-    console.error(`Error writing ${key} to SecureStore:`, error);
   }
 }
 
 async function deleteValue(key: string): Promise<void> {
   if (Platform.OS === 'web') {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.removeItem(key);
-      }
-    } catch {
-      // Fallback
+    if (key === ACCESS_TOKEN_KEY || key === REFRESH_TOKEN_KEY) {
+      memoryStorage.delete(key);
+    } else if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(key);
     }
-    memoryStorage.delete(key);
     return;
   }
 
   try {
     await SecureStore.deleteItemAsync(key);
   } catch (error) {
-    console.error(`Error deleting ${key} from SecureStore:`, error);
   }
 }
 

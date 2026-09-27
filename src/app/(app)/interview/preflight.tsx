@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAudioRecorder, useAudioRecorderState, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio';
+import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
 import { memo, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, TextInput, TouchableOpacity, View, Platform } from 'react-native';
@@ -684,35 +686,80 @@ const MicCheckCard = memo(({ colors, onModeChange }: { colors: any; onModeChange
   const [micStatus, setMicStatus] = useState<'idle' | 'testing' | 'ready' | 'blocked'>('idle');
   const [meterLevel, setMeterLevel] = useState(0);
 
+  // use expo-audio for real mic test
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(recorder);
+
+  // Map metering to meterLevel when testing
   useEffect(() => {
-    let interval: any;
     if (micStatus === 'testing') {
-      interval = setInterval(() => {
-        setMeterLevel(Math.floor(Math.random() * 60) + 30);
-      }, 150);
-    } else if (micStatus === 'ready') {
-      setMeterLevel(100);
-    } else if (micStatus === 'blocked') {
+      const dbfs = recorderState.metering || -160;
+      // Normalize -160..0 to 0..100
+      let normalized = ((dbfs + 160) / 160) * 100;
+      if (normalized < 0) normalized = 0;
+      if (normalized > 100) normalized = 100;
+      setMeterLevel(Math.floor(normalized));
+    } else if (micStatus === 'ready' || micStatus === 'blocked') {
       setMeterLevel(100);
     } else {
       setMeterLevel(0);
     }
-    return () => clearInterval(interval);
-  }, [micStatus]);
+  }, [micStatus, recorderState.metering]);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (recorder.isRecording) {
+        recorder.stop().then(() => {
+          if (recorder.uri) {
+            FileSystem.deleteAsync(recorder.uri, { idempotent: true }).catch(() => {});
+          }
+        }).catch(() => {});
+      }
+    };
+  }, [recorder]);
 
   const handleTest = async () => {
+    if (micStatus === 'testing') return;
     setMicStatus('testing');
     try {
-      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach((track) => track.stop());
-        setMicStatus('ready');
-        onModeChange?.('voice');
-      } else {
-        setTimeout(() => {
+      if (Platform.OS === 'web') {
+        if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach((track) => track.stop());
           setMicStatus('ready');
           onModeChange?.('voice');
-        }, 1200);
+        } else {
+          setMicStatus('blocked');
+          onModeChange?.('text');
+        }
+      } else {
+        // Native: use expo-audio real permission request and recording
+        const perm = await requestRecordingPermissionsAsync();
+        if (perm.granted) {
+          await recorder.prepareToRecordAsync();
+          recorder.record();
+          
+          // Test for 3 seconds
+          timeoutRef.current = setTimeout(async () => {
+            try {
+              if (recorder.isRecording) {
+                await recorder.stop();
+              }
+              if (recorder.uri) {
+                await FileSystem.deleteAsync(recorder.uri, { idempotent: true });
+              }
+            } catch {}
+            setMicStatus('ready');
+            onModeChange?.('voice');
+          }, 3000);
+        } else {
+          setMicStatus('blocked');
+          onModeChange?.('text');
+        }
       }
     } catch {
       setMicStatus('blocked');
@@ -1081,6 +1128,9 @@ export default function PreflightScreen() {
     setSeniority(goal.seniority.toLowerCase());
   };
 
+  const jdIdempotencyRef = useRef<string | null>(null);
+  const interviewIdempotencyRef = useRef<string | null>(null);
+
   const startMutation = useMutation({
     mutationFn: async () => {
       let finalJdId = selectedJdId;
@@ -1101,10 +1151,12 @@ export default function PreflightScreen() {
           if (!newJdTitle.trim() || !newJdContent.trim()) {
             throw new Error('Vui lòng nhập tiêu đề và nội dung Job Description mới');
           }
+          if (!jdIdempotencyRef.current) jdIdempotencyRef.current = require('../../../utils/uuid').generateIdempotencyKey();
+          
           const createdJd = await jobDescriptionsApi.create({
             title: newJdTitle.trim(),
             content: newJdContent.trim(),
-          });
+          }, jdIdempotencyRef.current || undefined);
           finalJdId = createdJd.id;
         } else {
           if (!finalJdId) {
@@ -1112,6 +1164,8 @@ export default function PreflightScreen() {
           }
         }
       }
+
+      if (!interviewIdempotencyRef.current) interviewIdempotencyRef.current = require('../../../utils/uuid').generateIdempotencyKey();
 
       const res = await interviewApi.start({
         role: role.trim() || undefined,
@@ -1121,7 +1175,7 @@ export default function PreflightScreen() {
         resumeId: interviewType === 'cv_targeted' ? selectedResumeId! : undefined,
         jobDescriptionId: interviewType === 'jd_targeted' ? finalJdId! : undefined,
         careerGoalId: selectedGoalId || undefined,
-      });
+      }, interviewIdempotencyRef.current || undefined);
       return res;
     },
     onSuccess: (data) => {
@@ -1131,7 +1185,6 @@ export default function PreflightScreen() {
     },
     onError: (err: any) => {
       Alert.alert('Lỗi', err.message || 'Không thể khởi tạo phiên phỏng vấn. Vui lòng thử lại.');
-      console.error(err);
     },
   });
 

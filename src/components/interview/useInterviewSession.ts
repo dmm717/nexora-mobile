@@ -1,46 +1,35 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 
 import { interviewApi } from '@/api/interview.api';
-import { speechService } from '@/services/speech';
-import { ttsService } from '@/services/tts';
+import { useInterviewAudio } from '@/hooks/useInterviewAudio';
 
 export function useInterviewSession(id: string | undefined) {
   const router = useRouter();
 
   const [answerText, setAnswerText] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const [durationSeconds, setDurationSeconds] = useState(0);
   const [showQ2BoundaryModal, setShowQ2BoundaryModal] = useState(false);
   const [showQ3BoundaryModal, setShowQ3BoundaryModal] = useState(false);
   const [lastCoaching, setLastCoaching] = useState<any | null>(null);
-
-  const [isTtsSpeaking, setIsTtsSpeaking] = useState(false);
   const [showCoachingModal, setShowCoachingModal] = useState(false);
-  const [isMicAllowed, setIsMicAllowed] = useState<boolean | null>(null);
-  const attemptedQuestionsRef = useRef<Set<string>>(new Set());
 
+  const attemptedQuestionsRef = useRef<Set<string>>(new Set());
   const timerRef = useRef<any>(null);
 
-  // Check browser mic permission on load
-  useEffect(() => {
-    let active = true;
-    async function checkMicPermission() {
-      const state = await speechService.checkPermission();
-      if (!active) return;
-      if (state === 'denied') {
-        setIsMicAllowed(false);
-      } else if (state === 'granted') {
-        setIsMicAllowed(true);
-      }
-    }
-    checkMicPermission();
-    return () => {
-      active = false;
-    };
+  // Platform-aware audio hook (native: expo-audio+Azure, web: Web Speech API)
+  const onTranscriptionComplete = useCallback((text: string) => {
+    setAnswerText((prev) => {
+      // For native STT: append transcribed text to existing answer
+      // For web STT: the transcript is the full accumulated text
+      if (!prev.trim()) return text;
+      return `${prev.trim()} ${text}`;
+    });
   }, []);
+
+  const audio = useInterviewAudio(id, onTranscriptionComplete);
 
   const { data: interview, isLoading, refetch } = useQuery({
     queryKey: ['interview', id],
@@ -68,7 +57,7 @@ export function useInterviewSession(id: string | undefined) {
   const answeredQuestionIds = new Set(interview?.answers?.map((a) => a.questionId) || []);
   const currentQuestion = interview?.questions?.find((q) => !answeredQuestionIds.has(q.id));
 
-  // Automatically check completion and navigate to report when completing/evaluating/completed
+  // Automatically check completion and navigate to report
   useEffect(() => {
     if (
       interview?.id &&
@@ -81,7 +70,7 @@ export function useInterviewSession(id: string | undefined) {
     }
   }, [interview?.status, interview?.reportState, interview?.id, router]);
 
-  // Auto-play TTS question reading on question change (AutoSpeak)
+  // Auto-play TTS question reading on question change
   useEffect(() => {
     if (
       currentQuestion?.id &&
@@ -89,43 +78,24 @@ export function useInterviewSession(id: string | undefined) {
       !attemptedQuestionsRef.current.has(currentQuestion.id)
     ) {
       attemptedQuestionsRef.current.add(currentQuestion.id);
-      setIsTtsSpeaking(true);
-      ttsService.speak(
-        currentQuestion.content,
-        id,
-        () => setIsTtsSpeaking(false),
-        () => setIsTtsSpeaking(false)
-      );
+      audio.speakTts(currentQuestion.content);
     }
     return () => {
-      ttsService.stop();
-      setIsTtsSpeaking(false);
+      audio.stopTts();
     };
-  }, [currentQuestion?.id, currentQuestion?.content, id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestion?.id, currentQuestion?.content]);
 
   // Manual TTS Speaker Toggle
-  const toggleTts = () => {
-    if (isTtsSpeaking) {
-      ttsService.stop();
-      setIsTtsSpeaking(false);
-    } else if (currentQuestion?.content) {
-      if (isRecording) {
-        speechService.stopListening();
-        setIsRecording(false);
-      }
-      setIsTtsSpeaking(true);
-      ttsService.speak(
-        currentQuestion.content,
-        id,
-        () => setIsTtsSpeaking(false),
-        () => setIsTtsSpeaking(false)
-      );
+  const toggleTts = useCallback(() => {
+    if (currentQuestion?.content) {
+      audio.toggleTts(currentQuestion.content);
     }
-  };
+  }, [audio, currentQuestion]);
 
-  // Answer duration timer
+  // Answer duration timer (for web; native STT handles its own duration)
   useEffect(() => {
-    if (isRecording) {
+    if (audio.isRecording) {
       timerRef.current = setInterval(() => {
         setDurationSeconds((prev) => prev + 1);
       }, 1000);
@@ -135,40 +105,19 @@ export function useInterviewSession(id: string | undefined) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRecording]);
-
-  const speechBaseTextRef = useRef<string>('');
+  }, [audio.isRecording]);
 
   // Speech Recognition toggle
-  const toggleSpeech = () => {
-    if (isTtsSpeaking) {
-      ttsService.stop();
-      setIsTtsSpeaking(false);
-    }
+  const toggleSpeech = useCallback(() => {
+    audio.toggleSpeech();
+  }, [audio]);
 
-    if (isRecording) {
-      speechService.stopListening();
-      setIsRecording(false);
-    } else {
-      speechBaseTextRef.current = answerText;
-      setIsRecording(true);
-      speechService.startListening(
-        {
-          onResult: (transcript) => {
-            setAnswerText(transcript);
-          },
-          onError: (err) => {
-            Alert.alert('Thông báo Microphone', String(err));
-            setIsRecording(false);
-          },
-          onEnd: () => {
-            setIsRecording(false);
-          },
-        },
-        answerText
-      );
+  // Show STT errors
+  useEffect(() => {
+    if (audio.sttErrorMessage) {
+      Alert.alert('Thông báo Microphone', audio.sttErrorMessage);
     }
-  };
+  }, [audio.sttErrorMessage]);
 
   // Submit answer mutation
   const submitAnswerMutation = useMutation({
@@ -176,11 +125,9 @@ export function useInterviewSession(id: string | undefined) {
       if (!currentQuestion) throw new Error('Không có câu hỏi hiện tại');
       if (!answerText.trim()) throw new Error('Vui lòng nhập hoặc thu âm câu trả lời');
 
-      ttsService.stop();
-      setIsTtsSpeaking(false);
-      if (isRecording) {
-        speechService.stopListening();
-        setIsRecording(false);
+      audio.stopTts();
+      if (audio.isRecording) {
+        audio.toggleSpeech();
       }
 
       const res = await interviewApi.submitAnswer(id!, {
@@ -193,9 +140,6 @@ export function useInterviewSession(id: string | undefined) {
     onSuccess: (data) => {
       setAnswerText('');
       setDurationSeconds(0);
-      setIsRecording(false);
-      setIsTtsSpeaking(false);
-      ttsService.stop();
 
       const isMaxReached = data.isComplete === true && !data.nextQuestion && data.continuation?.state === 'max_questions_reached';
       if (isMaxReached) {
@@ -221,12 +165,14 @@ export function useInterviewSession(id: string | undefined) {
   });
 
   // Derived AI Presence State
-  const aiState: 'idle' | 'speaking' | 'listening' | 'thinking' =
+  const aiState: 'idle' | 'speaking' | 'listening' | 'thinking' | 'processing' =
     submitAnswerMutation.isPending
       ? 'thinking'
-      : isRecording
+      : audio.isProcessingStt
+      ? 'processing'
+      : audio.isRecording
       ? 'listening'
-      : isTtsSpeaking
+      : audio.isTtsSpeaking
       ? 'speaking'
       : 'idle';
 
@@ -288,11 +234,12 @@ export function useInterviewSession(id: string | undefined) {
     currentQuestion,
     answerText,
     setAnswerText,
-    isRecording,
+    isRecording: audio.isRecording,
+    isProcessingStt: audio.isProcessingStt,
     toggleSpeech,
-    isTtsSpeaking,
+    isTtsSpeaking: audio.isTtsSpeaking,
     toggleTts,
-    durationSeconds,
+    durationSeconds: audio.isRecording ? audio.durationSeconds || durationSeconds : durationSeconds,
     aiState,
     lastCoaching,
     showCoachingModal,
@@ -306,6 +253,6 @@ export function useInterviewSession(id: string | undefined) {
     completeMutation,
     continueMutation,
     retryQuestionPreparationMutation,
-    isMicAllowed,
+    isMicAllowed: audio.isMicAllowed,
   };
 }

@@ -5,8 +5,11 @@ import { toast } from '@/components/ui/toast/ToastProvider';
 import { logger } from '@/services/logger';
 import { extractErrorMessage } from '@/utils/errorTranslator';
 
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || 'https://nexora-backend-q32b.onrender.com/api/v1';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL as string;
+
+if (!API_BASE_URL) {
+  throw new Error('Missing EXPO_PUBLIC_API_URL environment variable. Check your .env setup.');
+}
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -17,16 +20,11 @@ export const apiClient = axios.create({
   timeout: 30000,
 });
 
+import { generateIdempotencyKey } from '../utils/uuid';
+
 // Idempotency Key generator for mutation operations
 export function createIdempotencyKey(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  return generateIdempotencyKey();
 }
 
 // Global Auth Error Listener for forcing logout when refresh fails
@@ -56,10 +54,10 @@ apiClient.interceptors.request.use(
 
 // Centralized 401 Single-Flight Refresh Lock
 let isRefreshing = false;
-let failedQueue: Array<{
+let failedQueue: {
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
-}> = [];
+}[] = [];
 
 function processQueue(error: unknown, token: string | null = null) {
   failedQueue.forEach((promise) => {

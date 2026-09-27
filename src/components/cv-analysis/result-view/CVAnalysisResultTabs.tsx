@@ -140,7 +140,7 @@ export const CVBreakdownTab = memo(({
 }: {
   isBenchmark: boolean;
   hasBreakdown: boolean;
-  breakdownEntries: Array<{ key: string; name: string; score: number | null; desc: string }>;
+  breakdownEntries: { key: string; name: string; score: number | null; desc: string }[];
   strengths: string[];
   gaps: string[];
   colors: any;

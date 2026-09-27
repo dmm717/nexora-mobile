@@ -18,17 +18,14 @@
     "android": {
       "package": "com.nexora.app",
       "versionCode": 1,
-      "permissions": [
-        "RECORD_AUDIO",
-        "INTERNET",
-        "MODIFY_AUDIO_SETTINGS"
-      ],
+      "permissions": [],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "usesCleartextTraffic": false,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -45,7 +42,22 @@
           "imageWidth": 120
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Nexora cần quyền truy cập microphone để bạn thực hành phỏng vấn qua giọng nói.",
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": false
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Nexora cần quyền truy cập thư viện ảnh để thay đổi ảnh đại diện."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -6,5 +6,12 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ["dist/*"],
+  },
+  {
+    rules: {
+      "react/display-name": "warn",
+      "react/no-unescaped-entities": "warn",
+      "react-hooks/set-state-in-effect": "warn"
+    }
   }
 ]);

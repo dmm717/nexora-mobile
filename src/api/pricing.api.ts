@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { PlanResponseV2, CheckoutResponse, CheckoutStatusResponse } from './types';
-import uuid from 'react-native-uuid';
+import { generateIdempotencyKey } from '../utils/uuid';
 
 export const pricingApi = {
   listPlans: async (): Promise<PlanResponseV2[]> => {
@@ -9,7 +9,7 @@ export const pricingApi = {
   },
 
   createCheckoutSession: async (planPriceId: string, idempotencyKey?: string): Promise<CheckoutResponse> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: CheckoutResponse } | CheckoutResponse>(
       '/checkout-sessions',
       { planPriceId },

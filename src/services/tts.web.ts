@@ -32,7 +32,7 @@ function buildSingleVoiceSsml(text: string, voiceName: string = INTERVIEW_SPEECH
   );
 }
 
-class TTSService {
+class WebTtsService {
   private isSpeaking = false;
   private selectedVoice: SpeechSynthesisVoice | null = null;
   private currentAudioElement: HTMLAudioElement | null = null;
@@ -133,7 +133,7 @@ class TTSService {
 
       // Attempt 2: If primary voice fails, fallback to vi-VN-HoaiMyNeural single-voice SSML
       if (!response.ok) {
-        console.warn(`Azure TTS primary voice (${INTERVIEW_SPEECH_CONFIG.voiceName}) returned ${response.status}. Retrying with vi-VN-HoaiMyNeural...`);
+        // console.warn(`Azure TTS primary voice (${INTERVIEW_SPEECH_CONFIG.voiceName}) returned ${response.status}. Retrying with vi-VN-HoaiMyNeural...`);
         ssml = buildSingleVoiceSsml(text, 'vi-VN-HoaiMyNeural');
         response = await fetch(
           `https://${auth.region}.tts.speech.microsoft.com/cognitiveservices/v1`,
@@ -167,7 +167,7 @@ class TTSService {
       };
 
       audio.onerror = (e) => {
-        console.warn('Azure audio playback error, falling back to local voice:', e);
+        // console.warn('Azure audio playback error, falling back to local voice:', e);
         this.isSpeaking = false;
         this.currentAudioElement = null;
         URL.revokeObjectURL(audioUrl);
@@ -176,7 +176,7 @@ class TTSService {
 
       await audio.play();
     } catch (err: any) {
-      console.warn('Azure TTS REST failed, falling back to local voice:', err);
+      // console.warn('Azure TTS REST failed, falling back to local voice:', err);
       this.isSpeaking = false;
       this.currentAudioElement = null;
       this.speakWithLocalVoice(text, onDone, onError);
@@ -209,7 +209,7 @@ class TTSService {
         };
 
         utterance.onerror = (e) => {
-          console.warn('Local TTS playback error:', e);
+          // console.warn('Local TTS playback error:', e);
           this.isSpeaking = false;
           onError?.(e);
         };
@@ -246,4 +246,4 @@ class TTSService {
   }
 }
 
-export const ttsService = new TTSService();
+export const webTtsInstance = new WebTtsService();

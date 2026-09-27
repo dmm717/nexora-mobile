@@ -70,7 +70,17 @@ export default function ResumesScreen() {
     },
     onError: (error: any) => {
       Alert.alert('Lỗi', error.message || 'Không thể tải lên CV. Vui lòng thử lại.');
-      console.error(error);
+      // console.error(error);
+    },
+    onSettled: async (_, __, variables) => {
+      // SECURITY & PERFORMANCE (Phase 4.8): Always clean up DocumentPicker temp cache
+      try {
+        if (variables?.uri) {
+          await FileSystem.deleteAsync(variables.uri, { idempotent: true });
+        }
+      } catch (err) {
+        // Ignore silent cleanup errors
+      }
     }
   });
 
@@ -133,10 +143,23 @@ export default function ResumesScreen() {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        uploadMutation.mutate(result.assets[0]);
+        const file = result.assets[0];
+        
+        // SECURITY & VALIDATION (Phase 4.8): Strict size limit (5MB)
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+        if (file.size && file.size > MAX_FILE_SIZE) {
+          Alert.alert('Lỗi', 'Kích thước file không được vượt quá 5MB.');
+          // Cleanup the too-large file immediately
+          try {
+            if (file.uri) await FileSystem.deleteAsync(file.uri, { idempotent: true });
+          } catch {}
+          return;
+        }
+
+        uploadMutation.mutate(file);
       }
     } catch (err) {
-      console.error('Lỗi khi chọn file', err);
+      // console.error('Lỗi khi chọn file', err);
     }
   };
 

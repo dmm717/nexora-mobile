@@ -18,6 +18,7 @@ export interface AudioSpeechDockProps {
   answerText: string;
   setAnswerText: (text: string | ((prev: string) => string)) => void;
   isRecording: boolean;
+  isProcessingStt?: boolean;
   toggleSpeech: () => void;
   isTtsSpeaking: boolean;
   toggleTts: () => void;
@@ -36,6 +37,7 @@ export function AudioSpeechDock({
   answerText,
   setAnswerText,
   isRecording,
+  isProcessingStt = false,
   toggleSpeech,
   isTtsSpeaking,
   toggleTts,
@@ -86,17 +88,17 @@ export function AudioSpeechDock({
   return (
     <View style={[styles.container, { backgroundColor: colors.card, borderTopColor: colors.cardBorder }]}>
       {/* Draft Caption Preview Bar (if candidate has transcribed speech or typed text) */}
-      {Boolean(answerText.trim() || isRecording) && (
+      {Boolean(answerText.trim() || isRecording || isProcessingStt) && (
         <View style={[styles.draftContainer, { backgroundColor: colors.background, borderColor: colors.cardBorder }]}>
           <View style={styles.draftHeader}>
             <View style={styles.draftHeaderLeft}>
               <Ionicons
-                name={isRecording ? 'mic' : 'create-outline'}
+                name={isProcessingStt ? 'cloud-upload-outline' : isRecording ? 'mic' : 'create-outline'}
                 size={16}
-                color={isRecording ? colors.danger || '#ef4444' : colors.primary}
+                color={isProcessingStt ? colors.warning || '#f59e0b' : isRecording ? colors.danger || '#ef4444' : colors.primary}
               />
               <ThemedText style={styles.draftLabel}>
-                {isRecording ? 'Đang nhận diện giọng nói...' : `Phụ đề câu trả lời · ${wordCount} từ`}
+                {isProcessingStt ? 'Đang xử lý giọng nói...' : isRecording ? 'Đang nhận diện giọng nói...' : `Phụ đề câu trả lời · ${wordCount} từ`}
               </ThemedText>
             </View>
             <ThemedText style={[styles.durationText, { color: colors.primary }]}>
@@ -130,7 +132,7 @@ export function AudioSpeechDock({
                 },
               ]}
               onPress={onSubmit}
-              disabled={!answerText.trim() || isSubmitting || isRecording}
+              disabled={!answerText.trim() || isSubmitting || isRecording || isProcessingStt}
             >
               {isSubmitting ? (
                 <ActivityIndicator size="small" color="#ffffff" />
@@ -155,7 +157,9 @@ export function AudioSpeechDock({
         <TouchableOpacity
           style={[
             styles.actionBtnCall,
-            isRecording
+            isProcessingStt
+              ? { backgroundColor: colors.warning || '#f59e0b' }
+              : isRecording
               ? { backgroundColor: colors.danger || '#ef4444' }
               : { backgroundColor: '#EEF2FF', borderWidth: 1, borderColor: '#C7D2FE' },
           ]}
@@ -163,15 +167,19 @@ export function AudioSpeechDock({
             setActiveInputMode('voice');
             toggleSpeech();
           }}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isProcessingStt}
         >
-          <Ionicons
-            name={isRecording ? 'stop-circle' : 'mic'}
-            size={18}
-            color={isRecording ? '#ffffff' : (colors.primary || '#6366f1')}
-          />
-          <ThemedText style={[styles.actionBtnCallText, { color: isRecording ? '#ffffff' : (colors.primary || '#6366f1') }]}>
-            {isRecording ? 'Dừng nói' : 'Trả lời'}
+          {isProcessingStt ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Ionicons
+              name={isRecording ? 'stop-circle' : 'mic'}
+              size={18}
+              color={isRecording ? '#ffffff' : (colors.primary || '#6366f1')}
+            />
+          )}
+          <ThemedText style={[styles.actionBtnCallText, { color: isProcessingStt || isRecording ? '#ffffff' : (colors.primary || '#6366f1') }]}>
+            {isProcessingStt ? 'Đang xử lý...' : isRecording ? 'Dừng nói' : 'Trả lời'}
           </ThemedText>
         </TouchableOpacity>
 
@@ -272,7 +280,9 @@ export function AudioSpeechDock({
       {/* Status Hint Caption (Matching Web FE Copy) */}
       <View style={styles.statusHintContainer}>
         <ThemedText style={[styles.statusHintText, { color: colors.textSecondary }]}>
-          {isRecording
+          {isProcessingStt
+            ? 'Đang gửi bản ghi âm lên hệ thống xử lý giọng nói...'
+            : isRecording
             ? `Đang nhận diện giọng nói ${formatTimer(durationSeconds)} · Bấm Dừng nói để lấy phụ đề (không tự động nộp)`
             : 'Nhấn microphone để bắt đầu trả lời · không tự động nộp'}
         </ThemedText>

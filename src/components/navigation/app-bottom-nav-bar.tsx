@@ -36,13 +36,13 @@ export function AppBottomNavBar({ activeTab = 'none' }: AppBottomNavBarProps) {
   const bottomPadding = isWeb ? 8 : Math.max(insets.bottom, 8);
   const calculatedHeight = isWeb ? 70 : 60 + insets.bottom;
 
-  const tabs: Array<{
+  const tabs: {
     id: TabId;
     title: string;
     route: string;
     iconOutline: keyof typeof Ionicons.glyphMap;
     iconFilled: keyof typeof Ionicons.glyphMap;
-  }> = [
+  }[] = [
     { id: 'home', title: 'Tổng quan', route: '/(tabs)/home', iconOutline: 'home-outline', iconFilled: 'home' },
     { id: 'cv-jd', title: 'CV & JD', route: '/(tabs)/cv-jd', iconOutline: 'document-text-outline', iconFilled: 'document-text' },
     { id: 'interview', title: 'Phỏng vấn', route: '/(tabs)/interview', iconOutline: 'mic-outline', iconFilled: 'mic' },

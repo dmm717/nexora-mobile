@@ -40,7 +40,7 @@ export default function CreateCareerGoalScreen() {
     },
     onError: (error) => {
       Alert.alert('Lỗi', 'Không thể tạo mục tiêu. Vui lòng thử lại.');
-      console.error(error);
+      // console.error(error);
     }
   });
 
