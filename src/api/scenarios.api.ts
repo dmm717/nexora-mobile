@@ -7,7 +7,7 @@ import {
   ScenarioAttemptHistoryResponse,
   ScenarioProgressResponse,
 } from './types';
-import uuid from 'react-native-uuid';
+import { generateIdempotencyKey } from '../utils/uuid';
 
 export const scenariosApi = {
   listCategories: async (): Promise<ScenarioCategoryResponse[]> => {
@@ -42,7 +42,7 @@ export const scenariosApi = {
   },
 
   createAttempt: async (scenarioId: string, idempotencyKey?: string): Promise<ScenarioAttemptResponse> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: ScenarioAttemptResponse } | ScenarioAttemptResponse>(
       '/scenario-attempts',
       { scenarioId },
@@ -52,7 +52,7 @@ export const scenariosApi = {
   },
 
   submitAttempt: async (attemptId: string, answer: string, idempotencyKey?: string): Promise<ScenarioAttemptResponse> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: ScenarioAttemptResponse } | ScenarioAttemptResponse>(
       `/scenario-attempts/${attemptId}/submit`,
       { answer },
@@ -77,7 +77,7 @@ export const scenariosApi = {
   },
 
   retry: async (scenarioId: string, idempotencyKey?: string): Promise<ScenarioAttemptResponse> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: ScenarioAttemptResponse } | ScenarioAttemptResponse>(
       `/scenarios/${scenarioId}/retry`,
       {},

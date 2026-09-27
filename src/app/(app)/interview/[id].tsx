@@ -40,6 +40,7 @@ export default function InterviewRoomScreen() {
     answerText,
     setAnswerText,
     isRecording,
+    isProcessingStt,
     toggleSpeech,
     isTtsSpeaking,
     toggleTts,
@@ -323,6 +324,7 @@ export default function InterviewRoomScreen() {
             answerText={answerText}
             setAnswerText={setAnswerText}
             isRecording={isRecording}
+            isProcessingStt={isProcessingStt}
             toggleSpeech={toggleSpeech}
             isTtsSpeaking={isTtsSpeaking}
             toggleTts={toggleTts}

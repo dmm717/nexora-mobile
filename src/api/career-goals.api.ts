@@ -1,12 +1,12 @@
 import { apiClient } from './client';
 import { CareerGoalResponse, CreateCareerGoalRequest, UpdateCareerGoalRequest } from './types';
-import uuid from 'react-native-uuid';
+import { generateIdempotencyKey } from '../utils/uuid';
 
 export const careerGoalsApi = {
   create: async (request: CreateCareerGoalRequest): Promise<CareerGoalResponse> => {
     const res = await apiClient.post<{ data?: CareerGoalResponse } | CareerGoalResponse>('/career-goals', request, {
       headers: {
-        'Idempotency-Key': uuid.v4().toString(),
+        'Idempotency-Key': generateIdempotencyKey(),
       },
     });
     return 'data' in res.data && res.data.data ? res.data.data : (res.data as CareerGoalResponse);
@@ -30,7 +30,7 @@ export const careerGoalsApi = {
   delete: async (id: string): Promise<void> => {
     await apiClient.delete<void>(`/career-goals/${id}`, {
       headers: {
-        'Idempotency-Key': uuid.v4().toString(),
+        'Idempotency-Key': generateIdempotencyKey(),
       },
     });
   },

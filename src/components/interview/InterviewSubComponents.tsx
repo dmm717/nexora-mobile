@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { styles } from '@/styles/interview-room.styles';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { ttsService } from '@/services/tts';
 
 export const Q2BoundaryModal = React.memo(({
   visible,

@@ -1,10 +1,10 @@
 import { apiClient } from './client';
 import { StarAttemptCreateRequest, StarAttemptResponse } from './types';
-import uuid from 'react-native-uuid';
+import { generateIdempotencyKey } from '../utils/uuid';
 
 export const starApi = {
   create: async (request: StarAttemptCreateRequest, idempotencyKey?: string): Promise<StarAttemptResponse> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: StarAttemptResponse } | StarAttemptResponse>(
       '/star-attempts',
       request,

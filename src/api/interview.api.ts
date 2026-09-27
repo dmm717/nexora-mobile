@@ -8,11 +8,11 @@ import {
   ReportView,
   InterviewHistoryResponse,
 } from './types';
-import uuid from 'react-native-uuid';
+import { generateIdempotencyKey } from '../utils/uuid';
 
 export const interviewApi = {
   start: async (request: StartInterviewRequest, idempotencyKey?: string): Promise<InterviewView> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: InterviewView } | InterviewView>('/interviews', request, {
       headers: {
         'Idempotency-Key': key,
@@ -36,7 +36,7 @@ export const interviewApi = {
   },
 
   submitAnswer: async (id: string, request: SubmitAnswerRequest, idempotencyKey?: string): Promise<AnswerResult> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: AnswerResult } | AnswerResult>(`/interviews/${id}/answers`, request, {
       headers: {
         'Idempotency-Key': key,
@@ -46,7 +46,7 @@ export const interviewApi = {
   },
 
   continueInterview: async (id: string, idempotencyKey?: string): Promise<InterviewView> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: InterviewView } | InterviewView>(`/interviews/${id}/continue`, {}, {
       headers: {
         'Idempotency-Key': key,
@@ -56,7 +56,7 @@ export const interviewApi = {
   },
 
   completeInterview: async (id: string, idempotencyKey?: string): Promise<InterviewView> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: InterviewView } | InterviewView>(`/interviews/${id}/complete`, {}, {
       headers: {
         'Idempotency-Key': key,
@@ -71,7 +71,7 @@ export const interviewApi = {
   },
 
   retryReport: async (id: string, idempotencyKey?: string): Promise<InterviewView> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: InterviewView } | InterviewView>(`/interviews/${id}/report/retry`, {}, {
       headers: {
         'Idempotency-Key': key,
@@ -81,7 +81,7 @@ export const interviewApi = {
   },
 
   practiceAgain: async (id: string, request: PracticeAgainRequest, idempotencyKey?: string): Promise<InterviewView> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: InterviewView } | InterviewView>(`/interviews/${id}/practice-again`, request, {
       headers: {
         'Idempotency-Key': key,
@@ -91,7 +91,7 @@ export const interviewApi = {
   },
 
   retryQuestionPreparation: async (id: string, idempotencyKey?: string): Promise<InterviewView> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: InterviewView } | InterviewView>(`/interviews/${id}/questions/retry`, {}, {
       headers: {
         'Idempotency-Key': key,
@@ -101,7 +101,7 @@ export const interviewApi = {
   },
 
   retryResults: async (id: string, idempotencyKey?: string): Promise<InterviewView> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: InterviewView } | InterviewView>(`/interviews/${id}/results/retry`, {}, {
       headers: {
         'Idempotency-Key': key,

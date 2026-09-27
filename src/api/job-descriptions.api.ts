@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { JobDescriptionView, CreateJobDescriptionRequest } from './types';
-import uuid from 'react-native-uuid';
+import { generateIdempotencyKey } from '../utils/uuid';
 
 export const jobDescriptionsApi = {
   list: async (): Promise<JobDescriptionView[]> => {
@@ -14,7 +14,7 @@ export const jobDescriptionsApi = {
   },
 
   create: async (data: CreateJobDescriptionRequest, idempotencyKey?: string): Promise<JobDescriptionView> => {
-    const key = idempotencyKey || uuid.v4().toString();
+    const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: JobDescriptionView } | JobDescriptionView>('/job-descriptions', data, {
       headers: {
         'Idempotency-Key': key,

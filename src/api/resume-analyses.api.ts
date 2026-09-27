@@ -1,12 +1,12 @@
 import { apiClient } from './client';
 import { CreateResumeAnalysisRequest, ResumeAnalysisHistoryResponse, ResumeAnalysisView } from './types';
-import uuid from 'react-native-uuid';
+import { generateIdempotencyKey } from '../utils/uuid';
 
 export const resumeAnalysesApi = {
   create: async (request: CreateResumeAnalysisRequest): Promise<ResumeAnalysisView> => {
     const res = await apiClient.post<{ data?: ResumeAnalysisView } | ResumeAnalysisView>('/resume-analyses', request, {
       headers: {
-        'Idempotency-Key': uuid.v4().toString(),
+        'Idempotency-Key': generateIdempotencyKey(),
       },
     });
     return 'data' in res.data && res.data.data ? res.data.data : (res.data as ResumeAnalysisView);

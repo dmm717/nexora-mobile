@@ -13,6 +13,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AmbientBackground } from '@/components/ui/ambient-background';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { ProductFeedbackCard } from '@/components/profile/ProductFeedbackCard';
 import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
 import { styles } from '@/styles/profile.styles';
@@ -38,6 +39,8 @@ function useUserProfileData() {
   const isAdmin = roles.includes('Admin') || roles.includes('admin') || true;
   const planName = 'Gói PRO';
 
+  const avatarUrl = userProfileInfo?.avatarUrl || identity?.avatarUrl || user?.avatarUrl;
+
   return {
     user,
     logout,
@@ -49,6 +52,7 @@ function useUserProfileData() {
     displayName,
     planName,
     isAdmin,
+    avatarUrl,
   };
 }
 
@@ -70,6 +74,7 @@ export default function ProfileScreen() {
     displayName,
     planName,
     isAdmin,
+    avatarUrl,
   } = useUserProfileData();
 
   return (
@@ -94,8 +99,14 @@ export default function ProfileScreen() {
               {/* User Account Identity Card (Matching Screenshot Top Block) */}
               <GlassCard style={styles.userInfoCard}>
                 <ThemedText style={styles.accountLabel}>Tài khoản đang đăng nhập</ThemedText>
-                <ThemedText style={styles.userNameText}>{displayName}</ThemedText>
-                <ThemedText style={styles.userEmailText}>{email}</ThemedText>
+                
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.two }}>
+                  <UserAvatar name={displayName} email={email} avatarUrl={avatarUrl} size={64} />
+                  <View style={{ marginLeft: Spacing.three, flex: 1 }}>
+                    <ThemedText style={styles.userNameText}>{displayName}</ThemedText>
+                    <ThemedText style={styles.userEmailText}>{email}</ThemedText>
+                  </View>
+                </View>
 
                 {/* Plan & Role Badges Row (Matching Screenshot Badges) */}
                 <View style={styles.badgeRow}>

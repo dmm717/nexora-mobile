@@ -11,8 +11,12 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as ImagePicker from 'expo-image-picker';
 
 import { userApi } from '@/api/user.api';
+import { resumesApi } from '@/api/resumes.api';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { ProductFeedbackCard } from '@/components/profile/ProductFeedbackCard';
@@ -151,52 +155,181 @@ export default function AccountScreen() {
     changePasswordMutation.mutate({ currentPassword, newPassword });
   };
 
+  // Avatar Management
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const handlePickAvatar = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setIsUploadingAvatar(true);
+        const asset = result.assets[0];
+        
+        // Ensure uri and mimetype exist
+        if (asset.uri) {
+          const mimeType = asset.mimeType || 'image/jpeg';
+          const filename = asset.fileName || `avatar_${Date.now()}.jpg`;
+          
+          // SECURITY & VALIDATION (Phase 4.8): Strict size limit (5MB)
+          const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+          let currentUri = asset.uri;
+
+          try {
+            // SECURITY & VALIDATION (Phase 4.8): Strict type limit (JPEG/PNG/WebP only)
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) {
+              Alert.alert('Lỗi', 'Chỉ hỗ trợ định dạng ảnh JPEG, PNG hoặc WebP.');
+              setIsUploadingAvatar(false);
+              try { if (currentUri) await FileSystem.deleteAsync(currentUri, { idempotent: true }); } catch {}
+              return;
+            }
+
+            // 1. Get raw bytes and size
+            const response = await fetch(currentUri);
+            const blob = await response.blob();
+            const size = blob.size;
+
+            if (size > MAX_FILE_SIZE) {
+              Alert.alert('Lỗi', 'Kích thước ảnh không được vượt quá 5MB.');
+              setIsUploadingAvatar(false);
+              // Clean up cache
+              try { if (currentUri) await FileSystem.deleteAsync(currentUri, { idempotent: true }); } catch {}
+              return;
+            }
+
+            // 2. Request presigned URL
+            const intent = await resumesApi.presign({
+              fileName: filename,
+              contentType: mimeType,
+              size,
+            });
+
+            // 3. Upload to S3
+            await resumesApi.uploadRawBytes(intent.uploadUrl, blob, mimeType);
+
+            // 4. Update avatar in backend
+            await userApi.uploadAvatar(intent.token);
+            
+            // Use the exact queryKey used in the useQuery hook above
+            queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+            queryClient.invalidateQueries({ queryKey: ['career-profile'] });
+            Alert.alert('Thành Công', 'Đã cập nhật ảnh đại diện.');
+          } finally {
+            // SECURITY & PERFORMANCE (Phase 4.8): Always clean up ImagePicker temp cache
+            try {
+              if (currentUri) {
+                await FileSystem.deleteAsync(currentUri, { idempotent: true });
+              }
+            } catch (err) {
+              // Ignore silent cleanup errors
+            }
+          }
+        }
+      }
+    } catch (err: any) {
+      Alert.alert('Lỗi', err?.message || 'Không thể tải ảnh lên. Vui lòng thử lại.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleDeleteAvatar = () => {
+    Alert.alert('Xác nhận', 'Bạn có chắc chắn muốn xóa ảnh đại diện?', [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Xóa',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setIsUploadingAvatar(true);
+            await userApi.deleteAvatar();
+            queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+            queryClient.invalidateQueries({ queryKey: ['career-profile'] });
+            Alert.alert('Thành Công', 'Đã xóa ảnh đại diện.');
+          } catch (err: any) {
+            Alert.alert('Lỗi', err?.message || 'Không thể xóa ảnh.');
+          } finally {
+            setIsUploadingAvatar(false);
+          }
+        }
+      }
+    ]);
+  };
+
   // Export Data
   const [isExporting, setIsExporting] = useState(false);
   const handleExportData = async () => {
+    let fileUriToCleanUp: string | null = null;
     try {
       setIsExporting(true);
       const data = await userApi.exportData();
-      Alert.alert(
-        'Xuất Dữ Liệu Thành Công',
-        `Tệp dữ liệu cá nhân JSON đã được trích xuất thành công cho tài khoản ${currentUserData?.email}.`
-      );
+      
+      const fileName = `Nexora_Export_${currentUserData?.email || 'Data'}.json`;
+      const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+      
+      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(data, null, 2), {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      fileUriToCleanUp = fileUri;
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/json',
+          dialogTitle: 'Xuất Dữ Liệu Cá Nhân Nexora',
+        });
+        // Deletion is handled in the finally block
+      } else {
+        Alert.alert(
+          'Thành Công',
+          `Thiết bị không hỗ trợ chia sẻ. Tệp dữ liệu cá nhân đã được lưu tạm tại: ${fileUri}`
+        );
+        fileUriToCleanUp = null; // Leave it for the user to potentially access
+      }
     } catch (err: any) {
       Alert.alert('Lỗi', err?.message || 'Không thể trích xuất dữ liệu.');
     } finally {
       setIsExporting(false);
+      if (fileUriToCleanUp) {
+        FileSystem.deleteAsync(fileUriToCleanUp, { idempotent: true }).catch(() => {});
+      }
     }
   };
 
   // Delete Account Request
   const deleteAccountMutation = useMutation({
-    mutationFn: () => userApi.requestDeletion(),
+    mutationFn: () => userApi.deleteAccount(),
     onSuccess: () => {
       Alert.alert(
-        'Đã Gửi Yêu Cầu Xóa',
-        'Yêu cầu xóa tài khoản người dùng đã được tiếp nhận. Bạn sẽ được đăng xuất.',
+        'Đã Xóa Tài Khoản',
+        'Tài khoản của bạn đã được xóa vĩnh viễn khỏi hệ thống.',
         [{ text: 'OK', onPress: () => logout() }]
       );
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err?.message || 'Không thể yêu cầu xóa tài khoản.');
+      Alert.alert('Lỗi', err?.message || 'Không thể xóa tài khoản. Vui lòng thử lại sau.');
     },
   });
 
-  const handleDeleteAccountPrompt = () => {
+  const handleDeleteAccount = () => {
     Alert.alert(
-      'Yêu Cầu Xóa Tài Khoản',
-      'Bạn có chắc chắn muốn bắt đầu quy trình xóa tài khoản không? Hành động này không thể hoàn tác.',
+      'XÓA TÀI KHOẢN VĨNH VIỄN',
+      'Hành động này không thể hoàn tác.\n\nToàn bộ dữ liệu, lịch sử phỏng vấn, và gói đăng ký PRO (nếu có) sẽ bị xóa NGAY LẬP TỨC. Bạn có chắc chắn muốn tiếp tục?',
       [
         { text: 'Hủy', style: 'cancel' },
         {
-          text: 'Xác nhận xóa',
+          text: 'Xóa Vĩnh Viễn',
           style: 'destructive',
           onPress: () => deleteAccountMutation.mutate(),
         },
       ]
     );
   };
+
+
 
   // Entitlement & Orders
   const billing = (currentUserData as any)?.billing;
@@ -242,14 +375,27 @@ export default function AccountScreen() {
           <GlassCard style={styles.card}>
             {/* Sub-section: Ảnh đại diện */}
             <View style={[styles.avatarSection, { borderBottomColor: colors.cardBorder }]}>
-              <UserAvatar name={displayName} email={currentUserData?.email} size={54} />
+              <View>
+                <UserAvatar 
+                  name={displayName} 
+                  email={currentUserData?.email} 
+                  avatarUrl={currentUserData?.avatarUrl}
+                  size={54} 
+                />
+                {isUploadingAvatar && (
+                  <View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, { backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 27, justifyContent: 'center', alignItems: 'center' }]}>
+                    <ActivityIndicator color="#fff" />
+                  </View>
+                )}
+              </View>
 
               <View style={{ flex: 1, gap: 4 }}>
                 <ThemedText style={styles.fieldLabel}>Ảnh đại diện</ThemedText>
                 <View style={styles.avatarActionsRow}>
                   <TouchableScale
                     style={[styles.btnOutline, styles.btnSmall, { borderColor: colors.cardBorder }]}
-                    onPress={() => Alert.alert('Thông báo', 'Chọn ảnh đại diện mới từ thư viện ảnh.')}
+                    onPress={handlePickAvatar}
+                    disabled={isUploadingAvatar}
                   >
                     <ThemedText style={[styles.btnText, { color: colors.text, fontSize: 11 }]}>
                       Thay ảnh
@@ -257,7 +403,8 @@ export default function AccountScreen() {
                   </TouchableScale>
                   <TouchableScale
                     style={[styles.btnOutline, styles.btnSmall, { borderColor: colors.cardBorder }]}
-                    onPress={() => Alert.alert('Thông báo', 'Đã gỡ ảnh đại diện.')}
+                    onPress={handleDeleteAvatar}
+                    disabled={isUploadingAvatar || !currentUserData?.avatarUrl}
                   >
                     <ThemedText style={[styles.btnText, { color: colors.textMuted, fontSize: 11 }]}>
                       Xóa ảnh
@@ -265,7 +412,7 @@ export default function AccountScreen() {
                   </TouchableScale>
                 </View>
                 <ThemedText style={styles.avatarSubtext}>
-                  JPEG, PNG hoặc WebP · tối đa 2 MB
+                  JPEG, PNG hoặc WebP · tối đa 5 MB
                 </ThemedText>
               </View>
             </View>
@@ -499,6 +646,9 @@ export default function AccountScreen() {
               <ThemedText style={styles.downloadBoxSub}>
                 Tệp xuất khẩu chứa toàn bộ thông tin tài khoản, lịch sử thực hành phỏng vấn, hồ sơ mục tiêu và dữ liệu liên quan ở định dạng JSON tiêu chuẩn.
               </ThemedText>
+              <ThemedText style={[styles.downloadBoxSub, { color: '#b91c1c', fontWeight: 'bold', marginTop: 4 }]}>
+                Tệp chứa toàn bộ dữ liệu cá nhân của bạn. Hãy lưu trữ ở nơi an toàn.
+              </ThemedText>
               <TouchableScale
                 style={[
                   styles.btnOutline,
@@ -625,23 +775,23 @@ export default function AccountScreen() {
 
             <View style={{ gap: 4 }}>
               <ThemedText style={{ fontSize: 13, fontWeight: '700', color: '#991b1b' }}>
-                Yêu cầu xóa tài khoản người dùng
+                Xóa tài khoản người dùng
               </ThemedText>
               <ThemedText style={[styles.dangerSub, { color: '#7f1d1d' }]}>
-                Bắt đầu quy trình xóa tài khoản. Sau khi yêu cầu được chấp nhận, bạn sẽ được đăng xuất khỏi phiên hiện tại.
+                Xóa vĩnh viễn tài khoản của bạn khỏi hệ thống (bao gồm mọi dữ liệu và gói PRO). Hành động này diễn ra ngay lập tức và không thể hoàn tác.
               </ThemedText>
             </View>
 
             <TouchableScale
               style={[styles.btnDanger, { backgroundColor: '#dc2626', alignSelf: 'flex-start' }]}
-              onPress={handleDeleteAccountPrompt}
+              onPress={handleDeleteAccount}
               disabled={deleteAccountMutation.isPending}
             >
               {deleteAccountMutation.isPending ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : null}
               <ThemedText style={{ color: '#ffffff', fontWeight: '700', fontSize: 12 }}>
-                Yêu cầu xóa tài khoản
+                Xóa tài khoản vĩnh viễn
               </ThemedText>
             </TouchableScale>
           </View>

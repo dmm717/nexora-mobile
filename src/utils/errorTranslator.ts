@@ -23,7 +23,8 @@ export const translateErrorMessage = (englishMessage: string): string => {
   if (lowerMsg.includes('invalid email')) return 'Email không hợp lệ.';
   if (lowerMsg.includes('network error') || lowerMsg.includes('failed to fetch') || lowerMsg.includes('timeout')) return 'Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.';
 
-  return englishMessage;
+  // Prevent raw backend messages from leaking to UI if not explicitly mapped
+  return 'Đã có lỗi xảy ra. Vui lòng thử lại.';
 };
 
 export function extractErrorMessage(data: any, fallbackMessage: string): string {

@@ -149,7 +149,7 @@ export function useHomeState() {
   }, [recommendation, progressData, activeGoal?.targetRole, hasInsufficientEvidence]);
 
   const recentActivities = useMemo(() => {
-    const activities: Array<{
+    const activities: {
       id: string;
       interviewId: string;
       role: string;
@@ -157,7 +157,7 @@ export function useHomeState() {
       updatedAt: string;
       score: number | null;
       fullTimestamp: string;
-    }> = [];
+    }[] = [];
 
     if (dashboardData?.interviews) {
       dashboardData.interviews.slice(0, 4).forEach((iv) => {

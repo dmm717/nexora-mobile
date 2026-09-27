@@ -23,12 +23,12 @@ type HistoryFilter = 'all' | 'interview' | 'scenario' | 'star';
 type PracticeFeatureState = 'enabled' | 'locked' | 'unknown';
 
 function getFeatureState(
-  features: Array<{
+  features: {
     code: string;
     enabled: boolean;
     available: number | null;
     unlimited: boolean;
-  }> | undefined,
+  }[] | undefined,
   code: string
 ): PracticeFeatureState {
   if (!Array.isArray(features)) return 'unknown';
@@ -146,7 +146,7 @@ export default function PracticeTabScreen() {
 
   // Combine practice history items (Interviews, Scenarios & STAR)
   const unifiedHistory = useMemo(() => {
-    const list: Array<{
+    const list: {
       id: string;
       type: 'interview' | 'scenario' | 'star';
       title: string;
@@ -155,7 +155,7 @@ export default function PracticeTabScreen() {
       score?: number | null;
       actionUrl: string;
       actionLabel: string;
-    }> = [];
+    }[] = [];
 
     // 1. Interviews
     (interviewHistory?.items || []).forEach((iv: any) => {

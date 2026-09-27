@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Animated, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 
-export type InterviewPresenceState = 'idle' | 'speaking' | 'listening' | 'thinking';
+export type InterviewPresenceState = 'idle' | 'speaking' | 'listening' | 'thinking' | 'processing';
 
 const PRESENCE_CONFIG: Record<
   InterviewPresenceState,
@@ -30,6 +30,11 @@ const PRESENCE_CONFIG: Record<
     color: '#f59e0b', // Amber
     icon: 'analytics',
   },
+  processing: {
+    label: 'Đang xử lý giọng nói...',
+    color: '#f59e0b', // Amber
+    icon: 'cloud-upload-outline',
+  },
 };
 
 export interface AiInterviewerPresenceProps {
@@ -45,7 +50,7 @@ export function AiInterviewerPresence({
   roleLabel = 'Người phỏng vấn của bạn',
   colors,
 }: AiInterviewerPresenceProps) {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const [pulseAnim] = useState(() => new Animated.Value(1));
   const config = PRESENCE_CONFIG[state] || PRESENCE_CONFIG.idle;
 
   useEffect(() => {
