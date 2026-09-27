@@ -15,6 +15,13 @@ import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/interview-report.styles';
 
+import { LoadingReportState } from '@/components/interview/report/LoadingReportState';
+import { FailedReportState } from '@/components/interview/report/FailedReportState';
+import { ScoreBadgeCard } from '@/components/interview/report/ScoreBadgeCard';
+import { ActionPlanSection } from '@/components/interview/report/ActionPlanSection';
+import { QuestionReviewCard } from '@/components/interview/report/QuestionReviewCard';
+import { PracticeAgainModal } from '@/components/interview/report/PracticeAgainModal';
+
 const PRACTICE_REASONS = [
   { id: 'repeat_question', label: 'Luyện lại câu hỏi này (Repeat Question)' },
   { id: 'rubric_weakness', label: 'Khắc phục điểm yếu Rubric (Rubric Weakness)' },
@@ -165,96 +172,12 @@ export default function ReportScreen() {
       (!report && (isReportLoading || isInterviewLoading)));
 
   if (isProcessing) {
-    return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <AppScreenHeader
-            title="Báo Cáo Phỏng Vấn AI"
-            fallbackRoute="/(tabs)/interview"
-            rightElement={
-              <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)} style={{ padding: 6 }}>
-                <Ionicons name="home-outline" size={22} color={colors.primary} />
-              </TouchableOpacity>
-            }
-          />
-          <View style={styles.centerContainer}>
-            <View
-              style={{
-                padding: Spacing.four,
-                borderRadius: Radius.lg,
-                backgroundColor: colors.card,
-                borderColor: colors.cardBorder,
-                borderWidth: 1,
-                alignItems: 'center',
-                maxWidth: 340,
-                width: '90%',
-                ...Shadows.md,
-              }}
-            >
-              <ActivityIndicator size="large" color={colors.primary} style={{ marginBottom: Spacing.three }} />
-              <ThemedText type="subtitle" style={{ textAlign: 'center', marginBottom: Spacing.two }}>
-                AI Đang Tổng Hợp Báo Cáo
-              </ThemedText>
-              <ThemedText style={{ textAlign: 'center', opacity: 0.8, fontSize: 14, lineHeight: 20 }}>
-                Hệ thống đang phân tích chi tiết câu trả lời, mô hình STAR và tổng hợp điểm số. Vui lòng đợi trong giây lát...
-              </ThemedText>
-
-              {interview?.evaluationProgress && (
-                <View style={{ marginTop: Spacing.three, width: '100%' }}>
-                  <ThemedText style={{ fontSize: 12, opacity: 0.7, textAlign: 'center' }}>
-                    Đã xử lý: {interview.evaluationProgress.ready} / {interview.evaluationProgress.total} câu hỏi
-                  </ThemedText>
-                </View>
-              )}
-            </View>
-          </View>
-        </SafeAreaView>
-      </ThemedView>
-    );
+    return <LoadingReportState colors={colors} interview={interview} />;
   }
 
   if (isFailed || !report) {
-    return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <AppScreenHeader
-            title="Báo Cáo Phỏng Vấn AI"
-            fallbackRoute="/(tabs)/interview"
-            rightElement={
-              <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)} style={{ padding: 6 }}>
-                <Ionicons name="home-outline" size={22} color={colors.primary} />
-              </TouchableOpacity>
-            }
-          />
-          <View style={styles.centerContainer}>
-            <Ionicons name="alert-circle-outline" size={56} color={colors.danger} />
-            <ThemedText type="subtitle" style={{ marginTop: Spacing.two }}>
-              Chưa thể tạo báo cáo phỏng vấn
-            </ThemedText>
-            <ThemedText style={{ textAlign: 'center', opacity: 0.8, marginVertical: Spacing.two, paddingHorizontal: Spacing.four }}>
-              Đã xảy ra sự cố trong quá trình phân tích AI. Vui lòng bấm bên dưới để hệ thống tiến hành chấm điểm lại.
-            </ThemedText>
-
-            <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: colors.primary, width: 220, marginTop: Spacing.two }]}
-              onPress={() => retryReportMutation.mutate()}
-              disabled={retryReportMutation.isPending}
-            >
-              {retryReportMutation.isPending ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <ThemedText style={styles.primaryButtonText}>Thử Lại Chấm Điểm</ThemedText>
-              )}
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </ThemedView>
-    );
+    return <FailedReportState colors={colors} retryReportMutation={retryReportMutation} />;
   }
-
-  const overallScore = report.overallScore ?? 0;
-  const scoreColor = overallScore >= 80 ? colors.accent : overallScore >= 60 ? colors.warning : colors.danger;
-  const isPartial = report.sample?.isPartial ?? false;
 
   return (
     <ThemedView style={styles.container}>
@@ -277,233 +200,26 @@ export default function ReportScreen() {
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Overall Score Badge Card */}
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder, alignItems: 'center' }]}>
-            {isPartial && (
-              <View style={{ backgroundColor: colors.warningLight || '#fef3c7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginBottom: Spacing.two }}>
-                <ThemedText style={{ fontSize: 12, fontWeight: '700', color: colors.warning }}>
-                  ⚡ Báo Cáo Thu Gọn (Nộp bài sớm)
-                </ThemedText>
-              </View>
-            )}
-
-            <View style={[styles.scoreBadge, { backgroundColor: `${scoreColor}15` }]}>
-              <ThemedText style={[styles.scoreNumber, { color: scoreColor }]}>
-                {overallScore}
-              </ThemedText>
-              <ThemedText style={styles.scoreMax}>/ 100</ThemedText>
-            </View>
-            <ThemedText type="subtitle" style={styles.scoreTitle}>
-              {overallScore >= 80 ? '🌟 Đạt Chuẩn Xuất Sắc' : overallScore >= 60 ? '👍 Khá Tốt - Cần Tối Ưu' : '💡 Cần Cải Thiện Thêm'}
-            </ThemedText>
-            <ThemedText style={styles.disclaimerText}>{report.disclaimer}</ThemedText>
-          </View>
+          <ScoreBadgeCard report={report} colors={colors} />
 
           {/* Action Plan Section */}
-          {report.actionPlan && Array.isArray(report.actionPlan) && report.actionPlan.length > 0 && (
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
-                <Ionicons name="flag-outline" size={20} color={colors.primary} />
-                <ThemedText type="subtitle" style={{ fontSize: 16, fontWeight: '700' }}>Kế Hoạch Hành Động Đề Xuất (Action Plan)</ThemedText>
-              </View>
-
-              <View style={{ gap: Spacing.two, marginTop: Spacing.one }}>
-                {report.actionPlan.map((step: string, idx: number) => (
-                  <View key={`step-${idx}-${step.substring(0, 10)}`} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two, backgroundColor: colors.backgroundElement, padding: Spacing.two, borderRadius: Radius.md }}>
-                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
-                      <ThemedText style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>{idx + 1}</ThemedText>
-                    </View>
-                    <ThemedText style={{ flex: 1, fontSize: 13, lineHeight: 18 }}>{step}</ThemedText>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
+          <ActionPlanSection report={report} colors={colors} />
 
           {/* Detailed Question Reviews */}
           {report.questionReviews && report.questionReviews.length > 0 && (
             <View style={{ gap: Spacing.four }}>
               <ThemedText type="subtitle" style={styles.sectionHeader}>Chi Tiết Đánh Giá Theo Câu Hỏi</ThemedText>
               
-              {report.questionReviews.map((review) => (
-                <View key={review.questionId || `q-${review.sequence}-${review.topic}`} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                  <View style={styles.questionReviewHeader}>
-                    <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-                      <ThemedText style={styles.badgeText}>Câu #{review.sequence}</ThemedText>
-                    </View>
-                    <View style={[styles.badge, { backgroundColor: colors.backgroundElement }]}>
-                      <ThemedText style={[styles.badgeText, { color: colors.text }]}>{review.topic}</ThemedText>
-                    </View>
-                  </View>
-
-                  <ThemedText style={styles.questionTitle}>Q: {review.question}</ThemedText>
-                  <View style={[styles.answerBox, { backgroundColor: colors.backgroundElement }]}>
-                    <ThemedText style={styles.answerText}>A: {review.answer}</ThemedText>
-                  </View>
-
-                  {/* Rubric Scores */}
-                  {review.rubric && review.rubric.length > 0 && (
-                    <View style={{ gap: 4, marginTop: Spacing.one }}>
-                      <ThemedText style={styles.subTitle}>📊 Điểm Tiêu Chí Rubric:</ThemedText>
-                      {review.rubric.map((r, rIdx) => (
-                        <View key={r.criterion || `r-${r.score}-${rIdx}`} style={styles.rubricRow}>
-                          <ThemedText style={styles.rubricLabel}>{r.criterion}:</ThemedText>
-                          <ThemedText style={[styles.rubricScore, { color: colors.primary }]}>{r.score}/100</ThemedText>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-
-                  {/* STAR Evaluation */}
-                  {review.star && review.star.applicable && (
-                    <View style={{ marginTop: Spacing.three, backgroundColor: colors.backgroundElement, borderRadius: 12, padding: Spacing.three, borderWidth: 1, borderColor: colors.cardBorder }}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.two }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.one }}>
-                          <Ionicons name="star" size={16} color={colors.primary} />
-                          <ThemedText style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>Mô hình phản xạ STAR</ThemedText>
-                        </View>
-                        <ThemedText style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>
-                          Điểm: {review.star.overallScore != null ? `${review.star.overallScore}/100` : 'Chưa có'}
-                        </ThemedText>
-                      </View>
-                      
-                      <View style={{ gap: Spacing.two }}>
-                        {[
-                          { key: 'situation', name: 'S — Situation (Bối cảnh)', comp: review.star.situation, weight: '20%' },
-                          { key: 'task', name: 'T — Task (Mục tiêu)', comp: review.star.task, weight: '20%' },
-                          { key: 'action', name: 'A — Action (Hành động)', comp: review.star.action, weight: '35%' },
-                          { key: 'result', name: 'R — Result (Kết quả)', comp: review.star.result, weight: '25%' },
-                        ].map((item) => {
-                          const isDetected = item.comp?.detected ?? false;
-                          const score = item.comp?.score ?? 0;
-                          return (
-                            <View key={item.key} style={{ backgroundColor: isDetected ? colors.card : colors.warningLight, padding: Spacing.two, borderRadius: 8, borderWidth: 1, borderColor: isDetected ? colors.cardBorder : colors.warning }}>
-                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                <ThemedText style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>{item.name}</ThemedText>
-                                <View style={{ backgroundColor: isDetected ? '#d1fae5' : '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                                  <ThemedText style={{ fontSize: 10, fontWeight: '700', color: isDetected ? '#065f46' : '#92400e' }}>
-                                    {isDetected ? `${score}đ (${item.weight})` : 'Chưa rõ'}
-                                  </ThemedText>
-                                </View>
-                              </View>
-                              {isDetected && item.comp?.evidence ? (
-                                <View style={{ backgroundColor: colors.background, padding: 6, borderRadius: 4, marginTop: 4 }}>
-                                  <ThemedText style={{ fontSize: 11, fontStyle: 'italic', color: colors.textSecondary }}>"{item.comp.evidence}"</ThemedText>
-                                </View>
-                              ) : (
-                                <ThemedText style={{ fontSize: 11, color: '#92400e', marginTop: 4 }}>
-                                  {item.comp?.feedback || 'Không phát hiện thành phần này.'}
-                                </ThemedText>
-                              )}
-                            </View>
-                          );
-                        })}
-                      </View>
-
-                      {review.star.missingElements && review.star.missingElements.length > 0 && (
-                        <View style={{ marginTop: Spacing.two, backgroundColor: '#fef3c7', padding: Spacing.two, borderRadius: 8, flexDirection: 'row', gap: 6 }}>
-                          <Ionicons name="warning" size={16} color="#d97706" />
-                          <ThemedText style={{ fontSize: 11, color: '#92400e', flex: 1 }}>
-                            <ThemedText style={{ fontWeight: '700' }}>Điểm khuyết thiếu: </ThemedText>
-                            Câu trả lời chưa thể hiện rõ ràng phần {review.star.missingElements.map((m) => m.toUpperCase()).join(', ')}. Bổ sung thêm bối cảnh và kết quả cụ thể để nâng cao điểm số.
-                          </ThemedText>
-                        </View>
-                      )}
-                    </View>
-                  )}
-
-                  {/* Feedback & STAR */}
-                  {review.feedback && (
-                    <View style={{ marginTop: Spacing.one }}>
-                      <ThemedText style={styles.subTitle}>💡 Nhận Xét Chuyên Sâu:</ThemedText>
-                      <ThemedText style={styles.bodyText}>{review.feedback}</ThemedText>
-                    </View>
-                  )}
-
-                  {/* Strengths & Improvements */}
-                  {review.strengths && review.strengths.length > 0 && (
-                    <View style={{ marginTop: Spacing.one }}>
-                      <ThemedText style={[styles.subTitle, { color: colors.accent }]}>💪 Điểm mạnh:</ThemedText>
-                      {review.strengths.map((s, sIdx) => (
-                        <ThemedText key={sIdx} style={styles.bulletText}>• {s}</ThemedText>
-                      ))}
-                    </View>
-                  )}
-
-                  {review.improvements && review.improvements.length > 0 && (
-                    <View style={{ marginTop: Spacing.one }}>
-                      <ThemedText style={[styles.subTitle, { color: colors.warning }]}>🚀 Cần cải thiện:</ThemedText>
-                      {review.improvements.map((imp, impIdx) => (
-                        <ThemedText key={impIdx} style={styles.bulletText}>• {imp}</ThemedText>
-                      ))}
-                    </View>
-                  )}
-
-                  {/* Suggested Answer */}
-                  {review.suggestedImprovedAnswer && (
-                    <View style={[styles.suggestedBox, { backgroundColor: colors.accentLight }]}>
-                      <ThemedText style={[styles.subTitle, { color: colors.accent }]}>✨ Câu trả lời mẫu gợi ý:</ThemedText>
-                      <ThemedText style={styles.bodyText}>{review.suggestedImprovedAnswer}</ThemedText>
-                    </View>
-                  )}
-
-                  {/* Sample Answer with Framework */}
-                  {review.sampleAnswer && (
-                    <View style={[styles.suggestedBox, { backgroundColor: colors.primaryLight, marginTop: Spacing.one }]}>
-                      <ThemedText style={[styles.subTitle, { color: colors.primary }]}>
-                        🎓 Câu Trả Lời Mẫu ({review.sampleAnswer.framework}):
-                      </ThemedText>
-                      
-                      {review.sampleAnswer.situation && (
-                        <ThemedText style={styles.bodyText}>
-                          <ThemedText style={{ fontWeight: '700' }}>[S] Situation: </ThemedText>
-                          {review.sampleAnswer.situation}
-                        </ThemedText>
-                      )}
-                      
-                      {review.sampleAnswer.task && (
-                        <ThemedText style={styles.bodyText}>
-                          <ThemedText style={{ fontWeight: '700' }}>[T] Task: </ThemedText>
-                          {review.sampleAnswer.task}
-                        </ThemedText>
-                      )}
-                      
-                      {review.sampleAnswer.action && (
-                        <ThemedText style={styles.bodyText}>
-                          <ThemedText style={{ fontWeight: '700' }}>[A] Action: </ThemedText>
-                          {review.sampleAnswer.action}
-                        </ThemedText>
-                      )}
-                      
-                      {review.sampleAnswer.result && (
-                        <ThemedText style={styles.bodyText}>
-                          <ThemedText style={{ fontWeight: '700' }}>[R] Result: </ThemedText>
-                          {review.sampleAnswer.result}
-                        </ThemedText>
-                      )}
-                      
-                      {review.sampleAnswer.fullAnswer && (
-                        <View style={{ marginTop: Spacing.one }}>
-                          <ThemedText style={{ fontWeight: '700', color: colors.primary }}>Đầy đủ:</ThemedText>
-                          <ThemedText style={styles.bodyText}>{review.sampleAnswer.fullAnswer}</ThemedText>
-                        </View>
-                      )}
-                    </View>
-                  )}
-
-                  {/* Practice Again for this question */}
-                  <TouchableOpacity
-                    style={[styles.secondaryButton, { borderColor: colors.primary }]}
-                    onPress={() => {
-                      setSelectedQuestionForPractice(review.questionId);
-                      setShowPracticeModal(true);
-                    }}
-                  >
-                    <Ionicons name="refresh" size={16} color={colors.primary} style={{ marginRight: 6 }} />
-                    <ThemedText style={[styles.secondaryButtonText, { color: colors.primary }]}>
-                      Luyện Tập Lại Câu Này
-                    </ThemedText>
-                  </TouchableOpacity>
-                </View>
+              {report.questionReviews.map((review: any) => (
+                <QuestionReviewCard
+                  key={review.questionId || `q-${review.sequence}-${review.topic}`}
+                  review={review}
+                  colors={colors}
+                  onPracticeAgain={(qId) => {
+                    setSelectedQuestionForPractice(qId);
+                    setShowPracticeModal(true);
+                  }}
+                />
               ))}
             </View>
           )}
@@ -522,59 +238,15 @@ export default function ReportScreen() {
         </ScrollView>
 
         {/* Practice Again Modal */}
-        <Modal visible={showPracticeModal} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <Ionicons name="refresh-circle" size={40} color={colors.primary} />
-              <ThemedText type="subtitle" style={styles.modalTitle}>Tạo Phiên Luyện Tập Lại</ThemedText>
-              <ThemedText style={styles.modalSub}>
-                Chọn lý do & tiêu chí bạn muốn tập trung cải thiện cho phiên mới này:
-              </ThemedText>
-
-              <View style={{ width: '100%', gap: Spacing.two, marginVertical: Spacing.two }}>
-                {PRACTICE_REASONS.map((r) => (
-                  <TouchableOpacity
-                    key={r.id}
-                    style={[
-                      styles.reasonOption,
-                      { borderColor: colors.cardBorder, backgroundColor: colors.backgroundElement },
-                      practiceReason === r.id && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
-                    ]}
-                    onPress={() => setPracticeReason(r.id)}
-                  >
-                    <Ionicons
-                      name={practiceReason === r.id ? 'radio-button-on' : 'radio-button-off'}
-                      size={18}
-                      color={practiceReason === r.id ? colors.primary : colors.textMuted}
-                    />
-                    <ThemedText style={[styles.reasonOptionText, practiceReason === r.id && { color: colors.primary, fontWeight: '700' }]}>
-                      {r.label}
-                    </ThemedText>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <TouchableOpacity
-                style={[styles.primaryButton, { backgroundColor: colors.primary, width: '100%' }]}
-                onPress={() => practiceAgainMutation.mutate()}
-                disabled={practiceAgainMutation.isPending}
-              >
-                {practiceAgainMutation.isPending ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <ThemedText style={styles.primaryButtonText}>Bắt Đầu Phỏng Vấn Mới</ThemedText>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.secondaryButton, { borderColor: colors.cardBorder, width: '100%' }]}
-                onPress={() => setShowPracticeModal(false)}
-              >
-                <ThemedText style={[styles.secondaryButtonText, { color: colors.textSecondary }]}>Hủy</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+        <PracticeAgainModal
+          visible={showPracticeModal}
+          colors={colors}
+          practiceReason={practiceReason}
+          setPracticeReason={setPracticeReason}
+          practiceAgainMutation={practiceAgainMutation}
+          onClose={() => setShowPracticeModal(false)}
+          PRACTICE_REASONS={PRACTICE_REASONS}
+        />
 
         {/* Global Bottom Navigation Bar */}
         <AppBottomNavBar activeTab="interview" />

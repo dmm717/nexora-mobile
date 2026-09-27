@@ -1,15 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  ActivityIndicator,
   Alert,
-  Pressable,
   View,
   Image,
-  ScrollView,
-  TextInput,
   StatusBar,
-  TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,25 +11,21 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import Animated, { FadeOut } from 'react-native-reanimated';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
 import { AppError } from '@/api/types';
 import { authApi } from '@/api/auth.api';
-import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { TouchableScale } from '@/components/ui/touchable-scale';
 import { TopographicHeader } from '@/components/ui/topographic-header';
-import { StaggeredTitle, CenterExpandView } from '@/components/ui/animated-auth-elements';
 import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
 import { styles } from '@/styles/login.styles';
 
-export type AuthStep =
-  | 'welcome'
-  | 'signin'
-  | 'signup'
-  | 'forgot_request'
-  | 'forgot_done';
+import { AuthStep } from '@/components/auth/types';
+import { WelcomeSection } from '@/components/auth/WelcomeSection';
+import { SignInSection } from '@/components/auth/SignInSection';
+import { SignUpSection } from '@/components/auth/SignUpSection';
+import { ForgotRequestSection } from '@/components/auth/ForgotRequestSection';
+import { ForgotDoneSection } from '@/components/auth/ForgotDoneSection';
 
 export default function LoginScreen() {
   const params = useLocalSearchParams<{ step?: string; skipSplash?: string; email?: string }>();
@@ -55,7 +45,7 @@ export default function LoginScreen() {
     setIsLegalModalVisible(true);
   };
 
-  const closeLegalModal = React.useCallback(() => {
+  const closeLegalModal = useCallback(() => {
     setIsLegalModalVisible(false);
   }, []);
 
@@ -64,11 +54,6 @@ export default function LoginScreen() {
   const [email, setEmail] = useState(params.email || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  // Input Focus States
-  const [nameFocused, setNameFocused] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
 
   useEffect(() => {
     if (isDirectSignIn) {
@@ -253,355 +238,51 @@ export default function LoginScreen() {
 
           {/* Main Content Area */}
           <View style={styles.contentArea}>
-
-            {/* STEP 1: WELCOME SCREEN */}
-            {step === 'welcome' && (
-              <View style={styles.welcomeSection}>
-                <View style={styles.welcomeTextGroup}>
-                  <StaggeredTitle text="Chào mừng" style={styles.welcomeTitle} triggerKey={step} />
-                  <CenterExpandView delay={120} triggerKey={step}>
-                    <ThemedText style={styles.welcomeSubtitle}>
-                      Nền tảng phỏng vấn thông minh & huấn luyện kỹ năng sự nghiệp hàng đầu Nexora AI.
-                    </ThemedText>
-                  </CenterExpandView>
-                </View>
-
-                {/* Continue Action */}
-                <CenterExpandView delay={240} triggerKey={step} style={styles.welcomeActionRow}>
-                  <Pressable onPress={() => setStep('signin')} hitSlop={12}>
-                    <ThemedText style={styles.continueText}>Tiếp tục</ThemedText>
-                  </Pressable>
-                  <TouchableScale
-                    style={styles.continueCircle}
-                    onPress={() => setStep('signin')}
-                    scaleTo={0.92}
-                  >
-                    <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
-                  </TouchableScale>
-                </CenterExpandView>
-              </View>
-            )}
-
-            {/* STEP 2: SIGN IN SCREEN */}
-            {step === 'signin' && (
-              <View style={styles.signInSection}>
-                {/* Title */}
-                <View style={styles.signInHeader}>
-                  <StaggeredTitle text="Đăng nhập" style={styles.signInTitle} triggerKey={step} />
-                </View>
-
-                {/* Form Inputs */}
-                <View style={styles.formStack}>
-                  {/* Email Field */}
-                  <CenterExpandView delay={140} triggerKey={step} style={styles.fieldGroup}>
-                    <ThemedText style={styles.fieldLabel}>Địa chỉ Email</ThemedText>
-                    <View style={[styles.inputRow, emailFocused && styles.inputRowFocused]}>
-                      <Ionicons
-                        name="mail-outline"
-                        size={18}
-                        color={emailFocused ? colors.primary : '#9CA3AF'}
-                      />
-                      <TextInput
-                        style={styles.textInput}
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="demo@email.com"
-                        placeholderTextColor="#9CA3AF"
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoComplete="email"
-                        onFocus={() => setEmailFocused(true)}
-                        onBlur={() => setEmailFocused(false)}
-                      />
-                    </View>
-                  </CenterExpandView>
-
-                  {/* Password Field */}
-                  <CenterExpandView delay={240} triggerKey={step} style={styles.fieldGroup}>
-                    <ThemedText style={styles.fieldLabel}>Mật khẩu</ThemedText>
-                    <View style={[styles.inputRow, passwordFocused && styles.inputRowFocused]}>
-                      <Ionicons
-                        name="lock-closed-outline"
-                        size={18}
-                        color={passwordFocused ? colors.primary : '#9CA3AF'}
-                      />
-                      <TextInput
-                        style={styles.textInput}
-                        value={password}
-                        onChangeText={setPassword}
-                        placeholder="••••••••••••"
-                        placeholderTextColor="#9CA3AF"
-                        secureTextEntry={!showPassword}
-                        autoCapitalize="none"
-                        autoComplete="password"
-                        onFocus={() => setPasswordFocused(true)}
-                        onBlur={() => setPasswordFocused(false)}
-                      />
-                      <Pressable
-                        onPress={() => setShowPassword(!showPassword)}
-                        style={styles.eyeIcon}
-                        hitSlop={8}
-                      >
-                        <Ionicons
-                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                          size={18}
-                          color="#9CA3AF"
-                        />
-                      </Pressable>
-                    </View>
-                  </CenterExpandView>
-
-                  {/* Options Row: Forgot Password */}
-                  <CenterExpandView delay={320} triggerKey={step} style={styles.optionsRow}>
-                    <Pressable hitSlop={8} onPress={() => setStep('forgot_request')}>
-                      <ThemedText style={styles.forgotText}>Quên mật khẩu?</ThemedText>
-                    </Pressable>
-                  </CenterExpandView>
-
-                  {/* Primary Sign In Button */}
-                  <CenterExpandView delay={400} triggerKey={step}>
-                    <TouchableScale
-                      style={styles.submitButton}
-                      onPress={handleLogin}
-                      disabled={loginMutation.isPending}
-                      scaleTo={0.96}
-                    >
-                      {loginMutation.isPending ? (
-                        <ActivityIndicator color="#FFFFFF" />
-                      ) : (
-                        <ThemedText style={styles.submitButtonText}>Đăng nhập</ThemedText>
-                      )}
-                    </TouchableScale>
-                  </CenterExpandView>
-                </View>
-
-                {/* Bottom Sign Up Link */}
-                <CenterExpandView delay={480} triggerKey={step} style={styles.footerRow}>
-                  <ThemedText style={styles.footerText}>Chưa có tài khoản? </ThemedText>
-                  <Pressable hitSlop={8} onPress={() => setStep('signup')}>
-                    <ThemedText style={styles.linkText}>Đăng ký ngay</ThemedText>
-                  </Pressable>
-                </CenterExpandView>
-              </View>
-            )}
-
-            {/* STEP 3: SIGN UP / REGISTER SCREEN */}
-            {step === 'signup' && (
-              <View style={styles.signInSection}>
-                {/* Title */}
-                <View style={styles.signInHeader}>
-                  <StaggeredTitle text="Đăng ký" style={styles.signInTitle} triggerKey={step} />
-                </View>
-
-                {/* Form Inputs */}
-                <View style={styles.formStack}>
-                  {/* Full Name Field */}
-                  <CenterExpandView delay={120} triggerKey={step} style={styles.fieldGroup}>
-                    <ThemedText style={styles.fieldLabel}>Họ và tên</ThemedText>
-                    <View style={[styles.inputRow, nameFocused && styles.inputRowFocused]}>
-                      <Ionicons
-                        name="person-outline"
-                        size={18}
-                        color={nameFocused ? colors.primary : '#9CA3AF'}
-                      />
-                      <TextInput
-                        style={styles.textInput}
-                        value={displayName}
-                        onChangeText={setDisplayName}
-                        placeholder="Nguyễn Văn A"
-                        placeholderTextColor="#9CA3AF"
-                        autoCapitalize="words"
-                        onFocus={() => setNameFocused(true)}
-                        onBlur={() => setNameFocused(false)}
-                      />
-                    </View>
-                  </CenterExpandView>
-
-                  {/* Email Field */}
-                  <CenterExpandView delay={220} triggerKey={step} style={styles.fieldGroup}>
-                    <ThemedText style={styles.fieldLabel}>Địa chỉ Email</ThemedText>
-                    <View style={[styles.inputRow, emailFocused && styles.inputRowFocused]}>
-                      <Ionicons
-                        name="mail-outline"
-                        size={18}
-                        color={emailFocused ? colors.primary : '#9CA3AF'}
-                      />
-                      <TextInput
-                        style={styles.textInput}
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="demo@email.com"
-                        placeholderTextColor="#9CA3AF"
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoComplete="email"
-                        onFocus={() => setEmailFocused(true)}
-                        onBlur={() => setEmailFocused(false)}
-                      />
-                    </View>
-                  </CenterExpandView>
-
-                  {/* Password Field */}
-                  <CenterExpandView delay={320} triggerKey={step} style={styles.fieldGroup}>
-                    <ThemedText style={styles.fieldLabel}>Mật khẩu (ít nhất 6 ký tự)</ThemedText>
-                    <View style={[styles.inputRow, passwordFocused && styles.inputRowFocused]}>
-                      <Ionicons
-                        name="lock-closed-outline"
-                        size={18}
-                        color={passwordFocused ? colors.primary : '#9CA3AF'}
-                      />
-                      <TextInput
-                        style={styles.textInput}
-                        value={password}
-                        onChangeText={setPassword}
-                        placeholder="••••••••••••"
-                        placeholderTextColor="#9CA3AF"
-                        secureTextEntry={!showPassword}
-                        autoCapitalize="none"
-                        autoComplete="password"
-                        onFocus={() => setPasswordFocused(true)}
-                        onBlur={() => setPasswordFocused(false)}
-                      />
-                      <Pressable
-                        onPress={() => setShowPassword(!showPassword)}
-                        style={styles.eyeIcon}
-                        hitSlop={8}
-                      >
-                        <Ionicons
-                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                          size={18}
-                          color="#9CA3AF"
-                        />
-                      </Pressable>
-                    </View>
-                  </CenterExpandView>
-
-                  {/* Legal Consent Text */}
-                  <CenterExpandView delay={390} triggerKey={step} style={styles.legalConsentRow}>
-                    <ThemedText style={styles.legalConsentText}>
-                      Bằng việc đăng ký, bạn đồng ý với{' '}
-                      <ThemedText style={styles.legalLink} onPress={() => openLegalModal('terms')}>
-                        Điều khoản dịch vụ
-                      </ThemedText>{' '}
-                      và{' '}
-                      <ThemedText style={styles.legalLink} onPress={() => openLegalModal('privacy')}>
-                        Chính sách bảo mật
-                      </ThemedText>{' '}
-                      của Nexora.
-                    </ThemedText>
-                  </CenterExpandView>
-
-                  {/* Primary Register Button */}
-                  <CenterExpandView delay={420} triggerKey={step}>
-                    <TouchableScale
-                      style={styles.submitButton}
-                      onPress={handleRegister}
-                      disabled={registerMutation.isPending}
-                      scaleTo={0.96}
-                    >
-                      {registerMutation.isPending ? (
-                        <ActivityIndicator color="#FFFFFF" />
-                      ) : (
-                        <ThemedText style={styles.submitButtonText}>Tạo tài khoản</ThemedText>
-                      )}
-                    </TouchableScale>
-                  </CenterExpandView>
-                </View>
-
-                {/* Bottom Sign In Link */}
-                <CenterExpandView delay={500} triggerKey={step} style={styles.footerRow}>
-                  <ThemedText style={styles.footerText}>Đã có tài khoản? </ThemedText>
-                  <Pressable hitSlop={8} onPress={() => setStep('signin')}>
-                    <ThemedText style={styles.linkText}>Đăng nhập ngay</ThemedText>
-                  </Pressable>
-                </CenterExpandView>
-              </View>
-            )}
-
-            {/* STEP 4: FORGOT PASSWORD REQUEST OTP */}
-            {step === 'forgot_request' && (
-              <View style={styles.signInSection}>
-                <View style={styles.signInHeader}>
-                  <StaggeredTitle text="Quên mật khẩu" style={styles.signInTitle} triggerKey={step} />
-                </View>
-
-                <View style={styles.formStack}>
-                  {/* Email Field */}
-                  <CenterExpandView delay={120} triggerKey={step} style={styles.fieldGroup}>
-                    <ThemedText style={styles.fieldLabel}>Địa chỉ Email</ThemedText>
-                    <View style={[styles.inputRow, emailFocused && styles.inputRowFocused]}>
-                      <Ionicons
-                        name="mail-outline"
-                        size={18}
-                        color={emailFocused ? colors.primary : '#9CA3AF'}
-                      />
-                      <TextInput
-                        style={styles.textInput}
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="demo@email.com"
-                        placeholderTextColor="#9CA3AF"
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoComplete="email"
-                        onFocus={() => setEmailFocused(true)}
-                        onBlur={() => setEmailFocused(false)}
-                      />
-                    </View>
-                  </CenterExpandView>
-
-                  {/* Primary Submit Button */}
-                  <CenterExpandView delay={240} triggerKey={step}>
-                    <TouchableScale
-                      style={styles.submitButton}
-                      onPress={handleSendRequest}
-                      disabled={sendRequestMutation.isPending}
-                      scaleTo={0.96}
-                    >
-                      {sendRequestMutation.isPending ? (
-                        <ActivityIndicator color="#FFFFFF" />
-                      ) : (
-                        <ThemedText style={styles.submitButtonText}>Gửi yêu cầu khôi phục</ThemedText>
-                      )}
-                    </TouchableScale>
-                  </CenterExpandView>
-
-                  <CenterExpandView delay={420} triggerKey={step} style={styles.footerRow}>
-                    <Pressable hitSlop={8} onPress={() => setStep('signin')}>
-                      <ThemedText style={styles.footerText}>Quay lại Đăng nhập</ThemedText>
-                    </Pressable>
-                  </CenterExpandView>
-                </View>
-              </View>
-            )}
-
-            {/* STEP 6: RESET SUCCESS CARD */}
-            {step === 'forgot_done' && (
-              <View style={styles.successContainer}>
-                <CenterExpandView delay={120} triggerKey={step}>
-                  <View style={styles.successIcon}>
-                    <Ionicons name="checkmark-circle" size={48} color={colors.primary} />
-                  </View>
-                </CenterExpandView>
-                <CenterExpandView delay={200} triggerKey={step}>
-                  <ThemedText style={styles.successText}>
-                    Nếu email thuộc một tài khoản hợp lệ, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến địa chỉ này. Vui lòng kiểm tra cả hòm thư Spam hoặc Thư rác.
-                  </ThemedText>
-                </CenterExpandView>
-
-                <CenterExpandView delay={320} triggerKey={step}>
-                  <TouchableScale style={styles.submitButton} onPress={() => setStep('signin')} scaleTo={0.96}>
-                    <ThemedText style={styles.submitButtonText}>Quay lại đăng nhập</ThemedText>
-                  </TouchableScale>
-                </CenterExpandView>
-              </View>
-            )}
-
+            <WelcomeSection step={step} setStep={setStep} colors={colors} />
+            <SignInSection
+              step={step}
+              setStep={setStep}
+              colors={colors}
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+              handleLogin={handleLogin}
+              isPending={loginMutation.isPending}
+            />
+            <SignUpSection
+              step={step}
+              setStep={setStep}
+              colors={colors}
+              displayName={displayName}
+              setDisplayName={setDisplayName}
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+              handleRegister={handleRegister}
+              isPending={registerMutation.isPending}
+              openLegalModal={openLegalModal}
+            />
+            <ForgotRequestSection
+              step={step}
+              setStep={setStep}
+              colors={colors}
+              email={email}
+              setEmail={setEmail}
+              handleSendRequest={handleSendRequest}
+              isPending={sendRequestMutation.isPending}
+            />
+            <ForgotDoneSection step={step} setStep={setStep} colors={colors} />
           </View>
         </KeyboardAwareScrollView>
       )}
 
-      {/* Legal Policy Modal */}
+      {/* Legal & Policy Modal */}
       <LegalPolicyModal
         visible={isLegalModalVisible}
         initialTab={legalModalTab}
@@ -610,5 +291,3 @@ export default function LoginScreen() {
     </SafeAreaView>
   );
 }
-
-

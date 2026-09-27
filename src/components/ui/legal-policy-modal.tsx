@@ -23,6 +23,11 @@ import { ThemedText } from '@/components/themed-text';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
+import { PrivacyPolicyContent } from './legal/PrivacyPolicyContent';
+import { TermsOfServiceContent } from './legal/TermsOfServiceContent';
+import { PaymentPolicyContent } from './legal/PaymentPolicyContent';
+import { DataDeletionContent } from './legal/DataDeletionContent';
+
 export type PolicyTab = 'privacy' | 'terms' | 'payment' | 'deletion';
 
 interface LegalPolicyModalProps {
@@ -185,22 +190,6 @@ export const LegalPolicyModal = memo(function LegalPolicyModal({
     }
   };
 
-  const renderBullet = (text: string) => (
-    <View style={styles.bulletRow}>
-      <View style={[styles.bulletDot, { backgroundColor: colors.textSecondary }]} />
-      <ThemedText style={[styles.bulletText, { color: colors.textSecondary }]}>{text}</ThemedText>
-    </View>
-  );
-
-  const renderSectionHeader = (number: string, title: string) => (
-    <View style={styles.sectionHeaderRow}>
-      <View style={[styles.sectionNumberBadge, { backgroundColor: colors.primary + '15' }]}>
-        <ThemedText style={[styles.sectionNumber, { color: colors.primary }]}>{number}</ThemedText>
-      </View>
-      <ThemedText style={styles.sectionHeading}>{title}</ThemedText>
-    </View>
-  );
-
   return (
     <Modal
       visible={showModal}
@@ -348,157 +337,10 @@ export const LegalPolicyModal = memo(function LegalPolicyModal({
                         bounces={false}
                         overScrollMode="never"
                       >
-                        {tab.key === 'privacy' && (
-                          <View style={styles.docSection}>
-                            <ThemedText style={[styles.docMeta, { color: colors.textMuted }]}>Cập nhật lần cuối: 25.09.2026</ThemedText>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('1', 'Thu thập dữ liệu')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Nexora AI cam kết bảo vệ thông tin riêng tư của ứng viên. Chúng tôi thu thập các dữ liệu cần thiết để phục vụ trải nghiệm luyện phỏng vấn:
-                              </ThemedText>
-                              <View style={styles.bulletList}>
-                                {renderBullet('Thông tin tài khoản: Email, tên hiển thị, mật khẩu được mã hóa qua ASP.NET Core Identity.')}
-                                {renderBullet('Hồ sơ nghề nghiệp: Nội dung CV, Mô tả công việc (JD), lịch sử các buổi phỏng vấn thử.')}
-                                {renderBullet('Giọng nói & Âm thanh: Dữ liệu ghi âm giọng nói khi thực hiện phỏng vấn (chỉ dùng cho chuyển đổi văn bản và phân tích giọng nói).')}
-                              </View>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('2', 'Sử dụng & bảo mật dữ liệu AI')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Tất cả dữ liệu câu trả lời và thông tin hồ sơ được truyền qua kết nối mã hóa TLS/HTTPS tới hệ thống backend. Nexora không bao giờ chia sẻ hoặc bán dữ liệu cá nhân của ứng viên cho bên thứ ba vì mục đích quảng cáo.
-                              </ThemedText>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('3', 'Quyền của ứng viên & lưu trữ')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Bạn có toàn quyền trích xuất bản sao dữ liệu cá nhân (định dạng JSON) hoặc yêu cầu xóa toàn bộ lịch sử và tài khoản người dùng trực tiếp trong ứng dụng. Dữ liệu cá nhân chỉ được lưu trữ trong thời gian tài khoản hoạt động và được xóa vĩnh viễn trong vòng 30 ngày sau khi tiếp nhận yêu cầu.
-                              </ThemedText>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('4', 'Quyền truy cập thiết bị & ghi âm')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Ứng dụng yêu cầu quyền truy cập Micro duy nhất cho mục đích thu âm câu trả lời phỏng vấn thử nghiệm bằng giọng nói. Dữ liệu âm thanh không bao giờ được ghi âm ngầm hay chạy dưới nền khi ứng dụng không thực hiện phỏng vấn.
-                              </ThemedText>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('5', 'Giới hạn độ tuổi & trẻ em')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Nexora AI là dịch vụ hỗ trợ sự nghiệp và ứng tuyển dành cho người dùng từ 18 tuổi trở lên (hoặc từ 13 tuổi với sự giám sát của người giám hộ). Chúng tôi không chủ động thu thập thông tin cá nhân của trẻ em dưới 13 tuổi.
-                              </ThemedText>
-                            </View>
-                          </View>
-                        )}
-        
-                        {tab.key === 'terms' && (
-                          <View style={styles.docSection}>
-                            <ThemedText style={[styles.docMeta, { color: colors.textMuted }]}>Áp dụng cho nền tảng Nexora AI Mobile</ThemedText>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('1', 'Mục đích sử dụng')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Nexora là sản phẩm hỗ trợ luyện tập phỏng vấn và nhận đánh giá phản hồi dựa trên tiêu chí tuyển dụng. Nền tảng tuyệt đối KHÔNG phải công cụ gian lận phỏng vấn trực tiếp hay phần mềm nhắc bài thời gian thực.
-                              </ThemedText>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('2', 'Tài khoản & gói sử dụng')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Người dùng có trách nhiệm bảo mật thông tin đăng nhập của mình. Các lượt phỏng vấn và tính năng AI được cấp hạn mức dựa trên gói tài khoản (FREE / PRO).
-                              </ThemedText>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('3', 'Sở hữu trí tuệ')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Toàn bộ thuật toán, giao diện và nội dung câu hỏi được bảo hộ bản quyền bởi Nexora Platform. Người dùng sở hữu nội dung câu trả lời và hồ sơ cá nhân của mình.
-                              </ThemedText>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('4', 'Nội dung phản hồi AI')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Các nhận xét và điểm số được khởi tạo tự động bởi mô hình AI dựa trên tiêu chí tuyển dụng. Nếu bạn phát hiện phản hồi AI không phù hợp hoặc không chính xác, bạn có thể gửi báo cáo trực tiếp thông qua tính năng "Đánh giá & Góp ý" tích hợp trong ứng dụng.
-                              </ThemedText>
-                            </View>
-                          </View>
-                        )}
-        
-                        {tab.key === 'payment' && (
-                          <View style={styles.docSection}>
-                            <ThemedText style={[styles.docMeta, { color: colors.textMuted }]}>Quy định nâng cấp gói & hoàn tiền</ThemedText>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('1', 'Phương thức thanh toán')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Các giao dịch nâng cấp gói cước (Gói PRO) được thực hiện an toàn qua hệ thống đối tác thanh toán chính thức hoặc cơ chế thanh toán trong ứng dụng (Google Play Billing). Nexora KHÔNG trực tiếp thu thập hay lưu trữ số thẻ ngân hàng, mã CVV hay mật khẩu tài khoản thanh toán của bạn.
-                              </ThemedText>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('2', 'Hạn mức & lượt sử dụng')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Mỗi đơn hàng thành công sẽ cấp quyền truy cập tính năng phỏng vấn AI tương ứng với gói đã chọn. Lịch sử đơn hàng, mã giao dịch và thời hạn gói cước được minh bạch trực tiếp trong trang "Cài đặt tài khoản".
-                              </ThemedText>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('3', 'Chính sách hoàn tiền')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Người dùng có quyền yêu cầu hoàn tiền trong các trường hợp:
-                              </ThemedText>
-                              <View style={styles.bulletList}>
-                                {renderBullet('Phát sinh sự cố kỹ thuật từ phía hệ thống Nexora dẫn đến việc không thể khởi tạo lượt phỏng vấn quá 24h.')}
-                                {renderBullet('Giao dịch bị thanh toán trùng lặp do sự cố cổng thanh toán.')}
-                              </View>
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary, marginTop: Spacing.two }]}>
-                                Yêu cầu hoàn tiền cần được gửi trong vòng 7 ngày làm việc kể từ thời điểm phát sinh giao dịch qua email support@nexora.vn hoặc mục "Đánh giá & Góp ý".
-                              </ThemedText>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('4', 'Hủy gói & gia hạn')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Bạn có thể chủ động ngừng gia hạn hoặc chuyển đổi gói cước bất kỳ lúc nào mà không phát sinh thêm chi phí ẩn. Sau khi hủy, quyền lợi gói PRO hiện tại sẽ duy trì cho đến hết chu kỳ đã thanh toán.
-                              </ThemedText>
-                            </View>
-                          </View>
-                        )}
-        
-                        {tab.key === 'deletion' && (
-                          <View style={styles.docSection}>
-                            <ThemedText style={[styles.docMeta, { color: colors.textMuted }]}>Tuân thủ quy định Google Play Store</ThemedText>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('1', 'Cam kết xóa dữ liệu')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Theo quy chuẩn dành cho ứng dụng Android trên Google Play Store, bạn có quyền yêu cầu xóa vĩnh viễn tài khoản và toàn bộ dữ liệu cá nhân (CV, lịch sử phỏng vấn, báo cáo điểm số).
-                              </ThemedText>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('2', 'Cách thực hiện')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Bạn có thể thực hiện xóa tài khoản bằng 2 cách:
-                              </ThemedText>
-                              <View style={styles.bulletList}>
-                                {renderBullet('Trực tiếp trong app: Vào Cài đặt tài khoản → Khu vực nguy hiểm → Yêu cầu xóa tài khoản.')}
-                                {renderBullet('Gửi email yêu cầu: Gửi tới support@nexora.vn với chủ đề "Yêu cầu xóa tài khoản Nexora".')}
-                              </View>
-                            </View>
-        
-                            <View style={styles.contentBlock}>
-                              {renderSectionHeader('3', 'Thời gian xử lý')}
-                              <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-                                Sau khi tiếp nhận yêu cầu, tài khoản của bạn sẽ bị vô hiệu hóa ngay lập tức và toàn bộ dữ liệu trên hệ thống cơ sở dữ liệu sẽ được hủy bỏ hoàn toàn trong tối đa 30 ngày làm việc.
-                              </ThemedText>
-                            </View>
-                          </View>
-                        )}
+                        {tab.key === 'privacy' && <PrivacyPolicyContent colors={colors} styles={styles} />}
+                        {tab.key === 'terms' && <TermsOfServiceContent colors={colors} styles={styles} />}
+                        {tab.key === 'payment' && <PaymentPolicyContent colors={colors} styles={styles} />}
+                        {tab.key === 'deletion' && <DataDeletionContent colors={colors} styles={styles} />}
         
                         <View style={styles.footerRow}>
                           <TouchableOpacity
@@ -599,23 +441,20 @@ const styles = StyleSheet.create({
     marginRight: Spacing.one,
   },
   tabText: {
-    fontSize: 15,
+    letterSpacing: -0.2,
   },
   activeIndicator: {
     position: 'absolute',
     bottom: -1,
-    left: 0,
-    right: 0,
     height: 2,
-    borderRadius: 1,
+    borderRadius: 2,
   },
   scrollContent: {
     flex: 1,
   },
   scrollInner: {
     padding: Spacing.four,
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.six + Spacing.four,
+    paddingBottom: 64, // Safe space at bottom
   },
   docSection: {
     gap: Spacing.four,
@@ -626,72 +465,73 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.two,
   },
   contentBlock: {
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.four,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-    marginBottom: Spacing.one,
+    alignItems: 'flex-start',
+    gap: Spacing.three,
+    marginBottom: Spacing.two,
   },
   sectionNumberBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 4,
+    marginTop: 2,
   },
   sectionNumber: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: Typography.fontFamily.bold,
   },
   sectionHeading: {
-    fontSize: 18,
+    flex: 1,
+    fontSize: 17,
     fontFamily: Typography.fontFamily.bold,
-    letterSpacing: -0.3,
+    lineHeight: 24,
   },
   paragraph: {
     fontSize: 15,
     lineHeight: 24,
-    fontFamily: Typography.fontFamily.medium,
-    opacity: 0.9,
+    fontFamily: Typography.fontFamily.regular,
   },
   bulletList: {
-    marginTop: Spacing.three,
+    marginTop: Spacing.two,
     gap: Spacing.two,
   },
   bulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: Spacing.three,
+    gap: Spacing.two,
+    paddingLeft: Spacing.two,
   },
   bulletDot: {
     width: 5,
     height: 5,
     borderRadius: 2.5,
     marginTop: 10,
-    opacity: 0.6,
   },
   bulletText: {
     flex: 1,
     fontSize: 15,
     lineHeight: 24,
-    fontFamily: Typography.fontFamily.medium,
-    opacity: 0.9,
+    fontFamily: Typography.fontFamily.regular,
   },
   footerRow: {
-    marginTop: Spacing.five,
-    alignItems: 'flex-start',
+    marginTop: Spacing.six,
+    alignItems: 'center',
+    paddingVertical: Spacing.four,
   },
   webLinkTextContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.one,
-    paddingVertical: Spacing.one,
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.four,
   },
   webLinkText: {
     fontSize: 15,
-    fontFamily: Typography.fontFamily.bold,
+    fontFamily: Typography.fontFamily.semibold,
   },
 });
