@@ -11,6 +11,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/scenarios-detail.styles';
+import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 import { ScenarioBriefingCard } from '@/components/scenarios/ScenarioBriefingCard';
 import { ActiveAttemptWorkbench } from '@/components/scenarios/ActiveAttemptWorkbench';
@@ -170,7 +171,20 @@ export default function ScenarioDetailScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <AppScreenHeader title="Kịch Bản Tình Huống" fallbackRoute="/(app)/scenarios" />
+        <AppScreenHeader 
+          title="Kịch Bản Tình Huống" 
+          fallbackRoute="/(app)/scenarios" 
+          rightElement={
+            activeAttempt ? (
+              <ReportContentButton 
+                contentType="scenario_result"
+                contentId={activeAttempt.id || id}
+                iconSize={20}
+                color={colors.primary}
+              />
+            ) : undefined
+          }
+        />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Scenario Briefing Header */}

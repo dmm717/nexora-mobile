@@ -14,6 +14,8 @@ import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/skill-profile.styles';
 import { safeBack } from '@/utils/navigation';
+import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
+import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 export default function SkillProfileScreen() {
   const router = useRouter();
@@ -30,7 +32,20 @@ export default function SkillProfileScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <AppScreenHeader title="Hồ Sơ Năng Lực AI" fallbackRoute="/(tabs)/profile" />
+        <AppScreenHeader 
+          title="Hồ Sơ Năng Lực AI" 
+          fallbackRoute="/(tabs)/profile" 
+          rightElement={
+            profile ? (
+              <ReportContentButton 
+                contentType="skill_profile"
+                contentId={(profile as any)?.id || 'skill-profile'}
+                iconSize={20}
+                color={colors.primary}
+              />
+            ) : undefined
+          }
+        />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -50,9 +65,12 @@ export default function SkillProfileScreen() {
             <>
               {/* Overview Banner */}
               <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                <View style={styles.cardHeaderRow}>
-                  <Ionicons name="ribbon-outline" size={24} color={colors.primary} />
-                  <ThemedText type="subtitle" style={styles.cardTitle}>Tổng Quan Điểm Năng Lực</ThemedText>
+                <View style={[styles.cardHeaderRow, { justifyContent: 'space-between' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="ribbon-outline" size={24} color={colors.primary} />
+                    <ThemedText type="subtitle" style={styles.cardTitle}>Tổng Quan Điểm Năng Lực</ThemedText>
+                  </View>
+                  <AIGeneratedLabel />
                 </View>
 
                 {profile.competencies.length === 0 ? (

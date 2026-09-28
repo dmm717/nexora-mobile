@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { logger } from '@/services/logger';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { careerGoalsApi } from '@/api/career-goals.api';
@@ -40,7 +41,7 @@ export default function CreateCareerGoalScreen() {
     },
     onError: (error) => {
       Alert.alert('Lỗi', 'Không thể tạo mục tiêu. Vui lòng thử lại.');
-      // console.error(error);
+      logger.error('Failed to create career goal', error);
     }
   });
 

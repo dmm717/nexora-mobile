@@ -6,6 +6,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { RadialScore } from '@/components/ui/radial-score';
 import { Spacing } from '@/constants/theme';
 import { styles } from '../CVAnalysisResultView.styles';
+import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
 
 export type TabKey = 'overview' | 'breakdown' | 'action';
 
@@ -54,9 +55,12 @@ export const CVMetaHeader = memo(({ isBenchmark, targetRole, seniority, industry
         <MaterialIcons name="verified" size={14} color={colors.primary} />
         <ThemedText style={[styles.tagText, { color: colors.primary }]}>Báo cáo phân tích chuyên sâu</ThemedText>
       </View>
-      <ThemedText style={styles.mainTitle}>
-        {isBenchmark ? 'Đánh giá hồ sơ theo Chuẩn năng lực' : 'Đánh giá hồ sơ theo JD'}
-      </ThemedText>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <ThemedText style={styles.mainTitle}>
+          {isBenchmark ? 'Đánh giá hồ sơ theo Chuẩn năng lực' : 'Đánh giá hồ sơ theo JD'}
+        </ThemedText>
+        <AIGeneratedLabel />
+      </View>
       <View style={styles.metaContainer}>
         {targetRole && <ThemedText style={styles.metaText}>Vị trí: <ThemedText style={{ fontWeight: 'bold' }}>{targetRole}{seniority ? ` (${seniority})` : ''}</ThemedText></ThemedText>}
         {industry && <ThemedText style={styles.metaText}>Ngành: <ThemedText style={{ fontWeight: 'bold' }}>{industry}</ThemedText></ThemedText>}

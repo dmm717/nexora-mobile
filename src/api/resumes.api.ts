@@ -20,7 +20,7 @@ export const resumesApi = {
       try {
         const baseUrlObj = new URL(API_BASE_URL);
         finalUrl = `${baseUrlObj.origin}${uploadUrl}`;
-      } catch {
+      } catch (_err) {
         finalUrl = `${API_BASE_URL.replace(/\/api\/v1\/?$/, '')}${uploadUrl}`;
       }
     }

@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { logger } from './logger';
 
 export interface SpeechRecognitionListener {
   onResult: (transcript: string, isFinal: boolean) => void;
@@ -45,8 +46,8 @@ class WebSpeechAPI {
           const status = await navigator.permissions.query({ name: 'microphone' as any });
           return status.state as 'granted' | 'denied' | 'prompt';
         }
-      } catch {
-        // Fallback for browsers that don't support permissions.query for microphone
+      } catch (err: any) {
+        logger.warn('Microphone permission query failed, falling back:', { error: err?.message || err });
       }
     }
     return 'prompt';
@@ -67,7 +68,7 @@ class WebSpeechAPI {
         this.recognition.start();
         this.isListening = true;
       } catch (err: any) {
-        // console.warn('Failed to start speech recognition:', err);
+        logger.warn('Failed to start speech recognition:', { error: err?.message || err });
         // If start throws because instance was in wrong state, re-init and retry
         this.initRecognition();
         if (this.recognition) {
@@ -133,7 +134,7 @@ class WebSpeechAPI {
     };
 
     this.recognition.onerror = (event: any) => {
-      // console.warn('Speech recognition error:', event.error);
+      logger.warn('Speech recognition error:', { error: event?.error || event });
       
       // Ignore 'no-speech' error if user is still recording in continuous session
       if (event.error === 'no-speech' && !this.userRequestedStop) {
@@ -164,8 +165,8 @@ class WebSpeechAPI {
           this.recognition.start();
           this.isListening = true;
           return;
-        } catch {
-          // If restart fails, clean up
+        } catch (err: any) {
+          logger.warn('Failed to auto-restart speech recognition:', { error: err?.message || err });
         }
       }
 
@@ -181,8 +182,8 @@ class WebSpeechAPI {
     if (Platform.OS === 'web' && this.recognition) {
       try {
         this.recognition.stop();
-      } catch (e) {
-        // console.warn(e);
+      } catch (e: any) {
+        logger.warn('Error stopping speech recognition', { error: e?.message || e });
       }
     }
     this.isListening = false;

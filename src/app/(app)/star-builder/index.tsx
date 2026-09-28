@@ -15,6 +15,7 @@ import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/star-builder.styles';
 import { safeBack } from '@/utils/navigation';
+import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 import { StarQuestionInputCard } from '@/components/star-builder/StarQuestionInputCard';
 import { StarAnswerInputCard } from '@/components/star-builder/StarAnswerInputCard';
@@ -91,7 +92,20 @@ export default function StarBuilderScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <AppScreenHeader title="Chuẩn Hóa STAR Builder AI" fallbackRoute="/(tabs)/practice" />
+        <AppScreenHeader 
+          title="Chuẩn Hóa STAR Builder AI" 
+          fallbackRoute="/(tabs)/practice" 
+          rightElement={
+            activeAttempt ? (
+              <ReportContentButton 
+                contentType="star_suggestion"
+                contentId={activeAttempt.id || 'star-builder'}
+                iconSize={20}
+                color={colors.primary}
+              />
+            ) : undefined
+          }
+        />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <StarQuestionInputCard question={question} setQuestion={setQuestion} colors={colors} />

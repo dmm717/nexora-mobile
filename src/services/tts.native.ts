@@ -14,6 +14,7 @@ import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-au
 import * as FileSystem from 'expo-file-system/legacy';
 import { getInterviewSpeechAuthorization } from './speechTokenManager';
 import { INTERVIEW_SPEECH_CONFIG } from '@/config/speech';
+import { logger } from './logger';
 
 // ---------------------------------------------------------------------------
 // SSML Builder (shared with tts.ts/web)
@@ -67,7 +68,7 @@ async function synthesizeToFile(
 
   // Attempt 2: Fallback to vi-VN-HoaiMyNeural
   if (!response.ok) {
-    // console.warn( ... );
+
     ssml = buildSsml(text, 'vi-VN-HoaiMyNeural');
     response = await fetch(endpoint, {
       method: 'POST',
@@ -155,8 +156,8 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
     // Stop any current playback
     try {
       player.pause();
-    } catch {
-      // ignore
+    } catch (err: any) {
+      logger.warn('Failed to pause player before new speech:', { error: err?.message || err });
     }
     cleanup();
     setIsSpeaking(false);
@@ -184,8 +185,8 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
 
       // Play
       player.play();
-    } catch (err) {
-      // console.warn('Native TTS failed:', err);
+    } catch (err: any) {
+      logger.warn('Native TTS failed:', { error: err?.message || err });
       setIsSpeaking(false);
       cleanup();
     }
@@ -194,8 +195,8 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
   const stop = useCallback(() => {
     try {
       player.pause();
-    } catch {
-      // ignore
+    } catch (err: any) {
+      logger.warn('Failed to pause player during stop:', { error: err?.message || err });
     }
     setIsSpeaking(false);
     cleanup();
@@ -206,7 +207,9 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
     return () => {
       try {
         player.pause();
-      } catch {}
+      } catch (err: any) {
+        logger.warn('Failed to pause player during cleanup:', { error: err?.message || err });
+      }
       cleanup();
     };
   }, [cleanup, player]);

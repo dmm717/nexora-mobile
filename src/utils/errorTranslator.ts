@@ -24,15 +24,43 @@ export const translateErrorMessage = (englishMessage: string): string => {
   if (lowerMsg.includes('network error') || lowerMsg.includes('failed to fetch') || lowerMsg.includes('timeout')) return 'Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.';
 
   // Prevent raw backend messages from leaking to UI if not explicitly mapped
-  return 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+  return 'Đã có lỗi xảy ra. Vui lòng thử lại hoặc liên hệ hỗ trợ.';
+};
+
+export const translateErrorCode = (code: string): string | null => {
+  switch (code) {
+    case 'UNAUTHORIZED':
+    case 'INVALID_CREDENTIALS':
+      return 'Tài khoản hoặc mật khẩu không chính xác.';
+    case 'USER_NOT_FOUND':
+      return 'Tài khoản không tồn tại.';
+    case 'EMAIL_EXISTS':
+      return 'Email đã được sử dụng.';
+    case 'RATE_LIMIT_EXCEEDED':
+      return 'Bạn thao tác quá nhanh, vui lòng thử lại sau.';
+    case 'CV_UPLOAD_FAILED':
+    case 'FILE_TOO_LARGE':
+      return 'File quá lớn hoặc không hợp lệ.';
+    case 'INTERNAL_SERVER_ERROR':
+    case 'DATABASE_ERROR':
+      return 'Đã có lỗi xảy ra. Vui lòng thử lại hoặc liên hệ hỗ trợ.';
+    default:
+      return null;
+  }
 };
 
 export function extractErrorMessage(data: any, fallbackMessage: string): string {
   if (!data) return translateErrorMessage(fallbackMessage);
 
-  // 1. Backend ApiErrorEnvelope standard format
-  if (data.error?.message) {
-    return translateErrorMessage(data.error.message);
+  // 1. Backend ApiErrorEnvelope standard format - map by error.code if available
+  if (data.error) {
+    if (data.error.code) {
+      const codeMsg = translateErrorCode(data.error.code);
+      if (codeMsg) return codeMsg;
+    }
+    if (data.error.message) {
+      return translateErrorMessage(data.error.message);
+    }
   }
 
   // 2. Direct message string

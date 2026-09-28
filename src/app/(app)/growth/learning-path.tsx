@@ -19,6 +19,8 @@ import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/learning-path.styles';
 
 import { getLocalizedCompetencyLabel } from '@/utils/competencyLocalization';
+import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
+import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 interface ActivityCardProps {
   activity: any;
@@ -77,6 +79,7 @@ const ActivityCardItem = React.memo(({
               </ThemedText>
             </View>
           )}
+          <AIGeneratedLabel />
         </View>
 
         {activity.status === 'completed' ? (
@@ -289,7 +292,20 @@ export default function LearningPathScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <AppScreenHeader title="Lộ Trình Học Tập AI" fallbackRoute="/(tabs)/practice" />
+        <AppScreenHeader 
+          title="Lộ Trình Học Tập AI" 
+          fallbackRoute="/(tabs)/practice" 
+          rightElement={
+            path ? (
+              <ReportContentButton 
+                contentType="learning_path"
+                contentId={path.id || 'learning-path'}
+                iconSize={20}
+                color={colors.primary}
+              />
+            ) : undefined
+          }
+        />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}

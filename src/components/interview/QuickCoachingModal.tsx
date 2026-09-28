@@ -9,6 +9,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
+import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 export interface QuickCoachingModalProps {
   visible: boolean;
@@ -64,15 +66,23 @@ export function QuickCoachingModal({
                       Đã đánh giá Câu {questionSequence}
                     </ThemedText>
                   </View>
+                  <AIGeneratedLabel />
                 </View>
                 <ThemedText style={[styles.headerSub, { color: colors.icon }]}>
                   Phản hồi tức thì giúp bạn cải thiện ngay cho câu tiếp theo.
                 </ThemedText>
               </View>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={22} color={colors.text} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.one }}>
+              <ReportContentButton 
+                contentType="coaching_note"
+                contentId={coaching.id || `coaching-${questionSequence}`}
+                contentSnapshot={coaching.feedback}
+              />
+              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Body Scroll */}

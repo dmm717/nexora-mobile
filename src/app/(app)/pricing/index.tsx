@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -6,25 +6,24 @@ import {
   ScrollView,
   View,
   TouchableOpacity,
-  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useIAP, PurchaseError, deepLinkToSubscriptions } from 'expo-iap';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { pricingApi } from '@/api/pricing.api';
 import { authApi } from '@/api/auth.api';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { logger } from '@/services/logger';
+import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlassCard } from '@/components/ui/glass-card';
-import { TouchableScale } from '@/components/ui/touchable-scale';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { OrderStatusBadge } from '@/components/ui/order-status-badge';
-import { safeBack } from '@/utils/navigation';
 import {
   formatCurrency,
   getExactEntitlementFeature,
@@ -43,6 +42,7 @@ export default function PricingScreen() {
   const colors = Colors[themeKey];
 
   const [selectedPriceId, setSelectedPriceId] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // 1. Fetch Current User (with billing entitlement & orders)
   const {
@@ -54,7 +54,7 @@ export default function PricingScreen() {
     queryFn: () => authApi.getMe(),
   });
 
-  // 2. Fetch Pricing Plans
+  // 2. Fetch Pricing Plans from Backend
   const {
     data: plans = [],
     isLoading: isPlansLoading,
@@ -65,43 +65,108 @@ export default function PricingScreen() {
     queryFn: pricingApi.listPlans,
   });
 
-  const isRefreshing = isRefetching;
+  // 3. Setup IAP
+  const {
+    connected,
+    subscriptions,
+    products,
+    fetchProducts,
+    requestPurchase,
+    getAvailablePurchases,
+    availablePurchases,
+    finishTransaction,
+  } = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      try {
+        setIsVerifying(true);
+        // Step 2.4 & 2.3: POST /billing/google-play/verify -> backend cấp entitlement
+        await pricingApi.verifyGooglePlayPurchase(
+          purchase.productId,
+          purchase.purchaseToken || '',
+          purchase.id
+        );
+        // Step 2.4: BẮT BUỘC
+        await finishTransaction({ purchase, isConsumable: false });
+        Alert.alert('Thành Công', 'Nâng cấp gói dịch vụ thành công!');
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      } catch (err: any) {
+        Alert.alert('Chưa hoàn tất', 'Thanh toán thành công nhưng có lỗi khi xác nhận với Server. Vui lòng thử lại bằng cách "Khôi phục giao dịch".');
+      } finally {
+        setIsVerifying(false);
+        setSelectedPriceId(null);
+      }
+    },
+    onPurchaseError: (err: any) => {
+      setIsVerifying(false);
+      setSelectedPriceId(null);
+      if (err?.code !== 'E_USER_CANCELLED') {
+        Alert.alert('Lỗi', 'Không thể hoàn tất thanh toán qua Google Play.');
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (connected && plans.length > 0) {
+      // Fetch products from store using backend plan codes as SKUs
+      // Quy ước: productId trên store giống code của plan (e.g. nexora_pro_1m)
+      const skus = plans.map(p => p.code.toLowerCase());
+      fetchProducts({ skus, type: 'subs' }).catch(logger.error);
+      fetchProducts({ skus, type: 'in-app' }).catch(logger.error);
+      
+      // Khôi phục giao dịch chưa xử lý khi khởi động
+      getAvailablePurchases().catch(logger.error);
+    }
+  }, [connected, plans]);
+
+  // Xử lý các giao dịch có sẵn (restore/pending)
+  useEffect(() => {
+    const processAvailablePurchases = async () => {
+      if (!availablePurchases || availablePurchases.length === 0) return;
+      
+      for (const purchase of availablePurchases) {
+        // Chỉ xử lý nếu chưa được verify hoặc app cần verify lại
+        try {
+          await pricingApi.verifyGooglePlayPurchase(
+            purchase.productId,
+            purchase.purchaseToken || '',
+            purchase.id
+          );
+          await finishTransaction({ purchase, isConsumable: false });
+          queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+        } catch (e) {
+          logger.error('Lỗi khi xử lý availablePurchase', e);
+        }
+      }
+    };
+    
+    processAvailablePurchases();
+  }, [availablePurchases]);
+
   const handleRefresh = async () => {
     await Promise.all([refetchUser(), refetchPlans()]);
   };
 
-  const checkoutMutation = useMutation({
-    mutationFn: (priceId: string) => pricingApi.createCheckoutSession(priceId),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      if (data.checkout?.url) {
-        Alert.alert(
-          'Đơn Hàng Đã Tạo',
-          `Mã đơn hàng: ${data.orderId.slice(0, 12)}\nSố tiền: ${formatCurrency(
-            data.amountMinor,
-            data.currency
-          )}\n\nBạn có muốn mở trang thanh toán an toàn ngay không?`,
-          [
-            { text: 'Để sau', style: 'cancel' },
-            {
-              text: 'Thanh toán ngay',
-              onPress: () => {
-                if (data.checkout?.url) {
-                  Linking.openURL(data.checkout.url);
-                }
-              },
-            },
-          ]
-        );
-      } else {
-        Alert.alert('Thành Công', `Đã khởi tạo đơn hàng: ${data.orderId.slice(0, 12)}`);
+  const handleRestorePurchases = async () => {
+    try {
+      setIsVerifying(true);
+      await getAvailablePurchases();
+      Alert.alert('Thông báo', 'Đã yêu cầu kiểm tra lại các giao dịch đang treo.');
+    } catch (e) {
+      Alert.alert('Lỗi', 'Không thể khôi phục giao dịch lúc này.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleManageSubscriptions = async () => {
+    try {
+      if (currentPlanCode) {
+        await deepLinkToSubscriptions({ skuAndroid: currentPlanCode, packageNameAndroid: 'com.nexora.app' });
       }
-    },
-    onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể tạo đơn hàng thanh toán.');
-    },
-  });
+    } catch (e) {
+      Alert.alert('Lỗi', 'Không thể mở trình quản lý gói cước Google Play.');
+    }
+  };
 
   // Billing Entitlement Calculations
   const entitlement = currentUser?.billing?.entitlement;
@@ -131,17 +196,16 @@ export default function PricingScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Navigation Header */}
         <AppScreenHeader title="Gói Dịch Vụ & Thanh Toán" fallbackRoute="/(tabs)/profile" />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+            <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={colors.primary} />
           }
         >
-          {/* PAGE HERO HEADER BLOCK (BillingPageHeader) */}
+          {/* PAGE HERO HEADER BLOCK */}
           <View style={styles.heroBlock}>
             <View style={[styles.pillBadge, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="card-outline" size={14} color={colors.primary} />
@@ -151,13 +215,12 @@ export default function PricingScreen() {
             </View>
 
             <ThemedText style={styles.mainHeading}>Gói dịch vụ & Lịch sử thanh toán</ThemedText>
-
             <ThemedText style={styles.subHeading}>
               Theo dõi hạn mức phỏng vấn, thời hạn gói và mở khóa thêm các tính năng phân tích & phỏng vấn AI mạnh mẽ.
             </ThemedText>
           </View>
 
-          {/* CARD 1: GÓI HIỆN TẠI (Current Entitlement Card) */}
+          {/* CARD 1: GÓI HIỆN TẠI */}
           <GlassCard style={styles.entitlementCard}>
             <View style={[styles.entitlementHeaderRow, { borderBottomColor: colors.cardBorder }]}>
               <View>
@@ -182,7 +245,6 @@ export default function PricingScreen() {
               </View>
             </View>
 
-            {/* 3 Quota Highlights Boxes */}
             <View style={styles.quotaGrid}>
               <View style={[styles.quotaBox, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
                 <ThemedText style={styles.quotaBoxLabel}>Hạn mức phỏng vấn khả dụng</ThemedText>
@@ -199,13 +261,24 @@ export default function PricingScreen() {
                 <ThemedText style={styles.quotaBoxValue}>{interviewQuestionLimitText}</ThemedText>
               </View>
             </View>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: Spacing.four, gap: Spacing.three }}>
+               <TouchableOpacity onPress={handleRestorePurchases}>
+                 <ThemedText style={{ color: colors.textMuted, fontSize: 13, textDecorationLine: 'underline' }}>Khôi phục giao dịch</ThemedText>
+               </TouchableOpacity>
+               {currentPlanCode && currentPlanCode !== 'free' && (
+                 <TouchableOpacity onPress={handleManageSubscriptions}>
+                   <ThemedText style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>Quản lý gia hạn (Google Play)</ThemedText>
+                 </TouchableOpacity>
+               )}
+            </View>
           </GlassCard>
 
-          {/* SECTION 2: NÂNG CẤP GÓI DỊCH VỤ (Upgrade Plans Section) */}
+          {/* SECTION 2: NÂNG CẤP GÓI DỊCH VỤ */}
           <View style={[styles.sectionHeaderBlock, { borderBottomColor: colors.cardBorder }]}>
             <ThemedText style={styles.sectionTitle}>Nâng cấp gói dịch vụ</ThemedText>
             <ThemedText style={styles.sectionSubtitle}>
-              Chọn gói cước phù hợp với tốc độ luyện tập và mục tiêu chuẩn bị phỏng vấn của bạn.
+              Thanh toán an toàn qua Google Play. Giá cả được hiển thị trực tiếp từ kho ứng dụng.
             </ThemedText>
           </View>
 
@@ -223,15 +296,21 @@ export default function PricingScreen() {
           ) : (
             <View style={styles.plansStack}>
               {plans.map((plan) => {
-                const price = plan.prices?.[0];
-                if (!price) return null;
+                const priceMeta = plan.prices?.[0];
+                if (!priceMeta) return null;
 
-                const isCurrentPlan = currentPlanCode === plan.code.toLowerCase();
-                const isFree = price.amountMinor === 0;
+                const sku = plan.code.toLowerCase();
+                const isCurrentPlan = currentPlanCode === sku;
+                const isFree = priceMeta.amountMinor === 0;
                 const isHighlighted = plan.isHighlighted;
-                const featureDescriptions = price.features
+                const featureDescriptions = priceMeta.features
                   .map(describePlanFeature)
                   .filter(Boolean) as string[];
+                  
+                // Match with store product if available
+                const storeSub = subscriptions.find(s => s.id === sku);
+                const storeProd = products.find(p => p.id === sku);
+                const displayPrice = isFree ? 'Miễn phí' : (storeSub?.displayPrice || storeProd?.displayPrice || formatCurrency(priceMeta.amountMinor, priceMeta.currency));
 
                 return (
                   <View
@@ -251,7 +330,6 @@ export default function PricingScreen() {
                       isHighlighted && styles.highlightedPlanCard,
                     ]}
                   >
-                    {/* Highlight Badge on top center */}
                     {isHighlighted && (
                       <View style={styles.topBadgeContainer}>
                         <View style={[styles.topBadge, { backgroundColor: colors.primary }]}>
@@ -261,7 +339,6 @@ export default function PricingScreen() {
                       </View>
                     )}
 
-                    {/* Plan Header */}
                     <View style={styles.planHeaderRow}>
                       <ThemedText style={styles.planNameText}>{plan.name}</ThemedText>
                       {isCurrentPlan && (
@@ -278,29 +355,26 @@ export default function PricingScreen() {
                         'Gói dịch vụ được thiết kế tối ưu cho nhu cầu rèn luyện phỏng vấn của bạn.'}
                     </ThemedText>
 
-                    {/* Price Display */}
                     <View style={[styles.priceDisplayRow, { borderBottomColor: colors.cardBorder }]}>
                       <ThemedText style={styles.priceAmountText}>
-                        {isFree ? 'Miễn phí' : formatCurrency(price.amountMinor, price.currency)}
+                        {displayPrice}
                       </ThemedText>
-                      {!isFree && price.durationDays > 0 && (
+                      {!isFree && priceMeta.durationDays > 0 && (
                         <ThemedText style={styles.priceDurationText}>
-                          / {price.durationDays} ngày
+                          / {priceMeta.durationDays} ngày
                         </ThemedText>
                       )}
                     </View>
 
-                    {/* Features Checklist */}
                     <View style={styles.featuresContainer}>
-                      {price.interviewQuota > 0 && (
+                      {priceMeta.interviewQuota > 0 && (
                         <View style={styles.featureRow}>
                           <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
                           <ThemedText style={styles.featureText}>
-                            Hạn mức phỏng vấn: {price.interviewQuota} lượt
+                            Hạn mức phỏng vấn: {priceMeta.interviewQuota} lượt
                           </ThemedText>
                         </View>
                       )}
-
                       {featureDescriptions.map((desc, fIdx) => (
                         <View key={fIdx} style={styles.featureRow}>
                           <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
@@ -309,7 +383,6 @@ export default function PricingScreen() {
                       ))}
                     </View>
 
-                    {/* Bottom Action Button */}
                     <TouchableOpacity
                       style={[
                         styles.planActionButton,
@@ -322,20 +395,20 @@ export default function PricingScreen() {
                           borderWidth: isCurrentPlan || isHighlighted ? 0 : 1,
                           borderColor: colors.primary,
                         },
-                        checkoutMutation.isPending && selectedPriceId === price.id && { opacity: 0.6 },
+                        isVerifying && selectedPriceId === sku && { opacity: 0.6 },
                       ]}
                       onPress={() => {
                         if (isCurrentPlan) return;
                         if (!isFree) {
-                          setSelectedPriceId(price.id);
-                          checkoutMutation.mutate(price.id);
+                          setSelectedPriceId(sku);
+                          requestPurchase({ request: { google: { skus: [sku] }, apple: { sku } }, type: storeSub ? 'subs' : 'in-app' }).catch(logger.error);
                         } else {
                           router.push('/(tabs)/home' as any);
                         }
                       }}
-                      disabled={isCurrentPlan || (checkoutMutation.isPending && selectedPriceId === price.id)}
+                      disabled={isCurrentPlan || isVerifying || (!storeSub && !storeProd && !isFree)}
                     >
-                      {checkoutMutation.isPending && selectedPriceId === price.id ? (
+                      {isVerifying && selectedPriceId === sku ? (
                         <ActivityIndicator color="#ffffff" size="small" />
                       ) : (
                         <ThemedText
@@ -352,6 +425,8 @@ export default function PricingScreen() {
                         >
                           {isCurrentPlan
                             ? 'Gói hiện tại'
+                            : (!storeSub && !storeProd && !isFree) 
+                            ? 'Sản phẩm đang được cập nhật'
                             : isHighlighted
                             ? 'Nâng cấp ngay'
                             : 'Chọn gói này'}
@@ -364,7 +439,7 @@ export default function PricingScreen() {
             </View>
           )}
 
-          {/* SECTION 3: LỊCH SỬ GIAO DỊCH (Orders History) */}
+          {/* SECTION 3: LỊCH SỬ GIAO DỊCH */}
           {orders.length > 0 && (
             <View style={{ gap: Spacing.two, marginTop: Spacing.two }}>
               <View style={[styles.sectionHeaderBlock, { borderBottomColor: colors.cardBorder }]}>
@@ -373,7 +448,6 @@ export default function PricingScreen() {
 
               <View style={styles.ordersContainer}>
                 {orders.map((o) => {
-                  const statusInfo = getOrderStatusPresentation(o.status);
                   return (
                     <View
                       key={o.id}
@@ -396,7 +470,6 @@ export default function PricingScreen() {
                             {new Date(o.createdAt).toLocaleString('vi-VN')}
                           </ThemedText>
                         </View>
-
                         <ThemedText style={styles.orderAmountText}>
                           {formatCurrency(o.amountMinor, o.currency)}
                         </ThemedText>

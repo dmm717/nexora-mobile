@@ -5,7 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
+import { logger } from '@/services/logger';
 
 import { ThemedText } from '@/components/themed-text';
 import { resumesApi } from '@/api/resumes.api';
@@ -42,22 +43,49 @@ export default function ResumesScreen() {
   const primaryResumeId = profile?.primaryResume?.id;
   const resumeList = Array.isArray(resumes) ? resumes : [];
 
+  const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
+  const uploadTaskRef = React.useRef<FileSystem.UploadTask | null>(null);
+
+  const handleCancelUpload = () => {
+    if (uploadTaskRef.current) {
+      uploadTaskRef.current.cancelAsync();
+      uploadTaskRef.current = null;
+      setUploadProgress(null);
+    }
+  };
+
   const uploadMutation = useMutation({
-    mutationFn: async (file: DocumentPicker.DocumentPickerAsset) => {
+    mutationFn: async (file: DocumentPicker.DocumentPickerAsset & { resolvedMimeType?: string }) => {
+      setUploadProgress(0);
       const intent = await resumesApi.presign({
         fileName: file.name,
-        contentType: file.mimeType || 'application/pdf',
-        size: file.size || 0,
+        contentType: file.resolvedMimeType || file.mimeType || 'application/pdf',
+        size: file.size!,
       });
 
-      const uploadResult = await FileSystem.uploadAsync(intent.uploadUrl, file.uri, {
-        httpMethod: 'PUT',
-        headers: {
-          'Content-Type': file.mimeType || 'application/pdf',
+      const uploadTask = FileSystem.createUploadTask(
+        intent.uploadUrl,
+        file.uri,
+        {
+          httpMethod: 'PUT',
+          headers: {
+            'Content-Type': file.resolvedMimeType || file.mimeType || 'application/pdf',
+          },
         },
-      });
+        (data) => {
+          const progress = data.totalBytesSent / data.totalBytesExpectedToSend;
+          setUploadProgress(Math.round(progress * 100));
+        }
+      );
 
-      if (uploadResult.status !== 200) {
+      uploadTaskRef.current = uploadTask;
+      const uploadResult = await uploadTask.uploadAsync();
+
+      if (!uploadResult) {
+        throw new Error('Upload bị hủy');
+      }
+
+      if (uploadResult.status < 200 || uploadResult.status >= 300) {
         throw new Error('Upload to S3 failed');
       }
 
@@ -70,16 +98,19 @@ export default function ResumesScreen() {
     },
     onError: (error: any) => {
       Alert.alert('Lỗi', error.message || 'Không thể tải lên CV. Vui lòng thử lại.');
-      // console.error(error);
+      logger.error('Failed to upload CV', error);
     },
     onSettled: async (_, __, variables) => {
+      setUploadProgress(null);
+      uploadTaskRef.current = null;
       // SECURITY & PERFORMANCE (Phase 4.8): Always clean up DocumentPicker temp cache
       try {
         if (variables?.uri) {
           await FileSystem.deleteAsync(variables.uri, { idempotent: true });
         }
-      } catch (err) {
-        // Ignore silent cleanup errors
+      } catch (err: any) {
+        // Ignore silent cleanup errors but log them
+        logger.warn('Failed to clean up DocumentPicker cache in onSettled', { error: err?.message || err });
       }
     }
   });
@@ -145,21 +176,50 @@ export default function ResumesScreen() {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
         
-        // SECURITY & VALIDATION (Phase 4.8): Strict size limit (5MB)
-        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-        if (file.size && file.size > MAX_FILE_SIZE) {
-          Alert.alert('Lỗi', 'Kích thước file không được vượt quá 5MB.');
-          // Cleanup the too-large file immediately
-          try {
-            if (file.uri) await FileSystem.deleteAsync(file.uri, { idempotent: true });
-          } catch {}
+        // Validate file size
+        if (!file.size || file.size === 0) {
+          Alert.alert('Lỗi', 'Không thể xác định kích thước file hoặc file rỗng. Vui lòng chọn file khác.');
+          try { if (file.uri) await FileSystem.deleteAsync(file.uri, { idempotent: true }); } catch (err: any) { logger.warn('Failed to delete temp CV file', { error: err?.message || err }); }
           return;
         }
 
-        uploadMutation.mutate(file);
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB as per plan
+        if (file.size > MAX_FILE_SIZE) {
+          Alert.alert('Lỗi', 'Kích thước file không được vượt quá 10MB.');
+          try { if (file.uri) await FileSystem.deleteAsync(file.uri, { idempotent: true }); } catch (err: any) { logger.warn('Failed to delete temp CV file', { error: err?.message || err }); }
+          return;
+        }
+
+        // Validate MIME type
+        let resolvedMimeType = file.mimeType;
+        if (!resolvedMimeType) {
+          const extension = file.name.split('.').pop()?.toLowerCase();
+          if (extension === 'pdf') {
+            resolvedMimeType = 'application/pdf';
+          } else if (extension === 'docx') {
+            resolvedMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          } else {
+            Alert.alert('Lỗi', 'Định dạng file không được hỗ trợ. Chỉ chấp nhận PDF hoặc DOCX.');
+            try { if (file.uri) await FileSystem.deleteAsync(file.uri, { idempotent: true }); } catch (err: any) { logger.warn('Failed to delete temp CV file', { error: err?.message || err }); }
+            return;
+          }
+        }
+
+        const allowedMimeTypes = [
+          'application/pdf',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        
+        if (!allowedMimeTypes.includes(resolvedMimeType)) {
+          Alert.alert('Lỗi', 'Định dạng file không được hỗ trợ. Chỉ chấp nhận PDF hoặc DOCX.');
+          try { if (file.uri) await FileSystem.deleteAsync(file.uri, { idempotent: true }); } catch (err: any) { logger.warn('Failed to delete temp CV file', { error: err?.message || err }); }
+          return;
+        }
+
+        uploadMutation.mutate({ ...file, resolvedMimeType });
       }
     } catch (err) {
-      // console.error('Lỗi khi chọn file', err);
+      logger.error('Lỗi khi chọn file', err);
     }
   };
 
@@ -175,20 +235,27 @@ export default function ResumesScreen() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
         >
           {/* Upload Button */}
-          <TouchableScale 
-            style={[styles.uploadButton, { backgroundColor: colors.primary }, uploadMutation.isPending && styles.disabledButton]} 
-            onPress={handleUpload}
-            disabled={uploadMutation.isPending}
-          >
-            {uploadMutation.isPending ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="cloud-upload-outline" size={22} color="#fff" style={{ marginRight: 8 }} />
-                <ThemedText style={styles.uploadButtonText}>Tải lên CV mới (PDF/DOCX)</ThemedText>
-              </>
-            )}
-          </TouchableScale>
+          {uploadMutation.isPending ? (
+            <View style={[styles.uploadButton, { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 1, flexDirection: 'column', height: 'auto', paddingVertical: 12 }]}>
+              <ThemedText style={{ color: colors.text, marginBottom: 8, fontWeight: '500' }}>
+                Đang tải lên... {uploadProgress !== null ? `${uploadProgress}%` : ''}
+              </ThemedText>
+              <View style={{ width: '100%', height: 4, backgroundColor: colors.border, borderRadius: 2, marginBottom: 12, overflow: 'hidden' }}>
+                <View style={{ width: `${uploadProgress || 0}%`, height: '100%', backgroundColor: colors.primary }} />
+              </View>
+              <TouchableScale onPress={handleCancelUpload} style={{ paddingHorizontal: 16, paddingVertical: 8, backgroundColor: colors.danger, borderRadius: 8 }}>
+                <ThemedText style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Hủy tải lên</ThemedText>
+              </TouchableScale>
+            </View>
+          ) : (
+            <TouchableScale 
+              style={[styles.uploadButton, { backgroundColor: colors.primary }]} 
+              onPress={handleUpload}
+            >
+              <Ionicons name="cloud-upload-outline" size={22} color="#fff" style={{ marginRight: 8 }} />
+              <ThemedText style={styles.uploadButtonText}>Tải lên CV mới (PDF/DOCX)</ThemedText>
+            </TouchableScale>
+          )}
 
           {/* Loading state */}
           {isLoading && !isRefetching ? (

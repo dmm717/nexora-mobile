@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { styles } from '@/styles/interview-room.styles';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
+import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 export const Q2BoundaryModal = React.memo(({
   visible,
@@ -137,18 +139,26 @@ export const CurrentQuestionCard = React.memo(({
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-      <View style={styles.questionHeader}>
-        <View style={[styles.sequenceChip, { backgroundColor: colors.primary }]}>
-          <ThemedText style={styles.sequenceChipText}>Câu hỏi #{currentQuestion.sequence}</ThemedText>
-        </View>
-        <View style={[styles.topicChip, { backgroundColor: colors.backgroundElement }]}>
-          <ThemedText style={styles.topicChipText}>{currentQuestion.topic}</ThemedText>
-        </View>
-        {currentQuestion.kind === 'followup' && (
-          <View style={[styles.kindChip, { backgroundColor: colors.warningLight }]}>
-            <ThemedText style={[styles.kindChipText, { color: colors.warning }]}>Hỏi đào sâu</ThemedText>
+      <View style={[styles.questionHeader, { justifyContent: 'space-between' }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.two, flex: 1 }}>
+          <View style={[styles.sequenceChip, { backgroundColor: colors.primary }]}>
+            <ThemedText style={styles.sequenceChipText}>Câu hỏi #{currentQuestion.sequence}</ThemedText>
           </View>
-        )}
+          <View style={[styles.topicChip, { backgroundColor: colors.backgroundElement }]}>
+            <ThemedText style={styles.topicChipText}>{currentQuestion.topic}</ThemedText>
+          </View>
+          {currentQuestion.kind === 'followup' && (
+            <View style={[styles.kindChip, { backgroundColor: colors.warningLight }]}>
+              <ThemedText style={[styles.kindChipText, { color: colors.warning }]}>Hỏi đào sâu</ThemedText>
+            </View>
+          )}
+          <AIGeneratedLabel />
+        </View>
+        <ReportContentButton 
+          contentType="interview_question" 
+          contentId={currentQuestion.id} 
+          contentSnapshot={currentQuestion.content} 
+        />
       </View>
 
       <ThemedText style={styles.questionContent}>

@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/react-native';
+
 export interface LogContext {
   requestId?: string;
   scope?: string;
@@ -26,11 +28,18 @@ export class LoggerService {
 
   public error(message: string, error?: unknown, context?: LogContext) {
     const formatted = this.formatLog('ERROR', message, context);
-    console.error(formatted, error || '');
+    if (__DEV__) {
+      console.error(formatted, error || '');
+    }
 
     // Observability Integration Gate (Sentry / Datadog in production)
     if (!__DEV__) {
       // In production builds, this feeds telemetry loggers like Sentry.captureException(error)
+      if (error instanceof Error) {
+        Sentry.captureException(error, { extra: { message, context } });
+      } else {
+        Sentry.captureMessage(message, { extra: { error, context } });
+      }
     }
   }
 }

@@ -1,5 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { logger } from './logger';
 
 const ACCESS_TOKEN_KEY = 'nexora_access_token';
 const REFRESH_TOKEN_KEY = 'nexora_refresh_token';
@@ -19,7 +20,8 @@ async function getValue(key: string): Promise<string | null> {
 
   try {
     return await SecureStore.getItemAsync(key);
-  } catch (error) {
+  } catch (error: any) {
+    logger.warn('SecureStore get error', { error: error?.message || error });
     return null;
   }
 }
@@ -36,7 +38,8 @@ async function setValue(key: string, value: string): Promise<void> {
 
   try {
     await SecureStore.setItemAsync(key, value);
-  } catch (error) {
+  } catch (error: any) {
+    logger.warn('SecureStore set error', { error: error?.message || error });
   }
 }
 
@@ -52,7 +55,8 @@ async function deleteValue(key: string): Promise<void> {
 
   try {
     await SecureStore.deleteItemAsync(key);
-  } catch (error) {
+  } catch (error: any) {
+    logger.warn('SecureStore delete error', { error: error?.message || error });
   }
 }
 

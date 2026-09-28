@@ -13,6 +13,7 @@
  * 4. Return transcribed text to parent component
  */
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { logger } from './logger';
 import {
   useAudioRecorder,
   useAudioRecorderState,
@@ -21,7 +22,7 @@ import {
   requestRecordingPermissionsAsync,
   getRecordingPermissionsAsync,
 } from 'expo-audio';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import { getInterviewSpeechAuthorization } from './speechTokenManager';
 
 // ---------------------------------------------------------------------------
@@ -204,7 +205,7 @@ export function useNativeStt(interviewId: string | undefined): UseNativeSttRetur
       setStatus('idle');
       return text;
     } catch (err: any) {
-      // console.warn('STT transcription failed:', err);
+      logger.warn('STT transcription failed:', { error: err?.message || err });
       setStatus('error');
       setErrorMessage(err.message || 'Không thể nhận diện giọng nói. Vui lòng thử lại.');
       return '';
@@ -213,8 +214,8 @@ export function useNativeStt(interviewId: string | undefined): UseNativeSttRetur
       if (fileUriToCleanUp) {
         try {
           await FileSystem.deleteAsync(fileUriToCleanUp, { idempotent: true });
-        } catch {
-          // Non-critical cleanup error
+        } catch (err: any) {
+          logger.warn('Failed to clean up temp audio file:', { error: err?.message || err });
         }
       }
     }
@@ -228,8 +229,8 @@ export function useNativeStt(interviewId: string | undefined): UseNativeSttRetur
         if (uri) {
           await FileSystem.deleteAsync(uri, { idempotent: true });
         }
-      } catch {
-        // Best-effort cleanup
+      } catch (err: any) {
+        logger.warn('Failed to cancel and clean up audio recording:', { error: err?.message || err });
       }
     }
     setStatus('idle');

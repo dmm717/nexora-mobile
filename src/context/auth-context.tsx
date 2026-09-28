@@ -1,10 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { clearInterviewSpeechAuthorizationCache } from '@/services/speechTokenManager';
 import { useQueryClient, QueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { authApi } from '@/api/auth.api';
 import { API_BASE_URL, onAuthError } from '@/api/client';
 import { LoginRequest, RegisterRequest, UserDto } from '@/api/types';
 import { tokenStorage } from '@/services/storage';
+import { logger } from '@/services/logger';
 
 interface AuthContextType {
   user: UserDto | null;
@@ -28,12 +30,15 @@ async function hydrateSessionAsync(
   let token = await tokenStorage.getAccessToken();
   if (!token) {
     try {
+      const rt = await tokenStorage.getRefreshToken();
+      const payload = rt ? { refreshToken: rt } : {};
       const refreshResponse = await axios.post<{
-        data?: { accessToken: string };
+        data?: { accessToken: string; refreshToken?: string };
         accessToken?: string;
+        refreshToken?: string;
       }>(
         `${API_BASE_URL}/auth/refresh`,
-        {},
+        payload,
         {
           withCredentials: true,
           headers: { 'Content-Type': 'application/json' },
@@ -41,11 +46,18 @@ async function hydrateSessionAsync(
       );
       const newAccessToken =
         refreshResponse.data?.data?.accessToken || refreshResponse.data?.accessToken;
+      const newRefreshToken =
+        refreshResponse.data?.data?.refreshToken || refreshResponse.data?.refreshToken;
+        
       if (newAccessToken) {
         await tokenStorage.setAccessToken(newAccessToken);
         token = newAccessToken;
       }
-    } catch {
+      if (newRefreshToken) {
+        await tokenStorage.setRefreshToken(newRefreshToken);
+      }
+    } catch (err: any) {
+      logger.warn('Failed to refresh token during hydration', { error: err?.message || err });
       await tokenStorage.clearTokens();
     }
   }
@@ -54,7 +66,8 @@ async function hydrateSessionAsync(
     try {
       const me = await authApi.getMe();
       if (signal.mounted) setUser(me);
-    } catch {
+    } catch (err: any) {
+      logger.warn('Failed to fetch user during hydration', { error: err?.message || err });
       if (signal.mounted) {
         await tokenStorage.clearTokens();
         setUser(null);
@@ -72,7 +85,8 @@ async function hydrateSessionWithFallback(
 ) {
   try {
     await hydrateSessionAsync(signal, setUser, setIsLoading);
-  } catch {
+  } catch (err: any) {
+    logger.warn('Hydration fallback catch triggered', { error: err?.message || err });
     if (signal.mounted) {
       await tokenStorage.clearTokens();
       queryClient.clear();
@@ -89,6 +103,7 @@ async function loginAsync(
   queryClient: QueryClient,
 ): Promise<void> {
   setIsLoading(true);
+  clearInterviewSpeechAuthorizationCache();
   queryClient.clear(); // Flush cached data from any previous account session
   const res = await authApi.login(payload);
   if (res.accessToken) {
@@ -120,6 +135,7 @@ async function logoutAsync(
   } finally {
     await tokenStorage.clearTokens();
     queryClient.clear(); // Flush all cached React Query data on logout
+    clearInterviewSpeechAuthorizationCache(); // Phase 4.9: Clear Azure Speech token
     setUser(null);
     setIsLoading(false);
   }
@@ -139,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const unsubscribe = onAuthError(() => {
       if (signal.mounted) {
+        clearInterviewSpeechAuthorizationCache();
         queryClient.clear();
         setUser(null);
       }
@@ -175,7 +192,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const me = await authApi.getMe();
       setUser(me);
-    } catch {
+    } catch (error: any) {
+      logger.warn('Failed to refresh user', { error: error?.message || error });
       await tokenStorage.clearTokens();
       queryClient.clear();
       setUser(null);

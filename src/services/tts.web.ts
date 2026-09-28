@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import { getInterviewSpeechAuthorization } from './speechTokenManager';
 import { INTERVIEW_SPEECH_CONFIG } from '@/config/speech';
+import { logger } from './logger';
 
 function escapeXml(unsafe: string): string {
   return unsafe.replace(/[<>&'"]/g, (c) => {
@@ -133,7 +134,7 @@ class WebTtsService {
 
       // Attempt 2: If primary voice fails, fallback to vi-VN-HoaiMyNeural single-voice SSML
       if (!response.ok) {
-        // console.warn(`Azure TTS primary voice (${INTERVIEW_SPEECH_CONFIG.voiceName}) returned ${response.status}. Retrying with vi-VN-HoaiMyNeural...`);
+        logger.warn(`Azure TTS primary voice (${INTERVIEW_SPEECH_CONFIG.voiceName}) returned ${response.status}. Retrying with vi-VN-HoaiMyNeural...`);
         ssml = buildSingleVoiceSsml(text, 'vi-VN-HoaiMyNeural');
         response = await fetch(
           `https://${auth.region}.tts.speech.microsoft.com/cognitiveservices/v1`,
@@ -166,8 +167,8 @@ class WebTtsService {
         onDone?.();
       };
 
-      audio.onerror = (e) => {
-        // console.warn('Azure audio playback error, falling back to local voice:', e);
+      audio.onerror = (e: any) => {
+        logger.warn('Azure audio playback error, falling back to local voice:', { error: e?.message || e });
         this.isSpeaking = false;
         this.currentAudioElement = null;
         URL.revokeObjectURL(audioUrl);
@@ -176,7 +177,7 @@ class WebTtsService {
 
       await audio.play();
     } catch (err: any) {
-      // console.warn('Azure TTS REST failed, falling back to local voice:', err);
+      logger.warn('Azure TTS REST failed, falling back to local voice:', { error: err?.message || err });
       this.isSpeaking = false;
       this.currentAudioElement = null;
       this.speakWithLocalVoice(text, onDone, onError);
@@ -208,8 +209,8 @@ class WebTtsService {
           onDone?.();
         };
 
-        utterance.onerror = (e) => {
-          // console.warn('Local TTS playback error:', e);
+        utterance.onerror = (e: any) => {
+          logger.warn('Local TTS playback error:', { error: e?.message || e });
           this.isSpeaking = false;
           onError?.(e);
         };
@@ -236,7 +237,8 @@ class WebTtsService {
         window.speechSynthesis.cancel();
       }
       this.isSpeaking = false;
-    } catch {
+    } catch (err: any) {
+      logger.warn('Failed to stop TTS playback:', { error: err?.message || err });
       this.isSpeaking = false;
     }
   }

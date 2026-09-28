@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { styles } from '@/styles/scenarios-detail.styles';
 import { FormattedScenarioContent } from './FormattedScenarioContent';
+import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
 
 interface ScenarioBriefingCardProps {
   scenario: any;
@@ -23,11 +24,12 @@ export const ScenarioBriefingCard = ({ scenario, colors }: ScenarioBriefingCardP
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
       <View style={styles.cardHeaderRow}>
-        <View style={[styles.badge, { backgroundColor: colors.primaryLight }]}>
-          <ThemedText style={[styles.badgeText, { color: colors.primary }]}>
-            {scenario.categoryName}
-          </ThemedText>
-        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1 }}>
+          <View style={[styles.badge, { backgroundColor: colors.primaryLight }]}>
+            <ThemedText style={[styles.badgeText, { color: colors.primary }]}>
+              {scenario.categoryName}
+            </ThemedText>
+          </View>
 
         <View
           style={[
@@ -67,11 +69,13 @@ export const ScenarioBriefingCard = ({ scenario, colors }: ScenarioBriefingCardP
           </View>
         ) : null}
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Ionicons name="time-outline" size={14} color={colors.textMuted} />
-          <ThemedText style={{ fontSize: 12, color: colors.textMuted }}>
-            {scenario.estimatedMinutes} phút
-          </ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+            <ThemedText style={{ fontSize: 12, color: colors.textMuted }}>
+              {scenario.estimatedMinutes} phút
+            </ThemedText>
+          </View>
+          <AIGeneratedLabel />
         </View>
       </View>
 

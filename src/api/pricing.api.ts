@@ -8,6 +8,9 @@ export const pricingApi = {
     return 'data' in res.data && res.data.data ? res.data.data : (res.data as PlanResponseV2[]);
   },
 
+  /**
+   * @deprecated web only, KHÔNG dùng trên native
+   */
   createCheckoutSession: async (planPriceId: string, idempotencyKey?: string): Promise<CheckoutResponse> => {
     const key = idempotencyKey || generateIdempotencyKey();
     const res = await apiClient.post<{ data?: CheckoutResponse } | CheckoutResponse>(
@@ -18,6 +21,9 @@ export const pricingApi = {
     return 'data' in res.data && res.data.data ? res.data.data : (res.data as CheckoutResponse);
   },
 
+  /**
+   * @deprecated web only, KHÔNG dùng trên native
+   */
   getCheckoutStatus: async (orderId: string): Promise<CheckoutStatusResponse> => {
     const res = await apiClient.get<{ data?: CheckoutStatusResponse } | CheckoutStatusResponse>(
       `/checkout-sessions/${orderId}`
@@ -25,11 +31,22 @@ export const pricingApi = {
     return 'data' in res.data && res.data.data ? res.data.data : (res.data as CheckoutStatusResponse);
   },
 
+  /**
+   * @deprecated web only, KHÔNG dùng trên native
+   */
   refreshCheckoutSession: async (orderId: string): Promise<CheckoutStatusResponse> => {
     const res = await apiClient.post<{ data?: CheckoutStatusResponse } | CheckoutStatusResponse>(
       `/checkout-sessions/${orderId}/refresh`,
       {}
     );
     return 'data' in res.data && res.data.data ? res.data.data : (res.data as CheckoutStatusResponse);
+  },
+
+  verifyGooglePlayPurchase: async (productId: string, purchaseToken: string, orderId?: string): Promise<any> => {
+    const res = await apiClient.post(
+      '/billing/google-play/verify',
+      { productId, purchaseToken, orderId }
+    );
+    return 'data' in res.data && res.data.data ? res.data.data : res.data;
   },
 };

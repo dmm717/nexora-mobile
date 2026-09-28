@@ -13,6 +13,7 @@
  * to know which platform it's running on.
  */
 import { Platform } from 'react-native';
+import { logger } from '@/services/logger';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 // Web services (always importable — they guard with Platform.OS checks internally)
@@ -177,8 +178,8 @@ function useInterviewAudioWeb(
           onResult: (transcript: string) => {
             onTranscriptionComplete(transcript);
           },
-          onError: (err: unknown) => {
-            // console.warn('Web speech error:', err);
+          onError: (err: any) => {
+            logger.warn('Web speech error:', { error: err?.message || err });
             setIsRecording(false);
           },
           onEnd: () => {

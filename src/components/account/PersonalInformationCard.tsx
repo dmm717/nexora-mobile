@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { View, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+import { logger } from '@/services/logger';
 
 import { userApi } from '@/api/user.api';
 import { resumesApi } from '@/api/resumes.api';
@@ -79,7 +80,7 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
             if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) {
               Alert.alert('Lỗi', 'Chỉ hỗ trợ định dạng ảnh JPEG, PNG hoặc WebP.');
               setIsUploadingAvatar(false);
-              try { if (currentUri) await FileSystem.deleteAsync(currentUri, { idempotent: true }); } catch {}
+              try { if (currentUri) await FileSystem.deleteAsync(currentUri, { idempotent: true }); } catch (err: any) { logger.warn('Cleanup failed', { error: err?.message || err }); }
               return;
             }
 
@@ -90,7 +91,7 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
             if (size > MAX_FILE_SIZE) {
               Alert.alert('Lỗi', 'Kích thước ảnh không được vượt quá 5MB.');
               setIsUploadingAvatar(false);
-              try { if (currentUri) await FileSystem.deleteAsync(currentUri, { idempotent: true }); } catch {}
+              try { if (currentUri) await FileSystem.deleteAsync(currentUri, { idempotent: true }); } catch (err: any) { logger.warn('Cleanup failed', { error: err?.message || err }); }
               return;
             }
 
@@ -111,7 +112,7 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
               if (currentUri) {
                 await FileSystem.deleteAsync(currentUri, { idempotent: true });
               }
-            } catch (err) {}
+            } catch (err: any) { logger.warn('Failed to delete temp avatar file', { error: err?.message || err }); }
           }
         }
       }

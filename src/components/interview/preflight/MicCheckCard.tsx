@@ -8,6 +8,7 @@ import { Spacing, Colors } from '@/constants/theme';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import * as FileSystem from 'expo-file-system';
 import { useAudioRecorder, useAudioRecorderState, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio';
+import { logger } from '@/services/logger';
 
 export const MicCheckCard = memo(({ colors, onModeChange }: { colors: any; onModeChange?: (mode: 'voice' | 'text') => void }) => {
   const [micStatus, setMicStatus] = useState<'idle' | 'testing' | 'ready' | 'blocked'>('idle');
@@ -79,7 +80,7 @@ export const MicCheckCard = memo(({ colors, onModeChange }: { colors: any; onMod
               if (recorder.uri) {
                 await FileSystem.deleteAsync(recorder.uri, { idempotent: true });
               }
-            } catch {}
+            } catch (err: any) { logger.warn('Failed mic stop', { error: err?.message || err }); }
             setMicStatus('ready');
             onModeChange?.('voice');
           }, 3000);
@@ -88,7 +89,8 @@ export const MicCheckCard = memo(({ colors, onModeChange }: { colors: any; onMod
           onModeChange?.('text');
         }
       }
-    } catch {
+    } catch (err: any) {
+      logger.warn('Failed mic check', { error: err?.message || err });
       setMicStatus('blocked');
       onModeChange?.('text');
     }

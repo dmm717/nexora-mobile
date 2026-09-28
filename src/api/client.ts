@@ -1,4 +1,5 @@
 import { tokenStorage } from '@/services/storage';
+import { generateIdempotencyKey } from '../utils/uuid';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiErrorResponse, AppError } from './types';
 import { toast } from '@/components/ui/toast/ToastProvider';
@@ -11,6 +12,10 @@ if (!API_BASE_URL) {
   throw new Error('Missing EXPO_PUBLIC_API_URL environment variable. Check your .env setup.');
 }
 
+if (!__DEV__ && !API_BASE_URL.startsWith('https://')) {
+  throw new Error('SECURITY: API_BASE_URL must use https:// in production.');
+}
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -20,7 +25,6 @@ export const apiClient = axios.create({
   timeout: 30000,
 });
 
-import { generateIdempotencyKey } from '../utils/uuid';
 
 // Idempotency Key generator for mutation operations
 export function createIdempotencyKey(): string {
@@ -93,27 +97,49 @@ apiClient.interceptors.response.use(
 
     // Observability Logging (skip expected transient polling status 409)
     if (!isReportProcessing) {
-      logger.error(`API Error [${error.config?.method?.toUpperCase() || 'HTTP'}] ${error.config?.url}`, error, {
+      // SECURITY (Phase 4.1): Scrub PII from error object before sending to Sentry
+      // Must preserve instanceof Error for proper Sentry exception capturing
+      const safeError = new Error(error.message);
+      safeError.name = error.name;
+      safeError.stack = error.stack;
+      
+      const safeConfig = error.config ? { ...error.config, data: '[Filtered PII]' } : undefined;
+      if (safeConfig?.headers) {
+        safeConfig.headers = { ...safeConfig.headers } as any;
+        delete safeConfig.headers['Authorization'];
+        delete safeConfig.headers['Cookie'];
+        delete safeConfig.headers['Idempotency-Key'];
+      }
+      
+      const safeResponse = error.response ? { ...error.response, data: '[Filtered PII]' } : undefined;
+      
+      (safeError as any).config = safeConfig;
+      (safeError as any).response = safeResponse;
+      (safeError as any).isAxiosError = error.isAxiosError;
+
+      logger.error(`API Error [${error.config?.method?.toUpperCase() || 'HTTP'}] ${error.config?.url}`, safeError, {
         requestId,
         code: errorCode,
         status: error.response?.status,
       });
     }
 
+    const reqIdSuffix = requestId ? ` (ReqID: ${requestId.substring(0, 8)})` : '';
+    
     // Auto-trigger Toast for API failures (displaying ONLY Vietnamese message, NO raw error codes)
     // Skip toast for transient polling status (409 INTERVIEW_REPORT_PROCESSING)
     if (isReportProcessing) {
       // Do not trigger toast error for expected report processing polling state
     } else if (!error.response) {
-      toast.error('Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.');
+      toast.error(`Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.${reqIdSuffix}`);
     } else if (error.response.status === 401) {
       // Handled via refresh flow below
     } else if (error.response.status === 429) {
-      toast.warning('Hệ thống đang xử lý quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.');
+      toast.warning(`Hệ thống đang xử lý quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.${reqIdSuffix}`);
     } else if (error.response.status >= 500) {
-      toast.error('Máy chủ gặp sự cố tạm thời. Vui lòng thử lại sau.');
+      toast.error(`Máy chủ gặp sự cố tạm thời. Vui lòng thử lại sau.${reqIdSuffix}`);
     } else if (extractedMessage) {
-      toast.error(extractedMessage);
+      toast.error(`${extractedMessage}${reqIdSuffix}`);
     }
 
     // Xử lý 401 Unauthorized
@@ -146,13 +172,16 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call backend /auth/refresh with credentials (cookie nexora_refresh_token)
+        const rt = await tokenStorage.getRefreshToken();
+        const payload = rt ? { refreshToken: rt } : {};
+        // Call backend /auth/refresh with credentials (cookie nexora_refresh_token or body)
         const refreshResponse = await axios.post<{
-          data?: { accessToken: string };
+          data?: { accessToken: string; refreshToken?: string };
           accessToken?: string;
+          refreshToken?: string;
         }>(
           `${API_BASE_URL}/auth/refresh`,
-          {},
+          payload,
           {
             withCredentials: true,
             headers: { 'Content-Type': 'application/json' },
@@ -161,12 +190,17 @@ apiClient.interceptors.response.use(
 
         const newAccessToken =
           refreshResponse.data?.data?.accessToken || refreshResponse.data?.accessToken;
+        const newRefreshToken =
+          refreshResponse.data?.data?.refreshToken || refreshResponse.data?.refreshToken;
 
         if (!newAccessToken) {
           throw new Error('Failed to obtain new access token');
         }
 
         await tokenStorage.setAccessToken(newAccessToken);
+        if (newRefreshToken) {
+          await tokenStorage.setRefreshToken(newRefreshToken);
+        }
 
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;

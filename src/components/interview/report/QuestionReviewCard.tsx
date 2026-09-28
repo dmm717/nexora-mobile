@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, Radius } from '@/constants/theme';
 import { styles } from '@/styles/interview-report.styles';
+import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
+import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 export const QuestionReviewCard = React.memo(({
   review,
@@ -15,13 +17,21 @@ export const QuestionReviewCard = React.memo(({
   onPracticeAgain: (questionId: string) => void;
 }) => (
   <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-    <View style={styles.questionReviewHeader}>
-      <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-        <ThemedText style={styles.badgeText}>Câu #{review.sequence}</ThemedText>
+    <View style={[styles.questionReviewHeader, { justifyContent: 'space-between' }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, flex: 1 }}>
+        <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+          <ThemedText style={styles.badgeText}>Câu #{review.sequence}</ThemedText>
+        </View>
+        <View style={[styles.badge, { backgroundColor: colors.backgroundElement }]}>
+          <ThemedText style={[styles.badgeText, { color: colors.text }]}>{review.topic}</ThemedText>
+        </View>
+        <AIGeneratedLabel />
       </View>
-      <View style={[styles.badge, { backgroundColor: colors.backgroundElement }]}>
-        <ThemedText style={[styles.badgeText, { color: colors.text }]}>{review.topic}</ThemedText>
-      </View>
+      <ReportContentButton 
+        contentType="interview_report" 
+        contentId={review.questionId || `review-${review.sequence}`}
+        contentSnapshot={JSON.stringify(review)}
+      />
     </View>
 
     <ThemedText style={styles.questionTitle}>Q: {review.question}</ThemedText>

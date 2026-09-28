@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { normalizeStarEvaluation } from './StarBuilderUtils';
 import { Spacing } from '@/constants/theme';
 import { styles } from '@/styles/star-builder.styles';
+import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
 
 const StarEvaluationDetailsContent = React.memo(({
   evaluation,
@@ -35,8 +36,11 @@ const StarEvaluationDetailsContent = React.memo(({
             <ThemedText style={styles.scoreGaugeLabel}>/100</ThemedText>
           </View>
           <View style={{ flex: 1 }}>
-            <ThemedText style={[styles.evalScoreTitle, { color: '#065f46' }]}>Đánh Giá Cấu Trúc STAR</ThemedText>
-            <ThemedText style={[styles.evalScoreFeedback, { color: '#047857' }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' }}>
+              <ThemedText style={[styles.evalScoreTitle, { color: '#065f46' }]}>Đánh Giá Cấu Trúc STAR</ThemedText>
+              <AIGeneratedLabel />
+            </View>
+            <ThemedText style={[styles.evalScoreFeedback, { color: '#047857', marginTop: 4 }]}>
               {normEval.applicable
                 ? 'AI đã phân tích đầy đủ các thành phần bối cảnh, mục tiêu, hành động và kết quả trong câu trả lời.'
                 : 'Câu trả lời chưa đầy đủ thành phần STAR tiêu chuẩn.'}

@@ -1,3 +1,4 @@
+import { logger } from '@/services/logger';
 import { apiClient } from './client';
 import {
   AuthResponse,
@@ -40,8 +41,9 @@ export const authApi = {
   async logout(): Promise<void> {
     try {
       await apiClient.post('/auth/logout');
-    } catch {
-      // Ignore logout API failures gracefully
+    } catch (err: any) {
+      // Ignore logout API failures gracefully, but log for visibility
+      logger.warn('Logout API failed:', { error: err?.message || err });
     }
   },
 

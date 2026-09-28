@@ -14,6 +14,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { safeBack } from '@/utils/navigation';
+import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 export default function CVAnalysisDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,7 +42,18 @@ export default function CVAnalysisDetailScreen() {
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.safeArea}>
-        <AppScreenHeader title="Báo Cáo Phân Tích" fallbackRoute="/(tabs)/cv-jd" />
+        <AppScreenHeader 
+          title="Báo Cáo Phân Tích" 
+          fallbackRoute="/(tabs)/cv-jd" 
+          rightElement={
+            <ReportContentButton 
+              contentType="cv_analysis"
+              contentId={analysisId || 'unknown'}
+              iconSize={20}
+              color={colors.primary}
+            />
+          }
+        />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <CVAnalysisResultView

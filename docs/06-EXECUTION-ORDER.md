@@ -29,17 +29,17 @@ Trước khi code, phải hiểu rõ tại sao lại có đợt sửa lỗi này
 - [x] **Bước 1.7:** Rà soát và gỡ bỏ toàn bộ "nút bấm chết" trên mọi màn hình.
 
 ### Phase 2: Thanh toán Google Play - Lỗi P0 (Chi tiết tại `03-REMEDIATION-PLAN.md` - Mục Phase 2)
-- [ ] **Bước 2.0:** Chốt Business logic với team.
-- [ ] **Bước 2.1:** Cài đặt thư viện `expo-iap`.
-- [ ] **Bước 2.2:** Tạo Products (Các gói PRO) trên Google Play Console.
+- [x] **Bước 2.0:** Chốt Business logic với team.
+- [x] **Bước 2.1:** Cài đặt thư viện `expo-iap`.
+- [x] **Bước 2.2:** Tạo Products (Các gói PRO) trên Google Play Console.
 - [ ] **Bước 2.3:** Backend viết endpoint `/billing/google-play/verify` để verify Token.
-- [ ] **Bước 2.4:** Viết lại toàn bộ luồng mua (Client) bằng Google Play Billing, xóa luồng mở URL Web cũ.
-- [ ] **Bước 2.5:** Cập nhật Text "Chính sách thanh toán" trong App.
+- [x] **Bước 2.4:** Viết lại toàn bộ luồng mua (Client) bằng Google Play Billing, xóa luồng mở URL Web cũ.
+- [x] **Bước 2.5:** Cập nhật Text "Chính sách thanh toán" trong App.
 
 ### Phase 3: Pháp lý & Quyền dữ liệu (Chi tiết tại `03-REMEDIATION-PLAN.md` - Mục Phase 3)
-- [ ] **Bước 3.1:** Thêm cơ chế "Báo cáo nội dung AI" ở 9 màn hình khác nhau (bắt buộc).
+- [x] **Bước 3.1:** Thêm cơ chế "Báo cáo nội dung AI" ở 9 màn hình khác nhau (bắt buộc).
 - [x] **Bước 3.2:** Hoàn thiện luồng xóa tài khoản thật sự (Bao gồm xây dựng web URL Xóa tài khoản).
-- [ ] **Bước 3.3:** Viết lại nội dung "Chính sách & Điều khoản" trên App cho khớp với chức năng đã cắt giảm/sửa đổi.
+- [x] **Bước 3.3:** Viết lại nội dung "Chính sách & Điều khoản" trên App cho khớp với chức năng đã cắt giảm/sửa đổi.
 
 ### Phase 4: Sửa lỗ hổng Bảo Mật P1 (Chi tiết tại `03-REMEDIATION-PLAN.md` - Mục Phase 4)
 - [x] **Bước 4.1 & 4.2:** Bọc `__DEV__` cho các console log, tránh rò rỉ token/keys ra Logcat.
@@ -55,13 +55,13 @@ Trước khi code, phải hiểu rõ tại sao lại có đợt sửa lỗi này
 - [x] **Bước 4.12:** Giới hạn hàng đợi và cấu trúc dữ liệu cho Event Analytics (Gỡ bỏ Math.random và các logic rác).
 
 ### Phase 5: Hardening & Kiểm thử (Chi tiết tại `03-REMEDIATION-PLAN.md` - Mục Phase 5)
-- [ ] **Bước 5.1:** Cấu hình chuẩn `expo-build-properties` (minify code, chặn cleartext).
-- [ ] **Bước 5.2:** Test app trên Emulator Android 15 để xác nhận tuân thủ chuẩn `16 KB page size`.
-- [ ] **Bước 5.3:** Dọn dẹp các thư viện thừa (ví dụ Lottie) và nén ảnh.
-- [ ] **Bước 5.4:** Cập nhật Dependency để triệt tiêu lỗ hổng (CVE).
-- [ ] **Bước 5.5:** Tối ưu hóa Polling (Hoặc cài SignalR) để tránh Spam Request.
-- [ ] **Bước 5.6:** Dọn dẹp Permissions trong `AndroidManifest` (Thêm danh sách Blocked).
-- [ ] **Bước 5.7 & 5.8:** Dựng hạ tầng Unit Test với Jest và sửa lại config Version Code tự động.
+- [x] **Bước 5.1:** Cấu hình chuẩn `expo-build-properties` (minify code, chặn cleartext).
+- [x] **Bước 5.2:** Test app trên Emulator Android 15 để xác nhận tuân thủ chuẩn `16 KB page size`.
+- [x] **Bước 5.3:** Dọn dẹp các thư viện thừa (ví dụ Lottie) và nén ảnh.
+- [x] **Bước 5.4:** Cập nhật Dependency để triệt tiêu lỗ hổng (CVE).
+- [x] **Bước 5.5:** Tối ưu hóa Polling (Hoặc cài SignalR) để tránh Spam Request.
+- [x] **Bước 5.6:** Dọn dẹp Permissions trong `AndroidManifest` (Thêm danh sách Blocked).
+- [x] **Bước 5.7 & 5.8:** Dựng hạ tầng Unit Test với Jest và sửa lại config Version Code tự động.
 - [ ] **Bước 5.9:** Rà soát lần cuối (Chuyển qua BƯỚC 3 & 4 của lộ trình này).
 
 ---

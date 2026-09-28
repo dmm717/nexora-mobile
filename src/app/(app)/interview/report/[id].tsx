@@ -21,6 +21,7 @@ import { ScoreBadgeCard } from '@/components/interview/report/ScoreBadgeCard';
 import { ActionPlanSection } from '@/components/interview/report/ActionPlanSection';
 import { QuestionReviewCard } from '@/components/interview/report/QuestionReviewCard';
 import { PracticeAgainModal } from '@/components/interview/report/PracticeAgainModal';
+import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 const PRACTICE_REASONS = [
   { id: 'repeat_question', label: 'Luyện lại câu hỏi này (Repeat Question)' },
@@ -188,6 +189,10 @@ export default function ReportScreen() {
           fallbackRoute="/(tabs)/interview"
           rightElement={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <ReportContentButton 
+                contentType="interview_report" 
+                contentId={report.id || id} 
+              />
               <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)} style={{ padding: 6 }}>
                 <Ionicons name="home-outline" size={22} color={colors.primary} />
               </TouchableOpacity>
