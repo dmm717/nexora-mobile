@@ -12,11 +12,19 @@ import { useRouter } from 'expo-router';
 export const LoadingReportState = React.memo(({
   colors,
   interview,
+  onReload,
 }: {
   colors: any;
   interview: any;
+  onReload?: () => void;
 }) => {
   const router = useRouter();
+  const [showReload, setShowReload] = React.useState(false);
+  
+  React.useEffect(() => {
+    const timer = setTimeout(() => setShowReload(true), 15000);
+    return () => clearTimeout(timer);
+  }, []);
   
   return (
     <ThemedView style={styles.container}>
@@ -57,6 +65,24 @@ export const LoadingReportState = React.memo(({
                 <ThemedText style={{ fontSize: 12, opacity: 0.7, textAlign: 'center' }}>
                   Đã xử lý: {interview.evaluationProgress.ready} / {interview.evaluationProgress.total} câu hỏi
                 </ThemedText>
+              </View>
+            )}
+
+            {showReload && onReload && (
+              <View style={{ marginTop: Spacing.four, width: '100%' }}>
+                <TouchableOpacity
+                  onPress={onReload}
+                  style={{
+                    backgroundColor: colors.primary + '20',
+                    padding: Spacing.three,
+                    borderRadius: Radius.md,
+                    alignItems: 'center',
+                  }}
+                >
+                  <ThemedText style={{ color: colors.primary, fontWeight: '600' }}>
+                    Tải lại thủ công
+                  </ThemedText>
+                </TouchableOpacity>
               </View>
             )}
           </View>

@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import Animated, { FadeOut } from 'react-native-reanimated';
+import { validateEmail, validatePassword } from '@/utils/validation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AppError } from '@/api/types';
 import { authApi } from '@/api/auth.api';
@@ -139,22 +140,6 @@ export default function LoginScreen() {
     },
   });
 
-  const validatePassword = (pass: string) => {
-    if (pass.length < 8) return 'Mật khẩu phải có ít nhất 8 ký tự';
-    if (!/[A-Z]/.test(pass)) return 'Mật khẩu phải chứa ít nhất một chữ viết hoa';
-    if (!/[a-z]/.test(pass)) return 'Mật khẩu phải chứa ít nhất một chữ viết thường';
-    if (!/[0-9]/.test(pass)) return 'Mật khẩu phải chứa ít nhất một chữ số';
-    if (!/[^a-zA-Z0-9]/.test(pass)) return 'Mật khẩu phải chứa ít nhất một ký tự đặc biệt';
-    return null;
-  };
-
-  const validateEmail = (emailStr: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailStr)) {
-      return 'Vui lòng nhập định dạng email hợp lệ';
-    }
-    return null;
-  };
 
   const handleLogin = () => {
     if (!email.trim() || !password.trim()) {
@@ -203,7 +188,6 @@ export default function LoginScreen() {
     }
     sendRequestMutation.mutate();
   };
-
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>

@@ -9,7 +9,6 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.nexora.app",
-      "buildNumber": "1.0.0",
       "icon": "./assets/images/icon.png",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Nexora cần quyền truy cập microphone để bạn thực hành phỏng vấn qua giọng nói."
@@ -17,12 +16,18 @@
     },
     "android": {
       "package": "com.nexora.app",
-      "versionCode": 1,
       "permissions": [],
       "blockedPermissions": [
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.READ_CONTACTS"
+        "android.permission.READ_CONTACTS",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_PHONE_STATE",
+        "android.permission.QUERY_ALL_PACKAGES",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.RECEIVE_BOOT_COMPLETED"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -68,9 +73,16 @@
         "expo-build-properties",
         {
           "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
             "usesCleartextTraffic": false,
             "networkInspector": false,
-            "enableMinifyInReleaseBuilds": true
+            "extraProguardRules": "-keep class com.dooboolab.RNIap.** { *; }\n-keep class com.android.billingclient.** { *; }\n-keep class com.swmansion.reanimated.** { *; }"
+          },
+          "ios": {
+            "networkInspector": false
           }
         }
       ],

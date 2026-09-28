@@ -62,7 +62,7 @@ Trước khi code, phải hiểu rõ tại sao lại có đợt sửa lỗi này
 - [x] **Bước 5.5:** Tối ưu hóa Polling (Hoặc cài SignalR) để tránh Spam Request.
 - [x] **Bước 5.6:** Dọn dẹp Permissions trong `AndroidManifest` (Thêm danh sách Blocked).
 - [x] **Bước 5.7 & 5.8:** Dựng hạ tầng Unit Test với Jest và sửa lại config Version Code tự động.
-- [ ] **Bước 5.9:** Rà soát lần cuối (Chuyển qua BƯỚC 3 & 4 của lộ trình này).
+- [x] **Bước 5.9:** Rà soát lần cuối (Chuyển qua BƯỚC 3 & 4 của lộ trình này).
 
 ---
 

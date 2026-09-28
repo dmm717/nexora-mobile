@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, Modal, Share } from 'react-native';
+import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, Modal, Share, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -43,11 +43,12 @@ export default function ReportScreen() {
   const [showPracticeModal, setShowPracticeModal] = useState(false);
 
   // Query interview lifecycle state
-  const { data: interview, isLoading: isInterviewLoading } = useQuery({
+  const { data: interview, isLoading: isInterviewLoading, refetch: refetchInterview } = useQuery({
     queryKey: ['interview', id],
     queryFn: () => interviewApi.get(id!),
     enabled: !!id,
     refetchInterval: (query) => {
+      if (AppState.currentState !== 'active') return false;
       const status = query.state.data?.status;
       const reportState = query.state.data?.reportState;
       const resultState = query.state.data?.resultState;
@@ -60,7 +61,9 @@ export default function ReportScreen() {
         status === 'evaluating' ||
         reportState === 'processing'
       ) {
-        return 3000;
+        const attempt = query.state.dataUpdateCount + query.state.fetchFailureCount;
+        if (attempt > 15) return false;
+        return Math.min(3000 * Math.pow(1.5, attempt), 30000);
       }
       return false;
     },
@@ -78,6 +81,7 @@ export default function ReportScreen() {
     enabled: !!id,
     retry: false,
     refetchInterval: (query) => {
+      if (AppState.currentState !== 'active') return false;
       const err = query.state.error as any;
       const isFailed =
         interview?.status === 'failed' ||
@@ -100,7 +104,9 @@ export default function ReportScreen() {
         (err?.status === 404 && (interview?.status === 'completing' || interview?.status === 'evaluating'));
 
       if (isProcessing) {
-        return 3000;
+        const attempt = query.state.dataUpdateCount + query.state.fetchFailureCount;
+        if (attempt > 15) return false;
+        return Math.min(3000 * Math.pow(1.5, attempt), 30000);
       }
       return false;
     },
@@ -173,7 +179,16 @@ export default function ReportScreen() {
       (!report && (isReportLoading || isInterviewLoading)));
 
   if (isProcessing) {
-    return <LoadingReportState colors={colors} interview={interview} />;
+    return (
+      <LoadingReportState 
+        colors={colors} 
+        interview={interview} 
+        onReload={() => {
+          refetchInterview();
+          refetchReport();
+        }}
+      />
+    );
   }
 
   if (isFailed || !report) {
