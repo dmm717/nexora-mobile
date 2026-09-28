@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { logger } from '@/services/logger';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { careerGoalsApi } from '@/api/career-goals.api';
-import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { CreateCareerGoalRequest } from '@/api/types';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';

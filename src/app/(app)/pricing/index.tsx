@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useIAP, PurchaseError, deepLinkToSubscriptions } from 'expo-iap';
+import { useIAP, deepLinkToSubscriptions } from 'expo-iap';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -30,7 +30,6 @@ import {
   formatFeatureAvailability,
   formatInterviewQuestionLimit,
   describePlanFeature,
-  getOrderStatusPresentation,
 } from '@/utils/billing-presentation';
 import { styles } from '@/styles/pricing.styles';
 

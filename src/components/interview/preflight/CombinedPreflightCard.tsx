@@ -1,12 +1,10 @@
 import React, { memo, useState } from 'react';
-import { View, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Platform } from 'react-native';
+import { View, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { styles } from '@/styles/interview-preflight.styles';
-import { Spacing, Colors } from '@/constants/theme';
-import { TouchableScale } from '@/components/ui/touchable-scale';
-import { INTERVIEW_TYPES, SENIORITIES, SESSION_DIFFICULTIES } from './constants';
+import { Spacing } from '@/constants/theme';
+import { SENIORITIES, SESSION_DIFFICULTIES } from './constants';
 
 export const CombinedPreflightCard = memo(({
   role,

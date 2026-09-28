@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, Modal, Share, AppState } from 'react-native';
+import { ScrollView, View, TouchableOpacity, Alert, Share, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -8,11 +8,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { interviewApi } from '@/api/interview.api';
-import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
-import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/interview-report.styles';
 
 import { LoadingReportState } from '@/components/interview/report/LoadingReportState';

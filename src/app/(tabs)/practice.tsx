@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, FlatList, ScrollView, View, ListRenderItemInfo, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { FlatList, ScrollView, View, ListRenderItemInfo, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';

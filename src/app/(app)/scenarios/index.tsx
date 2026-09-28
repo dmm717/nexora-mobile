@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, TextInput, RefreshControl, FlatList } from 'react-native';
+import { ActivityIndicator, ScrollView, View, TouchableOpacity, TextInput, RefreshControl, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -8,12 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { scenariosApi } from '@/api/scenarios.api';
-import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/scenarios.styles';
-import { safeBack } from '@/utils/navigation';
 
 const DIFFICULTIES = [
   { id: '', label: 'Tất cả' },

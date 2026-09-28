@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Spacing, Radius, Shadows } from '@/constants/theme';
+import { Spacing, Shadows } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   container: { flex: 1 },

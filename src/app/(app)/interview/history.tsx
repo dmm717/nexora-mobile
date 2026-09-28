@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, RefreshControl, TouchableOpacity, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, RefreshControl, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -8,11 +8,9 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { interviewApi } from '@/api/interview.api';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { Badge } from '@/components/ui/badge';
 import { TouchableScale } from '@/components/ui/touchable-scale';
-import { GlassCard as SurfaceCard } from '@/components/ui/glass-card';
 import { AmbientBackground as SolidBackground } from '@/components/ui/ambient-background';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';

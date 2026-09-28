@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView , Alert } from 'react-native';
 import { Colors, Typography, Spacing } from '@/constants/theme';
 import { logger } from '@/services/logger';
-import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 
 export class GlobalErrorBoundary extends React.Component<

@@ -7,12 +7,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
-  Platform,
 } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
 import { styles } from '@/styles/audio-speech-dock.styles';
 
 export interface AudioSpeechDockProps {

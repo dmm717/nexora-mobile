@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
 
-import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { resumeAnalysesApi } from '@/api/resume-analyses.api';
 import { CVAnalysisResultView } from '@/components/cv-analysis/CVAnalysisResultView';
@@ -13,7 +11,6 @@ import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
-import { safeBack } from '@/utils/navigation';
 import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 export default function CVAnalysisDetailScreen() {

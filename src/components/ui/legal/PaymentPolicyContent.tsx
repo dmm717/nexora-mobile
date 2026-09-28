@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Linking } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
-import { renderBullet, renderSectionHeader } from './LegalContentHelpers';
+import { renderSectionHeader } from './LegalContentHelpers';
 import { Spacing } from '@/constants/theme';
 
 export const PaymentPolicyContent = ({ colors, styles }: { colors: any, styles: any }) => (

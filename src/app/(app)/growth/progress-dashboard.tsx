@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, ScrollView, View, RefreshControl, TouchableOpacity } from 'react-native';
+import { ScrollView, View, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { growthApi } from '@/api/growth.api';
 import { profileApi } from '@/api/profile.api';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlassCard } from '@/components/ui/glass-card';
 import { SkeletonCard } from '@/components/ui/skeleton-loader';
@@ -18,7 +18,6 @@ import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { RadialScore } from '@/components/ui/radial-score';
 import { styles } from '@/styles/progress-dashboard.styles';
-import { safeBack } from '@/utils/navigation';
 import {
   getLocalizedRecommendationReason,
   getRecommendationDeepLink,

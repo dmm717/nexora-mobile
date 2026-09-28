@@ -1,10 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAudioRecorder, useAudioRecorderState, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio';
-import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
-import { memo, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, TextInput, TouchableOpacity, View, Platform } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { interviewApi } from '@/api/interview.api';
@@ -14,7 +11,7 @@ import { resumesApi } from '@/api/resumes.api';
 import { ExitConfirmationModal } from '@/components/interview/InterviewSubComponents';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';

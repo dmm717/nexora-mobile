@@ -1,11 +1,9 @@
-import React, { memo, useState } from 'react';
-import { View, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Platform } from 'react-native';
+import React, { memo } from 'react';
+import { View, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { styles } from '@/styles/interview-preflight.styles';
-import { Spacing, Colors } from '@/constants/theme';
-import { TouchableScale } from '@/components/ui/touchable-scale';
+import { Spacing } from '@/constants/theme';
 import { INTERVIEW_TYPES } from './constants';
 
 export const PreflightTypeCard = memo(({

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
@@ -62,7 +62,7 @@ export function ProductFeedbackCard() {
               <View style={cardStyles.starsInline}>
                 {[1, 2, 3, 4, 5].map((s) => (
                   <Ionicons
-                    key={s}
+                    key={`star-${s}`}
                     name={s <= myFeedback.rating ? 'star' : 'star-outline'}
                     size={16}
                     color={s <= myFeedback.rating ? '#f59e0b' : colors.cardBorder}
@@ -78,7 +78,7 @@ export function ProductFeedbackCard() {
 
             {myFeedback.comment ? (
               <ThemedText style={cardStyles.commentText} numberOfLines={2}>
-                "{myFeedback.comment}"
+                {"\""}{myFeedback.comment}{"\""}
               </ThemedText>
             ) : null}
 

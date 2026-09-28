@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, ScrollView, View, Alert, RefreshControl, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -11,7 +11,7 @@ import { logger } from '@/services/logger';
 import { ThemedText } from '@/components/themed-text';
 import { resumesApi } from '@/api/resumes.api';
 import { profileApi } from '@/api/profile.api';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlassCard } from '@/components/ui/glass-card';
 import { SkeletonCard } from '@/components/ui/skeleton-loader';
@@ -20,7 +20,6 @@ import { AmbientBackground } from '@/components/ui/ambient-background';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { EmptyStateCard } from '@/components/ui/empty-state-card';
-import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/resumes.styles';
 
 export default function ResumesScreen() {

@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, TouchableOpacity, Alert, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, View, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,12 +9,11 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { starApi } from '@/api/star.api';
 
-import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/star-builder.styles';
-import { safeBack } from '@/utils/navigation';
 import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 import { StarQuestionInputCard } from '@/components/star-builder/StarQuestionInputCard';

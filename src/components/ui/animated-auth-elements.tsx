@@ -8,7 +8,6 @@ import Animated, {
   withSpring,
   Easing,
 } from 'react-native-reanimated';
-import { ThemedText } from '@/components/themed-text';
 
 interface StaggeredTitleProps {
   text: string;

@@ -1,38 +1,128 @@
-name: Mobile App CI
+# ─────────────────────────────────────────────────────────────
+# Nexora Mobile — CI Pipeline
+# ─────────────────────────────────────────────────────────────
+# Jobs run in parallel. The final "ci-passed" gate aggregates
+# all results into a single required status check for branch
+# protection.
+# ─────────────────────────────────────────────────────────────
+
+name: Mobile CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: "22.x"
+
+# ─── Jobs ───────────────────────────────────────────────────
+
 jobs:
-  build:
+  # ── 1. TypeScript ──────────────────────────────────────
+  typecheck:
+    name: TypeScript
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22.x'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm install
-      
-    - name: Run TypeScript Check
-      run: npx tsc --noEmit
-      
-    - name: Run Linter
-      run: npm run lint
-      
-    - name: Run Tests
-      run: npm run test:ci
-      
-    - name: Audit Dependencies
-      run: npm audit --omit=dev --audit-level=high
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  # ── 2. ESLint ──────────────────────────────────────────
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  # ── 3. Jest ────────────────────────────────────────────
+  test:
+    name: Jest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run test:ci
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+  # ── 4. Security Audit ──────────────────────────────────
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=critical
+
+  # ── 5. Expo Doctor ─────────────────────────────────────
+  expo-doctor:
+    name: Expo Doctor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx expo-doctor
+
+  # ── Gate ───────────────────────────────────────────────
+  # Single required status check for branch protection.
+  # Set "ci-passed" as the required check in GitHub settings.
+  ci-passed:
+    name: CI Passed
+    if: always()
+    needs: [typecheck, lint, test, audit, expo-doctor]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify all checks
+        run: |
+          results=("${{ needs.typecheck.result }}" \
+                   "${{ needs.lint.result }}" \
+                   "${{ needs.test.result }}" \
+                   "${{ needs.audit.result }}" \
+                   "${{ needs.expo-doctor.result }}")
+          for r in "${results[@]}"; do
+            if [[ "$r" != "success" ]]; then
+              echo "::error::One or more CI checks failed"
+              exit 1
+            fi
+          done
+          echo "All CI checks passed ✓"

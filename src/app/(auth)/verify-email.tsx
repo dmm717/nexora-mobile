@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View, Image, ScrollView } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, View, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInUp, FadeInDown, Easing } from 'react-native-reanimated';
@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import { AppError } from '@/api/types';
 import { ThemedText } from '@/components/themed-text';
 import { MaterialInput } from '@/components/material-input';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { authApi } from '@/api/auth.api';
 import { TouchableScale } from '@/components/ui/touchable-scale';

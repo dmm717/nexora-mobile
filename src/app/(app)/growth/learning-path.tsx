@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, Alert, RefreshControl } from 'react-native';
+import { ActivityIndicator, ScrollView, View, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -8,14 +8,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { growthApi } from '@/api/growth.api';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlassCard } from '@/components/ui/glass-card';
 import { SkeletonCard } from '@/components/ui/skeleton-loader';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
-import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/learning-path.styles';
 
 import { getLocalizedCompetencyLabel } from '@/utils/competencyLocalization';

@@ -20,7 +20,7 @@ export const PracticeAgainModal = React.memo(({
   setPracticeReason: (reason: string) => void;
   practiceAgainMutation: any;
   onClose: () => void;
-  PRACTICE_REASONS: Array<{ id: string, label: string }>;
+  PRACTICE_REASONS: { id: string, label: string }[];
 }) => (
   <Modal visible={visible} transparent animationType="fade">
     <View style={styles.modalOverlay}>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, ScrollView, View, RefreshControl } from 'react-native';
+import { ActivityIndicator, ScrollView, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { profileApi } from '@/api/profile.api';
 import { useAuth } from '@/context/auth-context';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';

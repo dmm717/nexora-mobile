@@ -1,10 +1,8 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
-import { StyleSheet, View, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import { createContext, useContext, useState, useCallback, useRef, useEffect, FC, ReactNode } from 'react';
+import { StyleSheet, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
-import { Colors, Spacing } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -81,11 +79,8 @@ const TOAST_CONFIG: Record<
   },
 };
 
-export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [currentToast, setCurrentToast] = useState<(ToastOptions & { id: number }) | null>(null);
-  const colorScheme = useColorScheme();
-  const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
-  const colors = Colors[themeKey];
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hide = useCallback(() => {
@@ -108,7 +103,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   // Register static handler
-  React.useEffect(() => {
+  useEffect(() => {
     staticToastHandler = show;
     return () => {
       staticToastHandler = null;
@@ -121,7 +116,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <ToastContext.Provider value={{ show, hide }}>
       {children}
       {currentToast && (
-        <SafeAreaView style={[styles.safeContainer, { pointerEvents: 'box-none' }]}>
+        <SafeAreaView pointerEvents="box-none" style={styles.safeContainer}>
           <Animated.View
             entering={FadeInUp.duration(300).springify()}
             exiting={FadeOutUp.duration(200)}

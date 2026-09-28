@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, TextInput, ActivityIndicator, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { View, TextInput, ActivityIndicator, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { GlassCard as SurfaceCard } from '@/components/ui/glass-card';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { Badge } from '@/components/ui/badge';
-import { Spacing, Typography } from '@/constants/theme';
+import { Typography } from '@/constants/theme';
 import { ResumeView } from '@/api/types';
 import { styles } from './CVAnalysisForms.styles';
 

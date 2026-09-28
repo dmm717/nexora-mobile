@@ -31,14 +31,14 @@ export const TermsOfServiceContent = ({ colors, styles }: { colors: any, styles:
     <View style={styles.contentBlock}>
       {renderSectionHeader('4', 'Nội dung do AI tạo & Miễn trừ', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Tất cả nội dung đánh giá, nhận xét, điểm số, gợi ý STAR, lộ trình học tập, và phân tích CV trong Nexora AI đều được tạo tự động bởi mô hình AI. Nội dung này được đánh dấu rõ ràng với nhãn "AI Generated" tại nơi hiển thị. Kết quả AI chỉ mang tính chất tham khảo, không phải đánh giá của chuyên gia tuyển dụng thực tế.
+        Tất cả nội dung đánh giá, nhận xét, điểm số, gợi ý STAR, lộ trình học tập, và phân tích CV trong Nexora AI đều được tạo tự động bởi mô hình AI. Nội dung này được đánh dấu rõ ràng với nhãn &quot;AI Generated&quot; tại nơi hiển thị. Kết quả AI chỉ mang tính chất tham khảo, không phải đánh giá của chuyên gia tuyển dụng thực tế.
       </ThemedText>
     </View>
 
     <View style={styles.contentBlock}>
       {renderSectionHeader('5', 'Cơ chế báo cáo nội dung AI', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Nếu bạn phát hiện nội dung AI không phù hợp, xúc phạm, thiếu chính xác, phân biệt đối xử, hoặc vi phạm quyền riêng tư, bạn có thể báo cáo trực tiếp bằng cách nhấn nút "🚩 Báo cáo" ngay tại vị trí nội dung đó.
+        Nếu bạn phát hiện nội dung AI không phù hợp, xúc phạm, thiếu chính xác, phân biệt đối xử, hoặc vi phạm quyền riêng tư, bạn có thể báo cáo trực tiếp bằng cách nhấn nút &quot;🚩 Báo cáo&quot; ngay tại vị trí nội dung đó.
       </ThemedText>
       <View style={styles.bulletList}>
         {renderBullet('Mỗi báo cáo được ghi nhận với mã định danh riêng và gửi tới đội ngũ kiểm duyệt.', colors, styles)}

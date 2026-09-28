@@ -1,13 +1,13 @@
-import React from 'react';
+import { memo } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing, Radius } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { styles } from '@/styles/interview-report.styles';
 import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
 import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
-export const QuestionReviewCard = React.memo(({
+export const QuestionReviewCard = memo(function QuestionReviewCard({
   review,
   colors,
   onPracticeAgain,
@@ -15,7 +15,8 @@ export const QuestionReviewCard = React.memo(({
   review: any;
   colors: any;
   onPracticeAgain: (questionId: string) => void;
-}) => (
+}) {
+  return (
   <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
     <View style={[styles.questionReviewHeader, { justifyContent: 'space-between' }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, flex: 1 }}>
@@ -86,7 +87,7 @@ export const QuestionReviewCard = React.memo(({
                 </View>
                 {isDetected && item.comp?.evidence ? (
                   <View style={{ backgroundColor: colors.background, padding: 6, borderRadius: 4, marginTop: 4 }}>
-                    <ThemedText style={{ fontSize: 11, fontStyle: 'italic', color: colors.textSecondary }}>"{item.comp.evidence}"</ThemedText>
+                    <ThemedText style={{ fontSize: 11, fontStyle: 'italic', color: colors.textSecondary }}>{"\""}{item.comp.evidence}{"\""}</ThemedText>
                   </View>
                 ) : (
                   <ThemedText style={{ fontSize: 11, color: '#92400e', marginTop: 4 }}>
@@ -123,7 +124,7 @@ export const QuestionReviewCard = React.memo(({
       <View style={{ marginTop: Spacing.one }}>
         <ThemedText style={[styles.subTitle, { color: colors.accent }]}>💪 Điểm mạnh:</ThemedText>
         {review.strengths.map((s: string, sIdx: number) => (
-          <ThemedText key={sIdx} style={styles.bulletText}>• {s}</ThemedText>
+          <ThemedText key={`strength-${sIdx}`} style={styles.bulletText}>• {s}</ThemedText>
         ))}
       </View>
     )}
@@ -132,7 +133,7 @@ export const QuestionReviewCard = React.memo(({
       <View style={{ marginTop: Spacing.one }}>
         <ThemedText style={[styles.subTitle, { color: colors.warning }]}>🚀 Cần cải thiện:</ThemedText>
         {review.improvements.map((imp: string, impIdx: number) => (
-          <ThemedText key={impIdx} style={styles.bulletText}>• {imp}</ThemedText>
+          <ThemedText key={`improvement-${impIdx}`} style={styles.bulletText}>• {imp}</ThemedText>
         ))}
       </View>
     )}
@@ -200,4 +201,7 @@ export const QuestionReviewCard = React.memo(({
       </ThemedText>
     </TouchableOpacity>
   </View>
-));
+  );
+});
+
+QuestionReviewCard.displayName = 'QuestionReviewCard';

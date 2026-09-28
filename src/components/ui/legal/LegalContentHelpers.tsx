@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing, Typography } from '@/constants/theme';
 
 export const renderBullet = (text: string, colors: any, styles: any) => (
   <View style={styles.bulletRow}>
