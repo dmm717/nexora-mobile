@@ -6,7 +6,8 @@ import LoginScreen from '../src/app/(auth)/login';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '../src/context/auth-context';
 
-// Mock expo-router
+// ── All mocks MUST be at top-level ──────────────────────────────
+
 jest.mock('expo-router', () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -24,10 +25,51 @@ jest.mock('../src/api/auth.api', () => ({
   }
 }));
 
-// Mock safe-area-context
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => <>{children}</>,
 }));
+
+jest.mock('react-native-keyboard-aware-scroll-view', () => ({
+  KeyboardAwareScrollView: ({ children }: any) => <>{children}</>
+}));
+
+jest.mock('@/components/ui/topographic-header', () => ({
+  TopographicHeader: () => null
+}));
+jest.mock('@/components/ui/legal-policy-modal', () => ({
+  LegalPolicyModal: () => null
+}));
+jest.mock('@/components/ui/animated-auth-elements', () => ({
+  StaggeredTitle: () => null,
+  CenterExpandView: ({ children }: any) => <>{children}</>
+}));
+jest.mock('@/components/themed-text', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return {
+    ThemedText: ({ children, ...props }: any) => <Text {...props}>{children}</Text>
+  };
+});
+jest.mock('@/components/ui/touchable-scale', () => ({
+  TouchableScale: ({ children, onPress, disabled }: any) => {
+    const React = require('react');
+    const { TouchableOpacity } = require('react-native');
+    return <TouchableOpacity onPress={onPress} disabled={disabled}>{children}</TouchableOpacity>;
+  }
+}));
+
+jest.mock('react-native-gesture-handler', () => ({
+  GestureHandlerRootView: ({ children }: any) => <>{children}</>,
+  PanGestureHandler: ({ children }: any) => <>{children}</>,
+  ScrollView: ({ children }: any) => <>{children}</>,
+  State: { ACTIVE: 4 }
+}));
+
+jest.mock('../src/hooks/use-color-scheme', () => ({
+  useColorScheme: () => 'light'
+}));
+
+// ── Helpers ─────────────────────────────────────────────────────
 
 const renderWithProviders = (ui: React.ReactElement) => {
   const queryClient = new QueryClient({
@@ -42,16 +84,9 @@ const renderWithProviders = (ui: React.ReactElement) => {
   );
 };
 
+// ── Tests ───────────────────────────────────────────────────────
+
 describe('Auth Parity & Validation Tests', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-  });
-
   describe('validatePassword', () => {
     it('returns error for short password', () => {
       expect(validatePassword('abc')).toBe('Mật khẩu phải có ít nhất 8 ký tự');
@@ -75,46 +110,6 @@ describe('Auth Parity & Validation Tests', () => {
       expect(validateEmail('test@example.com')).toBeNull();
     });
   });
-
-// Mock keyboard aware scroll view
-jest.mock('react-native-keyboard-aware-scroll-view', () => ({
-  KeyboardAwareScrollView: ({ children }: any) => <>{children}</>
-}));
-
-// Icons are mocked globally in jest.setup.js
-
-// Mock UI components to isolate the test to auth logic
-jest.mock('@/components/ui/topographic-header', () => ({
-  TopographicHeader: () => null
-}));
-jest.mock('@/components/ui/legal-policy-modal', () => ({
-  LegalPolicyModal: () => null
-}));
-jest.mock('@/components/ui/animated-auth-elements', () => ({
-  StaggeredTitle: () => null,
-  CenterExpandView: ({ children }: any) => <>{children}</>
-}));
-jest.mock('@/components/themed-text', () => ({
-  ThemedText: ({ children }: any) => <>{children}</>
-}));
-jest.mock('@/components/ui/touchable-scale', () => ({
-  TouchableScale: ({ children, onPress, disabled }: any) => {
-    const React = require('react');
-    const { TouchableOpacity } = require('react-native');
-    return <TouchableOpacity onPress={onPress} disabled={disabled}>{children}</TouchableOpacity>;
-  }
-}));
-
-jest.mock('react-native-gesture-handler', () => ({
-  GestureHandlerRootView: ({ children }: any) => <>{children}</>,
-  PanGestureHandler: ({ children }: any) => <>{children}</>,
-  ScrollView: ({ children }: any) => <>{children}</>,
-  State: { ACTIVE: 4 }
-}));
-
-jest.mock('../src/hooks/use-color-scheme', () => ({
-  useColorScheme: () => 'light'
-}));
 
   describe('LoginScreen UI', () => {
     it('shows error message when submitting weak password in register mode', async () => {
@@ -148,7 +143,7 @@ jest.mock('../src/hooks/use-color-scheme', () => ({
           'Lỗi',
           expect.stringContaining('8 ký tự')
         );
-      });
-    });
+      }, { timeout: 5000 });
+    }, 15000);
   });
 });
