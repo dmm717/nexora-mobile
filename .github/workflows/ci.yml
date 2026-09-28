@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npx tsc --noEmit
 
   # ── 2. ESLint ──────────────────────────────────────────
@@ -49,7 +49,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npm run lint
 
   # ── 3. Jest ────────────────────────────────────────────
@@ -63,7 +63,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npm run test:ci
 
       - name: Upload coverage report
@@ -85,7 +85,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npm audit --omit=dev --audit-level=critical
 
   # ── 5. Expo Doctor ─────────────────────────────────────
@@ -99,7 +99,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npx expo-doctor
 
   # ── Gate ───────────────────────────────────────────────
