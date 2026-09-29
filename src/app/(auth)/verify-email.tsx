@@ -14,6 +14,7 @@ import { TouchableScale } from '@/components/ui/touchable-scale';
 import { GlassCard } from '@/components/ui/glass-card';
 import { AmbientBackground } from '@/components/ui/ambient-background';
 import { styles } from '@/styles/verify-email.styles';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function VerifyEmailScreen() {
   const { email: emailParam } = useLocalSearchParams<{ email: string }>();
@@ -35,9 +36,9 @@ export default function VerifyEmailScreen() {
     },
     onError: (error) => {
       if (error instanceof AppError) {
-        Alert.alert('Xác thực thất bại', `[${error.code}] ${error.message}`);
+        toast.error(`[${error.code}] ${error.message}`);
       } else {
-        Alert.alert('Xác thực thất bại', 'Có lỗi xảy ra khi xác thực tài khoản');
+        toast.error('Có lỗi xảy ra khi xác thực tài khoản');
       }
     },
   });
@@ -46,20 +47,20 @@ export default function VerifyEmailScreen() {
     mutationFn: () =>
       authApi.resendVerification({ email: email.trim() }),
     onSuccess: () => {
-      Alert.alert('Thành công', 'Mã xác thực mới đã được gửi đến email của bạn.');
+      toast.success('Mã xác thực mới đã được gửi đến email của bạn.');
     },
     onError: (error) => {
       if (error instanceof AppError) {
-        Alert.alert('Gửi lại thất bại', `[${error.code}] ${error.message}`);
+        toast.error(`[${error.code}] ${error.message}`);
       } else {
-        Alert.alert('Gửi lại thất bại', 'Có lỗi xảy ra khi yêu cầu mã xác thực mới');
+        toast.error('Có lỗi xảy ra khi yêu cầu mã xác thực mới');
       }
     },
   });
 
   const handleVerify = () => {
     if (!email.trim() || !code.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập Email và Mã xác thực');
+      toast.error('Vui lòng nhập Email và Mã xác thực');
       return;
     }
     verifyMutation.mutate();
@@ -67,7 +68,7 @@ export default function VerifyEmailScreen() {
 
   const handleResend = () => {
     if (!email.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập Email để nhận lại mã');
+      toast.error('Vui lòng nhập Email để nhận lại mã');
       return;
     }
     resendMutation.mutate();

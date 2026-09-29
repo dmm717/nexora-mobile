@@ -1,5 +1,5 @@
 /**
- * tts.native.ts — Native TTS via Azure REST API + expo-audio playback.
+ * tts.ts — Native TTS via Azure REST API + expo-audio playback.
  *
  * Flow:
  * 1. Build SSML payload.

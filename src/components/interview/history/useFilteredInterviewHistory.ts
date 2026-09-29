@@ -27,9 +27,9 @@ export function useFilteredInterviewHistory(rawData: any, filter: FilterType, pa
         ? completedItems
         : allItems;
 
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 5;
     const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
-    const paginatedItems = filteredList.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const paginatedItems = filteredList.slice(0, page * PAGE_SIZE);
     const hasNextPage = page < totalPages;
 
     return {

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView , Alert } from '
 import { Colors, Typography, Spacing } from '@/constants/theme';
 import { logger } from '@/services/logger';
 import { useRouter } from 'expo-router';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export class GlobalErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -38,7 +39,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
 
   const handleReport = () => {
     logger.error('App Crashed (User Reported)', error);
-    Alert.alert('Đã gửi báo cáo', 'Cảm ơn bạn đã thông báo sự cố cho chúng tôi.');
+    toast.success('Cảm ơn bạn đã thông báo sự cố cho chúng tôi.');
   };
 
   const handleGoHome = () => {

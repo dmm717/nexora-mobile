@@ -1,5 +1,5 @@
 /**
- * speech.native.ts — Native STT: expo-audio recording + Azure STT REST API.
+ * speech.ts — Native STT: expo-audio recording + Azure STT REST API.
  *
  * Architecture:
  * - useAudioRecorder() is a React hook → must live inside a component.

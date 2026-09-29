@@ -21,6 +21,7 @@ import { ActionPlanSection } from '@/components/interview/report/ActionPlanSecti
 import { QuestionReviewCard } from '@/components/interview/report/QuestionReviewCard';
 import { PracticeAgainModal } from '@/components/interview/report/PracticeAgainModal';
 import { ReportContentButton } from '@/components/moderation/ReportContentButton';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 const PRACTICE_REASONS = [
   { id: 'repeat_question', label: 'Luyện lại câu hỏi này (Repeat Question)' },
@@ -140,7 +141,7 @@ export default function ReportScreen() {
       router.replace(`/(app)/interview/${data.id}` as any);
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể tạo phiên luyện tập lại. Vui lòng thử lại.');
+      toast.error(err.message || 'Không thể tạo phiên luyện tập lại. Vui lòng thử lại.');
     },
   });
 
@@ -153,10 +154,10 @@ export default function ReportScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interview', id] });
       queryClient.invalidateQueries({ queryKey: ['interview-report', id] });
-      Alert.alert('Đang gửi yêu cầu', 'Hệ thống đang tiến hành chấm điểm lại báo cáo...');
+      toast.info('Hệ thống đang tiến hành chấm điểm lại báo cáo...');
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể yêu cầu chấm điểm lại.');
+      toast.error(err.message || 'Không thể yêu cầu chấm điểm lại.');
     },
   });
 

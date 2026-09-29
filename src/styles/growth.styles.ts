@@ -1,15 +1,18 @@
 import { StyleSheet } from 'react-native';
-import { Spacing, Radius } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   header: {
-    padding: Spacing.four,
-    paddingBottom: Spacing.two,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
+    borderBottomWidth: 1,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: Typography.sizes.md,
+    fontFamily: Typography.fontFamily.bold,
     letterSpacing: -0.5,
   },
   headerSub: {

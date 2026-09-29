@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Radius, Spacing } from '@/constants/theme';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export const AccountPendingDeletionBanner = () => {
   const insets = useSafeAreaInsets();
@@ -29,11 +30,11 @@ export const AccountPendingDeletionBanner = () => {
   const cancelMutation = useMutation({
     mutationFn: () => userApi.cancelDeletionRequest(),
     onSuccess: () => {
-      Alert.alert('Thành công', 'Đã hủy yêu cầu xóa tài khoản. Dữ liệu của bạn được an toàn.');
+      toast.success('Đã hủy yêu cầu xóa tài khoản. Dữ liệu của bạn được an toàn.');
       queryClient.setQueryData(['deletion-request'], null);
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err?.message || 'Không thể hủy yêu cầu xóa. Vui lòng thử lại sau.');
+      toast.error(err?.message || 'Không thể hủy yêu cầu xóa. Vui lòng thử lại sau.');
     },
   });
 
@@ -44,7 +45,7 @@ export const AccountPendingDeletionBanner = () => {
   const scheduledDate = request.scheduledHardDeleteAt ? new Date(request.scheduledHardDeleteAt).toLocaleDateString('vi-VN') : 'Sắp tới';
 
   return (
-    <View style={[styles.bannerContainer, { paddingTop: Math.max(insets.top, Spacing.two) }]}>
+    <View style={[styles.bannerContainer, { paddingTop: Spacing.three }]}>
       <View style={styles.contentRow}>
         <Ionicons name="warning" size={24} color="#7f1d1d" style={styles.icon} />
         <View style={styles.textContainer}>
@@ -72,11 +73,11 @@ export const AccountPendingDeletionBanner = () => {
 const styles = StyleSheet.create({
   bannerContainer: {
     backgroundColor: '#fef2f2',
-    borderBottomWidth: 1,
-    borderBottomColor: '#fca5a5',
+    borderWidth: 1,
+    borderColor: '#fca5a5',
     paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.three,
-    zIndex: 9999, // ensures it stays on top of stack
+    borderRadius: Radius.lg,
   },
   contentRow: {
     flexDirection: 'row',

@@ -7,6 +7,7 @@ import { userApi } from '@/api/user.api';
 import { ThemedText } from '@/components/themed-text';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { Radius, Shadows, Spacing } from '@/constants/theme';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 interface AccountDeletionModalProps {
   visible: boolean;
@@ -29,7 +30,7 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
       setDeleteScheduledAt(scheduledAt);
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err?.message || 'Không thể gửi yêu cầu xóa tài khoản. Vui lòng thử lại sau.');
+      toast.error(err?.message || 'Không thể gửi yêu cầu xóa tài khoản. Vui lòng thử lại sau.');
       onClose();
     },
   });
@@ -40,7 +41,7 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
 
   const handleConfirm = () => {
     if (confirmText !== 'XÓA' && confirmText !== userEmail) {
-      Alert.alert('Lỗi xác nhận', 'Vui lòng nhập chính xác từ "XÓA" hoặc email của bạn để xác nhận.');
+      toast.error('Vui lòng nhập chính xác từ "XÓA" hoặc email của bạn để xác nhận.');
       return;
     }
     deleteAccountMutation.mutate();

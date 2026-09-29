@@ -17,6 +17,7 @@ import { feedbackApi } from '@/api/feedback.api';
 import { FeedbackResponse } from '@/api/types/feedback.types';
 import { Colors, Radius, Spacing, Shadows } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 interface ProductFeedbackModalProps {
   visible: boolean;
@@ -55,11 +56,11 @@ export function ProductFeedbackModal({ visible, onClose, myFeedback }: ProductFe
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-feedback'] });
-      Alert.alert('Cảm ơn bạn!', 'Ý kiến đánh giá của bạn đã được ghi nhận thành công.');
+      toast.success('Ý kiến đánh giá của bạn đã được ghi nhận thành công.');
       onClose();
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể gửi đánh giá. Vui lòng thử lại.');
+      toast.error(err.message || 'Không thể gửi đánh giá. Vui lòng thử lại.');
     },
   });
 
@@ -67,11 +68,11 @@ export function ProductFeedbackModal({ visible, onClose, myFeedback }: ProductFe
     mutationFn: () => feedbackApi.deleteMyFeedback(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-feedback'] });
-      Alert.alert('Đã xóa', 'Bài đánh giá của bạn đã được xóa.');
+      toast.success('Bài đánh giá của bạn đã được xóa.');
       onClose();
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể xóa đánh giá. Vui lòng thử lại.');
+      toast.error(err.message || 'Không thể xóa đánh giá. Vui lòng thử lại.');
     },
   });
 

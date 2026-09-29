@@ -7,6 +7,7 @@ import { AnalysisHistoryItemCard } from './AnalysisHistoryItemCard';
 
 export const CvJdHistorySection = React.memo(({
   isHistoryLoading,
+  isFetchingNextPage,
   currentHistoryItems,
   profile,
   colors,
@@ -15,6 +16,7 @@ export const CvJdHistorySection = React.memo(({
   onLayout,
 }: {
   isHistoryLoading: boolean;
+  isFetchingNextPage?: boolean;
   currentHistoryItems: any[];
   profile: any;
   colors: any;
@@ -44,6 +46,9 @@ export const CvJdHistorySection = React.memo(({
               onViewResult={() => router.push(`/(app)/cv-analysis/${item.id}` as any)}
             />
           ))}
+          {isFetchingNextPage && (
+            <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 12, marginBottom: 24 }} />
+          )}
         </View>
       ) : (
         <View style={{ alignItems: 'center', marginTop: 24, padding: 24, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: 16 }}>

@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { ExitConfirmationModal } from '@/components/interview/InterviewSubComponents';
+import { ThemedText } from '@/components/themed-text';
+import { Colors, Spacing, Typography } from '@/constants/theme';
+import { useAuth } from '@/context/auth-context';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Redirect, Tabs, useRouter } from 'expo-router';
 import {
   FileText,
@@ -8,7 +12,7 @@ import {
   User,
   Wrench,
 } from 'lucide-react-native';
-import { useAuth } from '@/context/auth-context';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -17,38 +21,34 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
+  Easing,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
-  Easing,
 } from 'react-native-reanimated';
-import { Colors, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { ExitConfirmationModal } from '@/components/interview/InterviewSubComponents';
-import { ThemedText } from '@/components/themed-text';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, {
   Circle,
   Defs,
-  LinearGradient as SvgGradient,
   Path,
   Rect,
   Stop,
+  LinearGradient as SvgGradient,
 } from 'react-native-svg';
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
 const TAB_BAR_HEIGHT = 60;
 /** How high the arch crown rises above the flat top edge. */
-const ARCH_RISE      = 28;
+const ARCH_RISE = 28;
 /** Half-span of the arch. Narrower = more visible hump, still smooth. */
 const ARCH_HALF_SPAN = 100;
-const ICON_NORMAL    = 22;
-const ICON_CENTER    = 26;
+const ICON_NORMAL = 22;
+const ICON_CENTER = 26;
 /** Diameter of the circular icon background on the centre tab. */
-const CENTER_BTN     = 54;
+const CENTER_BTN = 54;
 
 /** Routes that must never appear as visible tab items. */
 const HIDDEN_TABS = new Set(['profile']);
@@ -102,8 +102,8 @@ function CenterTabIcon({
   iconSize: number;
 }) {
   const colorScheme = useColorScheme();
-  const isDark      = colorScheme === 'dark';
-  const colors      = Colors[isDark ? 'dark' : 'light'];
+  const isDark = colorScheme === 'dark';
+  const colors = Colors[isDark ? 'dark' : 'light'];
 
   // Shimmer cycle: 600ms sweep + 900ms pause = 1500ms total
   const shimmerProgress = useSharedValue(0);
@@ -114,7 +114,7 @@ function CenterTabIcon({
       -1,
       false,
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const shimmerStyle = useAnimatedStyle(() => {
@@ -125,7 +125,7 @@ function CenterTabIcon({
 
   // Gradient uses a slightly lighter blue down to the solid primary blue
   const gradStart = '#4d65ff';
-  const gradEnd   = colors.primary;
+  const gradEnd = colors.primary;
 
   return (
     <View style={{ width: CENTER_BTN, height: CENTER_BTN, justifyContent: 'center', alignItems: 'center' }}>
@@ -141,66 +141,66 @@ function CenterTabIcon({
         ]}
       >
         {/* SVG gradient fill */}
-      <Svg width={CENTER_BTN} height={CENTER_BTN} style={StyleSheet.absoluteFill}>
-        <Defs>
-          <SvgGradient id="ctrGrad" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={gradStart} />
-            <Stop offset="1" stopColor={gradEnd} />
-          </SvgGradient>
-        </Defs>
-        <Circle
-          cx={CENTER_BTN / 2}
-          cy={CENTER_BTN / 2}
-          r={CENTER_BTN / 2}
-          fill="url(#ctrGrad)"
-        />
-      </Svg>
-
-      {/* Premium Shimmer overlay (clipped by overflow: hidden on parent) */}
-      <Animated.View
-        style={[
-          s.shimmerStrip,
-          { width: CENTER_BTN * 0.8, height: CENTER_BTN, zIndex: 5 },
-          shimmerStyle,
-        ]}
-      >
-        <Svg width="100%" height="100%">
+        <Svg width={CENTER_BTN} height={CENTER_BTN} style={StyleSheet.absoluteFill}>
           <Defs>
-            <SvgGradient id="shimmer" x1="0" y1="0" x2="1" y2="0">
-              <Stop offset="0" stopColor="#ffffff" stopOpacity="0" />
-              <Stop offset="0.5" stopColor="#ffffff" stopOpacity="0.6" />
-              <Stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+            <SvgGradient id="ctrGrad" x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={gradStart} />
+              <Stop offset="1" stopColor={gradEnd} />
             </SvgGradient>
           </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#shimmer)" />
+          <Circle
+            cx={CENTER_BTN / 2}
+            cy={CENTER_BTN / 2}
+            r={CENTER_BTN / 2}
+            fill="url(#ctrGrad)"
+          />
         </Svg>
-      </Animated.View>
 
-      {/* Icon with zIndex to render above SVG on Web */}
-      <View style={{ zIndex: 10 }}>
-        <Mic size={iconSize + 4} color="#ffffff" strokeWidth={2.2} />
+        {/* Premium Shimmer overlay (clipped by overflow: hidden on parent) */}
+        <Animated.View
+          style={[
+            s.shimmerStrip,
+            { width: CENTER_BTN * 0.8, height: CENTER_BTN, zIndex: 5 },
+            shimmerStyle,
+          ]}
+        >
+          <Svg width="100%" height="100%">
+            <Defs>
+              <SvgGradient id="shimmer" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0" stopColor="#ffffff" stopOpacity="0" />
+                <Stop offset="0.5" stopColor="#ffffff" stopOpacity="0.6" />
+                <Stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+              </SvgGradient>
+            </Defs>
+            <Rect x="0" y="0" width="100%" height="100%" fill="url(#shimmer)" />
+          </Svg>
+        </Animated.View>
+
+        {/* Icon with zIndex to render above SVG on Web */}
+        <View style={{ zIndex: 10 }}>
+          <Mic size={iconSize + 4} color="#ffffff" strokeWidth={2.2} />
+        </View>
       </View>
-    </View>
     </View>
   );
 }
 
 // ─── MoMo-style tab bar ───────────────────────────────────────────────────────
 function MoMoTabBar({ state, descriptors, navigation, insets }: any) {
-  const colorScheme  = useColorScheme();
-  const isDark       = colorScheme === 'dark';
-  const colors       = Colors[isDark ? 'dark' : 'light'];
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const colors = Colors[isDark ? 'dark' : 'light'];
   const { width: W } = useWindowDimensions();
 
   const bottomPad = Platform.OS === 'web'
     ? Spacing.two
-    : Math.max(insets.bottom, Spacing.two);
+    : Math.max(insets.bottom * 0.5, Spacing.two);
 
-  const barH     = TAB_BAR_HEIGHT + bottomPad;
+  const barH = TAB_BAR_HEIGHT + bottomPad;
   const wrapperH = barH + ARCH_RISE;
 
-  const bgColor  = isDark ? colors.surface : colors.card;
-  const border   = isDark ? colors.cardBorder : colors.cardBorder;
+  const bgColor = isDark ? colors.surface : colors.card;
+  const border = isDark ? colors.cardBorder : colors.cardBorder;
   const inactive = colors.textMuted;
 
   const visibleRoutes = state.routes.filter(
@@ -233,10 +233,10 @@ function MoMoTabBar({ state, descriptors, navigation, insets }: any) {
       <View style={[s.row, { height: barH, paddingBottom: bottomPad }]}>
         {visibleRoutes.map((route: any) => {
           const { options } = descriptors[route.key];
-          const focused     = state.routes.indexOf(route) === state.index;
-          const isCenter    = route.name === 'interview';
-          const iconColor   = focused ? colors.primary : inactive;
-          const iconSize    = isCenter ? ICON_CENTER : ICON_NORMAL;
+          const focused = state.routes.indexOf(route) === state.index;
+          const isCenter = route.name === 'interview';
+          const iconColor = focused ? colors.primary : inactive;
+          const iconSize = isCenter ? ICON_CENTER : ICON_NORMAL;
 
           const handlePress = () => {
             const event = navigation.emit({
@@ -332,15 +332,15 @@ const s = StyleSheet.create({
 
 // ─── Root layout ──────────────────────────────────────────────────────────────
 export default function TabsLayout() {
-  const router      = useRouter();
+  const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
-  const insets      = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
-  const isDark      = colorScheme === 'dark';
-  const colors      = Colors[isDark ? 'dark' : 'light'];
+  const isDark = colorScheme === 'dark';
+  const colors = Colors[isDark ? 'dark' : 'light'];
 
   const [showExitModal, setShowExitModal] = useState(false);
-  const [pendingTarget,  setPendingTarget]  = useState<string | null>(null);
+  const [pendingTarget, setPendingTarget] = useState<string | null>(null);
 
   const handleStay = () => {
     setShowExitModal(false);
@@ -372,7 +372,7 @@ export default function TabsLayout() {
         screenListeners={({ navigation }) => ({
           tabPress: (e) => {
             const navState = navigation.getState();
-            const current  = navState.routes[navState.index];
+            const current = navState.routes[navState.index];
             if (current?.name === 'interview' && current.key !== e.target) {
               e.preventDefault();
               const dest = navState.routes.find((r: any) => r.key === e.target);
@@ -425,7 +425,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="growth"
           options={{
-            title: 'Tiến độ',
+            title: 'Năng lực',
             tabBarIcon: ({ color, focused, size }) => (
               <LineChart size={size} strokeWidth={focused ? 2.5 : 2} color={color as string} />
             ),

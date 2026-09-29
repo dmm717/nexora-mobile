@@ -27,6 +27,7 @@ import { SignInSection } from '@/components/auth/SignInSection';
 import { SignUpSection } from '@/components/auth/SignUpSection';
 import { ForgotRequestSection } from '@/components/auth/ForgotRequestSection';
 import { ForgotDoneSection } from '@/components/auth/ForgotDoneSection';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function LoginScreen() {
   const params = useLocalSearchParams<{ step?: string; skipSplash?: string; email?: string }>();
@@ -92,10 +93,10 @@ export default function LoginScreen() {
             { text: 'Hủy', style: 'cancel' },
           ]);
         } else {
-          Alert.alert('Đăng nhập thất bại', `[${error.code}] ${error.message}`);
+          toast.error(`[${error.code}] ${error.message}`);
         }
       } else {
-        Alert.alert('Đăng nhập thất bại', 'Có lỗi xảy ra khi kết nối hệ thống. Vui lòng thử lại.');
+        toast.error('Có lỗi xảy ra khi kết nối hệ thống. Vui lòng thử lại.');
       }
     },
   });
@@ -117,9 +118,9 @@ export default function LoginScreen() {
     },
     onError: (error) => {
       if (error instanceof AppError) {
-        Alert.alert('Đăng ký thất bại', `[${error.code}] ${error.message}`);
+        toast.error(`[${error.code}] ${error.message}`);
       } else {
-        Alert.alert('Đăng ký thất bại', 'Có lỗi xảy ra khi tạo tài khoản');
+        toast.error('Có lỗi xảy ra khi tạo tài khoản');
       }
     },
   });
@@ -133,9 +134,9 @@ export default function LoginScreen() {
     },
     onError: (error) => {
       if (error instanceof AppError) {
-        Alert.alert('Lỗi', `[${error.code}] ${error.message}`);
+        toast.error(`[${error.code}] ${error.message}`);
       } else {
-        Alert.alert('Lỗi', 'Có lỗi xảy ra khi gửi yêu cầu khôi phục mật khẩu.');
+        toast.error('Có lỗi xảy ra khi gửi yêu cầu khôi phục mật khẩu.');
       }
     },
   });
@@ -143,12 +144,12 @@ export default function LoginScreen() {
 
   const handleLogin = () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ email và mật khẩu');
+      toast.error('Vui lòng nhập đầy đủ email và mật khẩu');
       return;
     }
     const emailError = validateEmail(email.trim());
     if (emailError) {
-      Alert.alert('Lỗi', emailError);
+      toast.error(emailError);
       return;
     }
     loginMutation.mutate();
@@ -156,21 +157,21 @@ export default function LoginScreen() {
 
   const handleRegister = () => {
     if (!displayName.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
+      toast.error('Vui lòng nhập đầy đủ thông tin');
       return;
     }
     if (displayName.trim().length < 2) {
-      Alert.alert('Lỗi', 'Tên hiển thị phải có ít nhất 2 ký tự');
+      toast.error('Tên hiển thị phải có ít nhất 2 ký tự');
       return;
     }
     const emailError = validateEmail(email.trim());
     if (emailError) {
-      Alert.alert('Lỗi', emailError);
+      toast.error(emailError);
       return;
     }
     const passwordError = validatePassword(password);
     if (passwordError) {
-      Alert.alert('Lỗi', passwordError);
+      toast.error(passwordError);
       return;
     }
     registerMutation.mutate();
@@ -178,12 +179,12 @@ export default function LoginScreen() {
 
   const handleSendRequest = () => {
     if (!email.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập Địa chỉ Email');
+      toast.error('Vui lòng nhập Địa chỉ Email');
       return;
     }
     const emailError = validateEmail(email.trim());
     if (emailError) {
-      Alert.alert('Lỗi', emailError);
+      toast.error(emailError);
       return;
     }
     sendRequestMutation.mutate();

@@ -49,8 +49,19 @@ export const userApi = {
     await apiClient.delete('/me/deletion-requests/current');
   },
 
-  uploadAvatar: async (uploadToken: string): Promise<string> => {
-    const res = await apiClient.put('/me/avatar', { uploadToken });
+  uploadAvatar: async (fileUri: string, mimeType: string, filename: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: fileUri,
+      type: mimeType,
+      name: filename,
+    } as any);
+
+    const res = await apiClient.put('/me/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     const data = 'data' in res.data && res.data.data ? res.data.data : res.data;
     return (data as any).avatarUrl;
   },

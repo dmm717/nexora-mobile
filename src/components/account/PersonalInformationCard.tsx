@@ -6,8 +6,9 @@ import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { logger } from '@/services/logger';
 
+import { toast } from '@/components/ui/toast/ToastProvider';
 import { userApi } from '@/api/user.api';
-import { resumesApi } from '@/api/resumes.api';
+
 import { ThemedText } from '@/components/themed-text';
 import { GlassCard } from '@/components/ui/glass-card';
 import { TouchableScale } from '@/components/ui/touchable-scale';
@@ -15,8 +16,11 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { Spacing } from '@/constants/theme';
 import { styles } from '@/styles/account.styles';
 
+import { useAuth } from '@/context/auth-context';
+
 export const PersonalInformationCard = ({ currentUserData, colors }: { currentUserData: any; colors: any }) => {
   const queryClient = useQueryClient();
+  const { refreshUser } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
   const [yearsOfExperience, setYearsOfExperience] = useState('');
@@ -39,10 +43,11 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
       queryClient.setQueryData(['currentUser'], updatedUser);
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-      Alert.alert('Thành công', 'Cập nhật thông tin cá nhân thành công!');
+      void refreshUser();
+      toast.success('Cập nhật thông tin cá nhân thành công!');
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err?.message || 'Không thể cập nhật thông tin cá nhân.');
+      toast.error(err?.message || 'Không thể cập nhật thông tin cá nhân.');
     },
   });
 
@@ -78,7 +83,7 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
 
           try {
             if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) {
-              Alert.alert('Lỗi', 'Chỉ hỗ trợ định dạng ảnh JPEG, PNG hoặc WebP.');
+              toast.error('Chỉ hỗ trợ định dạng ảnh JPEG, PNG hoặc WebP.');
               setIsUploadingAvatar(false);
               try { if (currentUri) await FileSystem.deleteAsync(currentUri, { idempotent: true }); } catch (err: any) { logger.warn('Cleanup failed', { error: err?.message || err }); }
               return;
@@ -89,24 +94,18 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
             const size = blob.size;
 
             if (size > MAX_FILE_SIZE) {
-              Alert.alert('Lỗi', 'Kích thước ảnh không được vượt quá 5MB.');
+              toast.error('Kích thước ảnh không được vượt quá 5MB.');
               setIsUploadingAvatar(false);
               try { if (currentUri) await FileSystem.deleteAsync(currentUri, { idempotent: true }); } catch (err: any) { logger.warn('Cleanup failed', { error: err?.message || err }); }
               return;
             }
 
-            const intent = await resumesApi.presign({
-              fileName: filename,
-              contentType: mimeType,
-              size,
-            });
-
-            await resumesApi.uploadRawBytes(intent.uploadUrl, blob, mimeType);
-            await userApi.uploadAvatar(intent.token);
+            await userApi.uploadAvatar(currentUri, mimeType, filename);
             
             queryClient.invalidateQueries({ queryKey: ['currentUser'] });
             queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-            Alert.alert('Thành Công', 'Đã cập nhật ảnh đại diện.');
+            await refreshUser();
+            toast.success('Đã cập nhật ảnh đại diện.');
           } finally {
             try {
               if (currentUri) {
@@ -117,7 +116,7 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
         }
       }
     } catch (err: any) {
-      Alert.alert('Lỗi', err?.message || 'Không thể tải ảnh lên. Vui lòng thử lại.');
+      toast.error(err?.message || 'Không thể tải ảnh lên. Vui lòng thử lại.');
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -135,9 +134,10 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
             await userApi.deleteAvatar();
             queryClient.invalidateQueries({ queryKey: ['currentUser'] });
             queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-            Alert.alert('Thành Công', 'Đã xóa ảnh đại diện.');
+            await refreshUser();
+            toast.success('Đã xóa ảnh đại diện.');
           } catch (err: any) {
-            Alert.alert('Lỗi', err?.message || 'Không thể xóa ảnh.');
+            toast.error(err?.message || 'Không thể xóa ảnh.');
           } finally {
             setIsUploadingAvatar(false);
           }

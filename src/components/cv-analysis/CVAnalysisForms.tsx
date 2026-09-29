@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TextInput, ActivityIndicator, TouchableOpacity, FlatList } from 'react-native';
+import { View, TextInput, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { GlassCard as SurfaceCard } from '@/components/ui/glass-card';
@@ -276,17 +276,14 @@ export const ResumeUploadCard = ({
         {!selectedResumeId && existingResumes && existingResumes.length > 0 && (
           <View style={{ gap: 8 }}>
             <ThemedText style={{ fontSize: 12, fontFamily: Typography.fontFamily.medium, color: colors.textSecondary }}>Hoặc chọn từ CV đã lưu:</ThemedText>
-            <View style={{ gap: 8, maxHeight: 180, overflow: 'hidden' }}>
-              <FlatList
-                data={existingResumes}
-                keyExtractor={(r) => r.id}
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item: r }) => {
+            <View style={{ maxHeight: 180, overflow: 'hidden' }}>
+              <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                {existingResumes.map((r) => {
                   const isSelected = selectedResumeId === r.id;
                   const isReady = r.status === 'ready';
                   return (
                     <TouchableOpacity
+                      key={r.id}
                       disabled={!isReady}
                       onPress={() => onSelectExistingResume(r)}
                       style={[
@@ -304,8 +301,8 @@ export const ResumeUploadCard = ({
                       </ThemedText>
                     </TouchableOpacity>
                   );
-                }}
-              />
+                })}
+              </ScrollView>
             </View>
           </View>
         )}

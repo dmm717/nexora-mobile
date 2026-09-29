@@ -19,6 +19,7 @@ import { ReportContentButton } from '@/components/moderation/ReportContentButton
 import { StarQuestionInputCard } from '@/components/star-builder/StarQuestionInputCard';
 import { StarAnswerInputCard } from '@/components/star-builder/StarAnswerInputCard';
 import { StarEvaluationResultCard } from '@/components/star-builder/StarEvaluationResultCard';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function StarBuilderScreen() {
   const router = useRouter();
@@ -81,7 +82,7 @@ export default function StarBuilderScreen() {
       queryClient.invalidateQueries({ queryKey: ['star-attempts'] });
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể phân tích mô hình STAR. Vui lòng thử lại.');
+      toast.error(err.message || 'Không thể phân tích mô hình STAR. Vui lòng thử lại.');
     }
   });
 

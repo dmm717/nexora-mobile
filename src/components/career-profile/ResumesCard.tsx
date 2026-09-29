@@ -12,6 +12,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { styles } from '@/styles/career-profile.styles';
 import { formatFileSize, formatDate } from '@/utils/career-goal-contract';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 interface ResumesCardProps {
   resumes: any[];
@@ -28,10 +29,10 @@ export const ResumesCard = ({ resumes, primaryResume, colors }: ResumesCardProps
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
       queryClient.invalidateQueries({ queryKey: ['resumes'] });
-      Alert.alert('Thành công', 'Đã cập nhật CV chính');
+      toast.success('Đã cập nhật CV chính');
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err?.message || 'Không thể cập nhật CV chính.');
+      toast.error(err?.message || 'Không thể cập nhật CV chính.');
     },
   });
 
@@ -40,10 +41,10 @@ export const ResumesCard = ({ resumes, primaryResume, colors }: ResumesCardProps
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resumes'] });
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-      Alert.alert('Thành công', 'Đã xóa CV');
+      toast.success('Đã xóa CV');
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err?.message || 'Không thể xóa CV.');
+      toast.error(err?.message || 'Không thể xóa CV.');
     },
   });
 
@@ -93,10 +94,10 @@ export const ResumesCard = ({ resumes, primaryResume, colors }: ResumesCardProps
 
         queryClient.invalidateQueries({ queryKey: ['resumes'] });
         queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-        Alert.alert('Thành công', 'Đã tải lên CV mới thành công!');
+        toast.success('Đã tải lên CV mới thành công!');
       }
     } catch (err: any) {
-      Alert.alert('Lỗi tải lên', err?.message || 'Không thể tải lên CV. Vui lòng thử lại.');
+      toast.error(err?.message || 'Không thể tải lên CV. Vui lòng thử lại.');
     } finally {
       setIsUploadingCv(false);
     }

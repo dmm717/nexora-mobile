@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
-import { TouchableScale } from '@/components/ui/touchable-scale';
 import { Spacing } from '@/constants/theme';
 import { styles } from '@/styles/cv-jd.styles';
 import { PrimaryCvSpotlightCard } from './PrimaryCvSpotlightCard';
@@ -18,10 +17,11 @@ export const CurrentProfileSection = React.memo(({
       {mode === 'job_targeted' && (
         <JobDescriptionCard jdTitle={jdTitle} setJdTitle={setJdTitle} jdContent={jdContent} setJdContent={setJdContent} colors={colors} />
       )}
-      <TouchableScale
-        style={[styles.primaryButtonPremium, (analyzeMutation.isPending || !profile?.primaryResume || !isResumeReady) && styles.disabledButtonPremium]}
+      <TouchableOpacity
+        style={[styles.primaryButtonPremium, analyzeMutation.isPending && styles.disabledButtonPremium]}
         onPress={handleStartAnalysis}
-        disabled={analyzeMutation.isPending || !profile?.primaryResume || !isResumeReady}
+        disabled={analyzeMutation.isPending}
+        activeOpacity={0.8}
       >
         {analyzeMutation.isPending ? <ActivityIndicator color="#fff" /> : (
           <>
@@ -29,7 +29,7 @@ export const CurrentProfileSection = React.memo(({
             <View style={styles.buttonIconWrapPremium}><Ionicons name="rocket" size={16} color="#FFF" /></View>
           </>
         )}
-      </TouchableScale>
+      </TouchableOpacity>
     </View>
   );
 });

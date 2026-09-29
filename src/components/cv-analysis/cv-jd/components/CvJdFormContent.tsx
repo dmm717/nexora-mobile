@@ -71,16 +71,12 @@ export const CvJdFormContent = React.memo(({
 
     <CvJdHistorySection
       isHistoryLoading={state.isHistoryLoading}
+      isFetchingNextPage={state.isFetchingNextPage}
       currentHistoryItems={state.currentHistoryItems}
       profile={state.profile}
       colors={colors}
       setPrimaryResumeMutation={state.setPrimaryResumeMutation}
       router={state.router}
-      onLayout={(e) => {
-        if (state.setHistorySectionY) {
-          state.setHistorySectionY(e.nativeEvent.layout.y);
-        }
-      }}
     />
   </View>
 ));

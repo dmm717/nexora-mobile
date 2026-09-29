@@ -1,5 +1,6 @@
 import { apiClient, API_BASE_URL } from './client';
 import { PresignUploadRequest, UploadIntent, FinalizeResumeRequest, ResumeView } from './types';
+import { tokenStorage } from '@/services/storage';
 
 export const resumesApi = {
   /**
@@ -16,7 +17,10 @@ export const resumesApi = {
    */
   uploadRawBytes: async (uploadUrl: string, fileBytes: ArrayBuffer | Blob, contentType: string): Promise<void> => {
     let finalUrl = uploadUrl;
+    let isRelative = false;
+    
     if (uploadUrl.startsWith('/')) {
+      isRelative = true;
       try {
         const baseUrlObj = new URL(API_BASE_URL);
         finalUrl = `${baseUrlObj.origin}${uploadUrl}`;
@@ -25,17 +29,33 @@ export const resumesApi = {
       }
     }
 
-    const response = await fetch(finalUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': contentType,
-      },
-      body: fileBytes,
-    });
+    const headers: Record<string, string> = {
+      'Content-Type': contentType,
+    };
 
-    if (!response.ok) {
-      throw new Error(`Upload failed with status: ${response.status}`);
+    if (isRelative) {
+      const token = await tokenStorage.getAccessToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
     }
+
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', finalUrl);
+      for (const [key, value] of Object.entries(headers)) {
+        xhr.setRequestHeader(key, value);
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(null);
+        } else {
+          reject(new Error(`Upload failed with status: ${xhr.status}`));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Network request failed'));
+      xhr.send(fileBytes as any);
+    });
   },
 
   /**

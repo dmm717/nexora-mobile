@@ -1,9 +1,22 @@
 import { StyleSheet } from 'react-native';
-import { Spacing, Radius } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
+  // Standard Tab Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
+    borderBottomWidth: 1,
+  },
+  headerTitle: {
+    fontSize: Typography.sizes.md,
+    fontFamily: Typography.fontFamily.bold,
+    letterSpacing: -0.5,
+  },
   
   // Top nav header bar
   headerNav: {
@@ -144,6 +157,7 @@ export const styles = StyleSheet.create({
   metricBigNum: {
     fontSize: 26,
     fontWeight: '900',
+    lineHeight: 34, // Added to prevent number clipping
     marginTop: Spacing.one,
   },
   metricCardSub: {

@@ -16,6 +16,7 @@ import { ReportContentButton } from '@/components/moderation/ReportContentButton
 import { ScenarioBriefingCard } from '@/components/scenarios/ScenarioBriefingCard';
 import { ActiveAttemptWorkbench } from '@/components/scenarios/ActiveAttemptWorkbench';
 import { ScenarioHistorySection } from '@/components/scenarios/ScenarioHistorySection';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function ScenarioDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>(); // slug or id
@@ -88,7 +89,7 @@ export default function ScenarioDetailScreen() {
       queryClient.invalidateQueries({ queryKey: ['scenario-history', id] });
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể tạo lượt thử mới.');
+      toast.error(err.message || 'Không thể tạo lượt thử mới.');
     },
   });
 
@@ -128,7 +129,7 @@ export default function ScenarioDetailScreen() {
       queryClient.invalidateQueries({ queryKey: ['scenario-attempt', data.id] });
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể nộp bài làm tình huống. Vui lòng thử lại.');
+      toast.error(err.message || 'Không thể nộp bài làm tình huống. Vui lòng thử lại.');
     },
   });
 
@@ -156,7 +157,7 @@ export default function ScenarioDetailScreen() {
           return;
         }
       }
-      Alert.alert('Lỗi', err.message || 'Không thể tạo lượt luyện tập mới.');
+      toast.error(err.message || 'Không thể tạo lượt luyện tập mới.');
     },
   });
 

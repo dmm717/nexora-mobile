@@ -7,10 +7,11 @@ export const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
     borderBottomWidth: 1,
   },
-  title: { fontSize: 24, fontWeight: '700' },
+  title: { fontSize: Typography.sizes.md, fontFamily: Typography.fontFamily.bold, letterSpacing: -0.5 },
   scrollContent: { padding: Spacing.four, gap: Spacing.six, paddingBottom: Spacing.six * 2 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.four },
 

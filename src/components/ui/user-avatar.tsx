@@ -33,9 +33,15 @@ export const UserAvatar = React.memo<UserAvatarProps>(({
   const fontSize = Math.round(size * 0.42);
 
   if (avatarUrl) {
+    // React Native Image requires absolute URLs. Prefix if it's a relative path from the backend.
+    const baseUrl = (process.env.EXPO_PUBLIC_API_URL || '').replace(/\/api\/v1\/?$/, '');
+    const fullAvatarUrl = avatarUrl.startsWith('/') 
+      ? `${baseUrl}${avatarUrl}` 
+      : avatarUrl;
+      
     return (
       <Image
-        source={{ uri: avatarUrl }}
+        source={{ uri: fullAvatarUrl }}
         style={[
           styles.avatarImage,
           { width: size, height: size, borderRadius: size / 2 },

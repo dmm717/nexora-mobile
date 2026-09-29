@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 
 import { interviewApi } from '@/api/interview.api';
 import { useInterviewAudio } from '@/hooks/useInterviewAudio';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export function useInterviewSession(id: string | undefined) {
   const router = useRouter();
@@ -115,7 +116,7 @@ export function useInterviewSession(id: string | undefined) {
   // Show STT errors
   useEffect(() => {
     if (audio.sttErrorMessage) {
-      Alert.alert('Thông báo Microphone', audio.sttErrorMessage);
+      toast.error(audio.sttErrorMessage);
     }
   }, [audio.sttErrorMessage]);
 
@@ -160,7 +161,7 @@ export function useInterviewSession(id: string | undefined) {
       refetch();
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi nộp bài', err.message || 'Không thể nộp câu trả lời. Vui lòng thử lại.');
+      toast.error(err.message || 'Không thể nộp câu trả lời. Vui lòng thử lại.');
     }
   });
 
@@ -194,7 +195,7 @@ export function useInterviewSession(id: string | undefined) {
       refetch();
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể hoàn thành phỏng vấn.');
+      toast.error(err.message || 'Không thể hoàn thành phỏng vấn.');
     }
   });
 
@@ -210,7 +211,7 @@ export function useInterviewSession(id: string | undefined) {
       refetch();
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể tiếp tục phỏng vấn.');
+      toast.error(err.message || 'Không thể tiếp tục phỏng vấn.');
     }
   });
 
@@ -223,7 +224,7 @@ export function useInterviewSession(id: string | undefined) {
       refetch();
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể thử lại chuẩn bị câu hỏi.');
+      toast.error(err.message || 'Không thể thử lại chuẩn bị câu hỏi.');
     }
   });
 

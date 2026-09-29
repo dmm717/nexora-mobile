@@ -21,8 +21,6 @@ import { HistoryHeroHeader } from '@/components/interview/history/HistoryHeroHea
 import { HistoryEmptyOrErrorStateCard } from '@/components/interview/history/HistoryEmptyOrErrorStateCard';
 import { HistoryFilterHeader } from '@/components/interview/history/HistoryFilterHeader';
 import { HistoryListItemCard } from '@/components/interview/history/HistoryListItemCard';
-import { HistoryPaginationBar } from '@/components/interview/history/HistoryPaginationBar';
-
 export default function InterviewHistoryScreen() {
   const colors = useTheme();
   const router = useRouter();
@@ -69,6 +67,14 @@ export default function InterviewHistoryScreen() {
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={(e) => {
+            const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+            const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 200;
+            if (isCloseToBottom && hasNextPage) {
+              setPage((p) => p + 1);
+            }
+          }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -138,16 +144,6 @@ export default function InterviewHistoryScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {/* Floating Pagination Bar */}
-      <HistoryPaginationBar
-        page={page}
-        totalPages={totalPages}
-        hasNextPage={hasNextPage}
-        colors={colors}
-        onPrevPage={() => setPage((p) => Math.max(1, p - 1))}
-        onNextPage={() => setPage((p) => p + 1)}
-        bottomOffset={bottomBarHeight + 8}
-      />
 
       {/* Bottom Navigation Bar */}
       <AppBottomNavBar activeTab="interview" />

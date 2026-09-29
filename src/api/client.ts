@@ -94,9 +94,11 @@ apiClient.interceptors.response.use(
     const isReportProcessing =
       error.response?.status === 409 ||
       errorCode === 'INTERVIEW_REPORT_PROCESSING';
+      
+    const isRecoverableAuthError = error.response?.status === 401 && originalRequest && !originalRequest._retry;
 
-    // Observability Logging (skip expected transient polling status 409)
-    if (!isReportProcessing) {
+    // Observability Logging (skip expected transient polling status 409 and recoverable 401s)
+    if (!isReportProcessing && !isRecoverableAuthError) {
       // SECURITY (Phase 4.1): Scrub PII from error object before sending to Sentry
       // Must preserve instanceof Error for proper Sentry exception capturing
       const safeError = new Error(error.message);
@@ -117,11 +119,21 @@ apiClient.interceptors.response.use(
       (safeError as any).response = safeResponse;
       (safeError as any).isAxiosError = error.isAxiosError;
 
-      logger.error(`API Error [${error.config?.method?.toUpperCase() || 'HTTP'}] ${error.config?.url}`, safeError, {
-        requestId,
-        code: errorCode,
-        status: error.response?.status,
-      });
+      const status = error.response?.status;
+      if (status && status >= 400 && status < 500) {
+        logger.warn(`API Error [${error.config?.method?.toUpperCase() || 'HTTP'}] ${error.config?.url}`, {
+          requestId,
+          code: errorCode,
+          status,
+          errorMessage: error.message,
+        });
+      } else {
+        logger.error(`API Error [${error.config?.method?.toUpperCase() || 'HTTP'}] ${error.config?.url}`, safeError, {
+          requestId,
+          code: errorCode,
+          status,
+        });
+      }
     }
 
     const reqIdSuffix = requestId ? ` (ReqID: ${requestId.substring(0, 8)})` : '';

@@ -8,6 +8,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { PasswordInput } from '@/components/ui/password-input';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { styles } from '@/styles/account.styles';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export const SecurityCard = ({ colors }: { colors: any }) => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -18,27 +19,27 @@ export const SecurityCard = ({ colors }: { colors: any }) => {
     mutationFn: (data: { currentPassword: string; newPassword: string }) =>
       userApi.changePassword(data),
     onSuccess: () => {
-      Alert.alert('Thành công', 'Đổi mật khẩu thành công!');
+      toast.success('Đổi mật khẩu thành công!');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err?.message || 'Lỗi khi đổi mật khẩu.');
+      toast.error(err?.message || 'Lỗi khi đổi mật khẩu.');
     },
   });
 
   const handleChangePassword = () => {
     if (!currentPassword) {
-      Alert.alert('Lỗi', 'Vui lòng nhập mật khẩu hiện tại.');
+      toast.error('Vui lòng nhập mật khẩu hiện tại.');
       return;
     }
     if (newPassword.length < 8) {
-      Alert.alert('Lỗi', 'Mật khẩu mới yêu cầu tối thiểu 8 ký tự.');
+      toast.error('Mật khẩu mới yêu cầu tối thiểu 8 ký tự.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert('Lỗi', 'Xác nhận mật khẩu mới không khớp.');
+      toast.error('Xác nhận mật khẩu mới không khớp.');
       return;
     }
     changePasswordMutation.mutate({ currentPassword, newPassword });

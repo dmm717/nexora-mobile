@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Animated, Easing, View } from 'react-native';
+import { Animated, Easing, View, LayoutAnimation, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 
 import { ResumeAnalysisView } from '@/api/types';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -11,6 +12,7 @@ import {
   CVActionCtaBanner,
   CVAnalysisFailedState,
   CVAnalysisLoadingState,
+  CVAnalysisSkeleton,
 } from './result-view/CVAnalysisResultStates';
 import {
   CVActionPlanTab,
@@ -19,6 +21,15 @@ import {
   CVSegmentedTabs,
   TabKey,
 } from './result-view/CVAnalysisResultTabs';
+
+export const ANALYSIS_ANIMATION_CONFIG = {
+  typingSpeedMs: 35,
+  successTitleDelayMs: 200,
+  successDescDelayMs: 1000,
+  postTypingWaitMs: 2000,
+  successTitleText: 'Đã tạo báo cáo thành công!',
+  successDescText: 'Hệ thống đã trích xuất và đối chiếu toàn bộ dữ liệu thành công.',
+};
 
 interface Props {
   analysisId: string | null;
@@ -35,13 +46,19 @@ export function CVAnalysisResultView({ analysisId, analysisResult, setAnalysisId
   
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
 
+  const [internalState, setInternalState] = useState<'loading' | 'success' | 'skeleton' | 'completed' | 'failed'>(
+    (analysisResult?.status === 'completed') ? 'completed' : 
+    (analysisResult?.status === 'failed' ? 'failed' : 'loading')
+  );
+
   const [pulseAnim] = useState(() => new Animated.Value(0.3));
-  const [slideAnim] = useState(() => new Animated.Value(0));
+  const [simulatedProgressAnim] = useState(() => new Animated.Value(0));
+  const [fadeAnim] = useState(() => new Animated.Value(0));
 
   const parsed = parseAnalysisData(analysisResult, mode);
 
   useEffect(() => {
-    if (analysisResult?.status === 'pending' || analysisResult?.status === 'processing' || analysisResult?.status === 'queued') {
+    if (internalState === 'loading') {
       Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, { toValue: 1, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
@@ -49,21 +66,107 @@ export function CVAnalysisResultView({ analysisId, analysisResult, setAnalysisId
         ])
       ).start();
 
-      Animated.loop(
-        Animated.timing(slideAnim, { toValue: 1, duration: 1500, easing: Easing.linear, useNativeDriver: false })
-      ).start();
+      Animated.timing(simulatedProgressAnim, {
+        toValue: 90,
+        duration: 15000,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+    } else {
+      pulseAnim.stopAnimation();
+      if (internalState !== 'success') {
+        simulatedProgressAnim.stopAnimation();
+      }
     }
-  }, [analysisResult?.status, pulseAnim, slideAnim]);
+  }, [internalState, pulseAnim, simulatedProgressAnim]);
 
-  if (!analysisId || !analysisResult) return null;
+  const prevStatus = React.useRef(analysisResult?.status);
 
-  const currentStatus = analysisResult.status;
+  useEffect(() => {
+    let timeoutId1: ReturnType<typeof setTimeout>;
+    let timeoutId2: ReturnType<typeof setTimeout>;
+    const currentStatus = analysisResult?.status;
+    
+    if (currentStatus === 'completed') {
+      if (internalState === 'loading') {
+        if (!prevStatus.current) {
+          // If the status was undefined before and is now completed, it's an old report loading.
+          // Skip the success animation and jump straight to the completed state.
+          setInternalState('completed');
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }).start();
+          simulatedProgressAnim.setValue(100);
+        } else {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setInternalState('success');
+          
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          
+          const typingDuration = ANALYSIS_ANIMATION_CONFIG.successDescText.length * ANALYSIS_ANIMATION_CONFIG.typingSpeedMs;
+          const totalWaitTime = ANALYSIS_ANIMATION_CONFIG.successDescDelayMs + typingDuration + ANALYSIS_ANIMATION_CONFIG.postTypingWaitMs;
+          
+          timeoutId1 = setTimeout(() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setInternalState('skeleton');
+            
+            timeoutId2 = setTimeout(() => {
+              setInternalState('completed');
+              Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 800,
+                useNativeDriver: true,
+              }).start();
+            }, 1500);
+          }, totalWaitTime);
+        }
+      } else if (internalState === 'completed') {
+         fadeAnim.setValue(1);
+         simulatedProgressAnim.setValue(100);
+      }
+    } else if (currentStatus === 'failed') {
+      setInternalState('failed');
+    }
+    
+    prevStatus.current = currentStatus;
+    
+    return () => {
+      clearTimeout(timeoutId1);
+      clearTimeout(timeoutId2);
+    };
+  }, [analysisResult?.status]);
 
-  if (currentStatus === 'pending' || currentStatus === 'processing' || currentStatus === 'queued') {
-    return <CVAnalysisLoadingState slideAnim={slideAnim} pulseAnim={pulseAnim} colors={colors} isDark={isDark} />;
+  if (!analysisId || !analysisResult) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
   }
 
-  if (currentStatus === 'failed') {
+  const displayState = (analysisResult?.status === 'completed' && !prevStatus.current && internalState === 'loading') 
+    ? 'completed' 
+    : internalState;
+
+  if (displayState === 'loading' || displayState === 'success') {
+    return (
+      <CVAnalysisLoadingState 
+        simulatedProgressAnim={simulatedProgressAnim} 
+        pulseAnim={pulseAnim} 
+        colors={colors} 
+        isDark={isDark} 
+        isSuccess={displayState === 'success'}
+      />
+    );
+  }
+
+  if (displayState === 'skeleton') {
+    return <CVAnalysisSkeleton colors={colors} isDark={isDark} />;
+  }
+
+  if (displayState === 'failed') {
     return <CVAnalysisFailedState errorCode={(analysisResult as any).errorCode} colors={colors} onReset={() => setAnalysisId(null)} />;
   }
 
@@ -75,7 +178,7 @@ export function CVAnalysisResultView({ analysisId, analysisResult, setAnalysisId
   } = parsed;
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <CVSegmentedTabs activeTab={activeTab} setActiveTab={setActiveTab} colors={colors} isDark={isDark} />
 
       {/* Render Active Tab Content */}
@@ -121,6 +224,6 @@ export function CVAnalysisResultView({ analysisId, analysisResult, setAnalysisId
       </View>
 
       <CVActionCtaBanner colors={colors} onNavigate={() => router.push('/interviews' as any)} />
-    </View>
+    </Animated.View>
   );
 }

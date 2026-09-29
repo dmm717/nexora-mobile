@@ -15,6 +15,7 @@ import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { safeBack } from '@/utils/navigation';
 import { styles } from '@/styles/career-goals-create.styles';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function CreateCareerGoalScreen() {
   const router = useRouter();
@@ -35,18 +36,18 @@ export default function CreateCareerGoalScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['career-goals'] });
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-      Alert.alert('Thành công', 'Đã tạo mục tiêu nghề nghiệp mới');
+      toast.success('Đã tạo mục tiêu nghề nghiệp mới');
       safeBack(router, '/career-goals');
     },
     onError: (error) => {
-      Alert.alert('Lỗi', 'Không thể tạo mục tiêu. Vui lòng thử lại.');
+      toast.error('Không thể tạo mục tiêu. Vui lòng thử lại.');
       logger.error('Failed to create career goal', error);
     }
   });
 
   const handleSubmit = () => {
     if (!form.targetRole.trim() || !form.seniority.trim()) {
-      Alert.alert('Lỗi', 'Vai trò và Cấp bậc không được để trống.');
+      toast.error('Vai trò và Cấp bậc không được để trống.');
       return;
     }
     createMutation.mutate({

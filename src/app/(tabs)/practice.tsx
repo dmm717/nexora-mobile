@@ -488,9 +488,8 @@ export default function PracticeTabScreen() {
     <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
         {/* Top Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
           <ThemedText type="title" style={styles.headerTitle}>Trung Tâm Luyện Tập</ThemedText>
-          <ThemedText style={styles.headerSub}>Rèn luyện kỹ năng xử lý tình huống thực tế & phản xạ STAR</ThemedText>
         </View>
 
         <FlatList

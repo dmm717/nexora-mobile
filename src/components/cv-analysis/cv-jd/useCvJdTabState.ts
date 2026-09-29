@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 
@@ -9,6 +9,7 @@ import { profileApi } from '@/api/profile.api';
 import { resumeAnalysesApi } from '@/api/resume-analyses.api';
 import { resumesApi } from '@/api/resumes.api';
 import { tokenStorage } from '@/services/storage';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 type UploadResumeParams = {
   useCurrentProfile: boolean;
@@ -29,7 +30,7 @@ async function uploadResumeFile(params: UploadResumeParams): Promise<void> {
   const file = res.assets[0];
 
   if (file.size && file.size > 10 * 1024 * 1024) {
-    Alert.alert('Lỗi', 'Dung lượng file vượt quá 10MB.');
+    toast.error('Dung lượng file vượt quá 10MB.');
     return;
   }
 
@@ -52,7 +53,7 @@ async function uploadResumeFile(params: UploadResumeParams): Promise<void> {
   }
 
   if (!fileSize) {
-    Alert.alert('Lỗi', 'Không thể xác định kích thước file.');
+    toast.error('Không thể xác định kích thước file.');
     return;
   }
 
@@ -69,7 +70,7 @@ async function uploadResumeFile(params: UploadResumeParams): Promise<void> {
   }
 
   queryClient.invalidateQueries({ queryKey: ['resumes-list'] });
-  Alert.alert('Thành công', 'Đã tải lên CV thành công.');
+  toast.success('Đã tải lên CV thành công.');
 }
 
 export const getFileIconProps = (fileName?: string) => {
@@ -99,28 +100,23 @@ export function useCvJdTabState() {
   const [showPopup, setShowPopup] = useState(false);
   const [doNotShowAgain, setDoNotShowAgain] = useState(false);
 
-  const [historyPage, setHistoryPage] = useState(1);
-  const itemsPerPage = 6;
-  const [showFloatingNav, setShowFloatingNav] = useState(false);
-  const [historySectionY, setHistorySectionY] = useState(1050);
-
-  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    const shouldShow = offsetY > (historySectionY - 200);
-    setShowFloatingNav((prev) => (prev !== shouldShow ? shouldShow : prev));
-  }, [historySectionY]);
+  const itemsPerPage = 5;
 
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['career-profile'],
     queryFn: profileApi.getCareerProfile,
   });
 
-  const { data: historyData, isLoading: isHistoryLoading } = useQuery({
-    queryKey: ['resume-analysis-history', historyPage],
-    queryFn: () => resumeAnalysesApi.list(historyPage, itemsPerPage),
+  const { data: historyData, isLoading: isHistoryLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['resume-analysis-history'],
+    queryFn: ({ pageParam = 1 }) => resumeAnalysesApi.list(pageParam, itemsPerPage),
+    getNextPageParam: (lastPage, allPages) => lastPage.hasNextPage ? allPages.length + 1 : undefined,
+    initialPageParam: 1,
     refetchInterval: (query) => {
       if (!query.state.data) return false;
-      const hasPending = query.state.data.items.some((r: any) => r.status === 'pending' || r.status === 'processing' || r.status === 'queued');
+      const hasPending = query.state.data.pages.some(page => 
+        page.items.some((r: any) => r.status === 'pending' || r.status === 'processing' || r.status === 'queued')
+      );
       return hasPending ? 3000 : false;
     }
   });
@@ -136,18 +132,17 @@ export function useCvJdTabState() {
   });
 
   const latestCompletedAnalysis = useMemo(() => {
-    if (!historyData?.items) return null;
-    return historyData.items.find((item: any) => item.status === 'completed');
+    if (!historyData?.pages) return null;
+    for (const page of historyData.pages) {
+      const found = page.items.find((item: any) => item.status === 'completed');
+      if (found) return found;
+    }
+    return null;
   }, [historyData]);
 
   const currentHistoryItems = useMemo(() => {
-    return historyData?.items || [];
+    return historyData?.pages.flatMap(page => page.items) || [];
   }, [historyData]);
-
-  const totalHistoryPages = historyData?.totalCount 
-    ? Math.ceil(historyData.totalCount / itemsPerPage) 
-    : 0;
-  const hasNextPage = historyData?.hasNextPage || false;
 
   const isResumeReady = useMemo(() => {
     if (useCurrentProfile) {
@@ -192,7 +187,7 @@ export function useCvJdTabState() {
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể thiết lập CV chính.');
+      toast.error(err.message || 'Không thể thiết lập CV chính.');
     }
   });
 
@@ -263,20 +258,20 @@ export function useCvJdTabState() {
     },
     onError: (err: any) => {
       if (err?.code === 'FEATURE_QUOTA_EXCEEDED' || err?.code === 'FEATURE_NOT_AVAILABLE') {
-        Alert.alert('Đã hết lượt sử dụng', 'Bạn đã sử dụng hết lượt phân tích CV trong gói hiện tại. Vui lòng nâng cấp gói để tiếp tục.');
+        toast.error(err.message || 'Bạn đã sử dụng hết lượt phân tích CV trong gói hiện tại. Vui lòng nâng cấp gói để tiếp tục.');
       } else if (err?.code === 'RESUME_NOT_READY') {
-        Alert.alert('CV chưa sẵn sàng', 'CV của bạn đang được hệ thống xử lý (trích xuất văn bản). Vui lòng đợi vài giây và thử lại.');
+        toast.error(err.message || 'CV của bạn đang được hệ thống xử lý (trích xuất văn bản). Vui lòng đợi vài giây và thử lại.');
       } else if (err?.code === 'RESUME_ANALYSIS_CONTEXT_INVALID') {
-        Alert.alert('Lỗi', 'Mục tiêu nghề nghiệp hiện tại của bạn chưa có đủ thông tin cho phương thức này. Vui lòng thiết lập lại mục tiêu hoặc chọn Phân tích theo mục tiêu khác.');
+        toast.error(err.message || 'Mục tiêu nghề nghiệp hiện tại của bạn chưa có đủ thông tin cho phương thức này. Vui lòng thiết lập lại mục tiêu hoặc chọn Phân tích theo mục tiêu khác.');
       } else {
-        Alert.alert('Lỗi', err.message || 'Không thể bắt đầu phân tích CV. Vui lòng thử lại.');
+        toast.error(err.message || 'Không thể bắt đầu phân tích CV. Vui lòng thử lại.');
       }
     }
   });
 
   const handleStartAnalysis = useCallback(() => {
     if (useCurrentProfile && !profile?.primaryResume) {
-      Alert.alert('Chưa có CV chính', 'Vui lòng tải lên và chọn một CV làm Primary CV trước khi bắt đầu phân tích.');
+      toast.error('Vui lòng tải lên và chọn một CV làm Primary CV trước khi bắt đầu phân tích.');
       return;
     }
     analyzeMutation.mutate();
@@ -291,7 +286,7 @@ export function useCvJdTabState() {
         setCurrentFileName,
       }),
     onError: (error: any) => {
-      Alert.alert('Lỗi tải lên', error.message || 'Đã xảy ra lỗi khi upload CV.');
+      toast.error(error.message || 'Đã xảy ra lỗi khi upload CV.');
     },
   });
 
@@ -322,11 +317,6 @@ export function useCvJdTabState() {
     setShowPopup,
     doNotShowAgain,
     setDoNotShowAgain,
-    historyPage,
-    setHistoryPage,
-    showFloatingNav,
-    handleScroll,
-    setHistorySectionY,
     profile,
     isProfileLoading,
     historyData,
@@ -335,8 +325,9 @@ export function useCvJdTabState() {
     isResumeReady,
     latestCompletedAnalysis,
     currentHistoryItems,
-    totalHistoryPages,
+    fetchNextPage,
     hasNextPage,
+    isFetchingNextPage,
     handleClosePopup,
     setPrimaryResumeMutation,
     analyzeMutation,

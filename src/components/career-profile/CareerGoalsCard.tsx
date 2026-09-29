@@ -11,6 +11,7 @@ import { TouchableScale } from '@/components/ui/touchable-scale';
 import { EmptyStateCard } from '@/components/ui/empty-state-card';
 import { styles } from '@/styles/career-profile.styles';
 import { formatSeniorityLabel, formatDate } from '@/utils/career-goal-contract';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 interface CareerGoalsCardProps {
   activeGoal: any;
@@ -27,10 +28,10 @@ export const CareerGoalsCard = ({ activeGoal, otherGoals, colors }: CareerGoalsC
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['career-goals'] });
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-      Alert.alert('Thành công', 'Kích hoạt mục tiêu nghề nghiệp thành công!');
+      toast.success('Kích hoạt mục tiêu nghề nghiệp thành công!');
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err?.message || 'Không thể kích hoạt mục tiêu.');
+      toast.error(err?.message || 'Không thể kích hoạt mục tiêu.');
     },
   });
 
@@ -39,10 +40,10 @@ export const CareerGoalsCard = ({ activeGoal, otherGoals, colors }: CareerGoalsC
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['career-goals'] });
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-      Alert.alert('Thành công', 'Đã lưu trữ mục tiêu nghề nghiệp');
+      toast.success('Đã lưu trữ mục tiêu nghề nghiệp');
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err?.message || 'Không thể lưu trữ mục tiêu.');
+      toast.error(err?.message || 'Không thể lưu trữ mục tiêu.');
     },
   });
 
@@ -51,10 +52,10 @@ export const CareerGoalsCard = ({ activeGoal, otherGoals, colors }: CareerGoalsC
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['career-goals'] });
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-      Alert.alert('Thành công', 'Đã xóa mục tiêu nghề nghiệp');
+      toast.success('Đã xóa mục tiêu nghề nghiệp');
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err?.message || 'Không thể xóa mục tiêu.');
+      toast.error(err?.message || 'Không thể xóa mục tiêu.');
     },
   });
 

@@ -55,8 +55,8 @@ export const CVMetaHeader = memo(({ isBenchmark, targetRole, seniority, industry
         <MaterialIcons name="verified" size={14} color={colors.primary} />
         <ThemedText style={[styles.tagText, { color: colors.primary }]}>Báo cáo phân tích chuyên sâu</ThemedText>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <ThemedText style={styles.mainTitle}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <ThemedText style={[styles.mainTitle, { flex: 1, marginTop: -2 }]}>
           {isBenchmark ? 'Đánh giá hồ sơ theo Chuẩn năng lực' : 'Đánh giá hồ sơ theo JD'}
         </ThemedText>
         <AIGeneratedLabel />
@@ -123,12 +123,6 @@ export const CVOverviewTab = memo(({
         </View>
       ) : null}
 
-      {(rubricVersion || modelVersion) && (
-        <View style={[styles.versionContainer, { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
-          {rubricVersion && <ThemedText style={styles.versionText}>Rubric: {rubricVersion}</ThemedText>}
-          {modelVersion && <ThemedText style={styles.versionText}>Model: {modelVersion}</ThemedText>}
-        </View>
-      )}
     </View>
   </View>
 ));

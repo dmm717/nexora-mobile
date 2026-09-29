@@ -23,6 +23,7 @@ import { CombinedPreflightCard } from '@/components/interview/preflight/Combined
 import { PreflightTypeCard } from '@/components/interview/preflight/PreflightTypeCard';
 import { MicCheckCard } from '@/components/interview/preflight/MicCheckCard';
 import { EntranceActionCard } from '@/components/interview/preflight/EntranceActionCard';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function PreflightScreen() {
   const router = useRouter();
@@ -144,7 +145,7 @@ export default function PreflightScreen() {
       router.replace(`/(app)/interview/${data.id}?micMode=${micMode}` as any);
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể khởi tạo phiên phỏng vấn. Vui lòng thử lại.');
+      toast.error(err.message || 'Không thể khởi tạo phiên phỏng vấn. Vui lòng thử lại.');
     },
   });
 

@@ -2,8 +2,6 @@ import { Stack, Redirect } from 'expo-router';
 import { useAuth } from '@/context/auth-context';
 import { ActivityIndicator, View } from 'react-native';
 import { Colors } from '@/constants/theme';
-import { AccountPendingDeletionBanner } from '@/components/account/AccountPendingDeletionBanner';
-
 export default function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -22,7 +20,6 @@ export default function AppLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-      <AccountPendingDeletionBanner />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="account" options={{ headerShown: false }} />
         <Stack.Screen name="career-goals" options={{ headerShown: false }} />

@@ -5,6 +5,7 @@ import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { reportApi, ReportContentType, ReportReasonCode } from '@/api/report.api';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 interface ReportContentButtonProps {
   contentType: ReportContentType;
@@ -38,7 +39,7 @@ export function ReportContentButton({
 
   const handleSubmit = async () => {
     if (!reasonCode) {
-      Alert.alert('Lỗi', 'Vui lòng chọn một lý do báo cáo.');
+      toast.error('Vui lòng chọn một lý do báo cáo.');
       return;
     }
 
@@ -52,12 +53,12 @@ export function ReportContentButton({
         contentSnapshot
       });
       
-      Alert.alert('Thành công', 'Cảm ơn bạn. Chúng tôi sẽ xem xét nội dung này.');
+      toast.success('Cảm ơn bạn. Chúng tôi sẽ xem xét nội dung này.');
       setModalVisible(false);
       setReasonCode(null);
       setDescription('');
     } catch (e: any) {
-      Alert.alert('Lỗi', e?.response?.data?.message || 'Không thể gửi báo cáo lúc này. Vui lòng thử lại sau.');
+      toast.error(e?.response?.data?.message || 'Không thể gửi báo cáo lúc này. Vui lòng thử lại sau.');
     } finally {
       setIsSubmitting(false);
     }

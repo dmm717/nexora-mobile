@@ -32,6 +32,7 @@ import {
   describePlanFeature,
 } from '@/utils/billing-presentation';
 import { styles } from '@/styles/pricing.styles';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function PricingScreen() {
   const router = useRouter();
@@ -86,10 +87,10 @@ export default function PricingScreen() {
         );
         // Step 2.4: BẮT BUỘC
         await finishTransaction({ purchase, isConsumable: false });
-        Alert.alert('Thành Công', 'Nâng cấp gói dịch vụ thành công!');
+        toast.success('Nâng cấp gói dịch vụ thành công!');
         queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       } catch (err: any) {
-        Alert.alert('Chưa hoàn tất', 'Thanh toán thành công nhưng có lỗi khi xác nhận với Server. Vui lòng thử lại bằng cách "Khôi phục giao dịch".');
+        toast.error('Thanh toán thành công nhưng có lỗi khi xác nhận với Server. Vui lòng thử lại bằng cách "Khôi phục giao dịch".');
       } finally {
         setIsVerifying(false);
         setSelectedPriceId(null);
@@ -99,7 +100,7 @@ export default function PricingScreen() {
       setIsVerifying(false);
       setSelectedPriceId(null);
       if (err?.code !== 'E_USER_CANCELLED') {
-        Alert.alert('Lỗi', 'Không thể hoàn tất thanh toán qua Google Play.');
+        toast.error('Không thể hoàn tất thanh toán qua Google Play.');
       }
     },
   });
@@ -149,9 +150,9 @@ export default function PricingScreen() {
     try {
       setIsVerifying(true);
       await getAvailablePurchases();
-      Alert.alert('Thông báo', 'Đã yêu cầu kiểm tra lại các giao dịch đang treo.');
+      toast.info('Đã yêu cầu kiểm tra lại các giao dịch đang treo.');
     } catch (e) {
-      Alert.alert('Lỗi', 'Không thể khôi phục giao dịch lúc này.');
+      toast.error('Không thể khôi phục giao dịch lúc này.');
     } finally {
       setIsVerifying(false);
     }
@@ -163,7 +164,7 @@ export default function PricingScreen() {
         await deepLinkToSubscriptions({ skuAndroid: currentPlanCode, packageNameAndroid: 'com.nexora.app' });
       }
     } catch (e) {
-      Alert.alert('Lỗi', 'Không thể mở trình quản lý gói cước Google Play.');
+      toast.error('Không thể mở trình quản lý gói cước Google Play.');
     }
   };
 

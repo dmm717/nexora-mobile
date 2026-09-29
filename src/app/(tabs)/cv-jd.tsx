@@ -10,7 +10,6 @@ import { tokenStorage } from '@/services/storage';
 
 import { useCvJdTabState } from '@/components/cv-analysis/cv-jd/useCvJdTabState';
 import {
-  CvJdFloatingPagination,
   CvJdFormContent,
   LatestAnalysisModal,
 } from '@/components/cv-analysis/cv-jd/CvJdSubComponents';
@@ -27,14 +26,11 @@ export default function CvJdTabScreen() {
     showPopup,
     doNotShowAgain,
     setDoNotShowAgain,
-    historyPage,
-    setHistoryPage,
-    showFloatingNav,
-    handleScroll,
     isProfileLoading,
     latestCompletedAnalysis,
-    totalHistoryPages,
+    fetchNextPage,
     hasNextPage,
+    isFetchingNextPage,
     handleClosePopup,
   } = state;
 
@@ -48,8 +44,15 @@ export default function CvJdTabScreen() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          onScroll={handleScroll}
+          keyboardShouldPersistTaps="handled"
           scrollEventThrottle={16}
+          onScroll={(e) => {
+            const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+            const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 200;
+            if (isCloseToBottom && hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
         >
           {isProfileLoading ? (
             <ThemedView style={styles.centerContainer}>
@@ -64,17 +67,6 @@ export default function CvJdTabScreen() {
           )}
         </ScrollView>
       </SafeAreaView>
-
-      <CvJdFloatingPagination
-        showFloatingNav={showFloatingNav}
-        totalHistoryPages={totalHistoryPages}
-        historyPage={historyPage}
-        hasNextPage={hasNextPage}
-        colorScheme={colorScheme}
-        colors={colors}
-        onPrev={() => setHistoryPage((p) => Math.max(1, p - 1))}
-        onNext={() => setHistoryPage((p) => p + 1)}
-      />
 
       <LatestAnalysisModal
         visible={showPopup}

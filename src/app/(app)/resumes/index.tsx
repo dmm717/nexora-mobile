@@ -21,6 +21,7 @@ import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { EmptyStateCard } from '@/components/ui/empty-state-card';
 import { styles } from '@/styles/resumes.styles';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function ResumesScreen() {
   const router = useRouter();
@@ -93,10 +94,10 @@ export default function ResumesScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resumes'] });
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-      Alert.alert('Thành công', 'Đã tải lên CV thành công');
+      toast.success('Đã tải lên CV thành công');
     },
     onError: (error: any) => {
-      Alert.alert('Lỗi', error.message || 'Không thể tải lên CV. Vui lòng thử lại.');
+      toast.error(error.message || 'Không thể tải lên CV. Vui lòng thử lại.');
       logger.error('Failed to upload CV', error);
     },
     onSettled: async (_, __, variables) => {
@@ -129,10 +130,10 @@ export default function ResumesScreen() {
       }
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
       queryClient.invalidateQueries({ queryKey: ['resumes'] });
-      Alert.alert('Thành công', 'Đã đặt làm CV chính');
+      toast.success('Đã đặt làm CV chính');
     },
     onError: (error: any) => {
-      Alert.alert('Lỗi', error.message || 'Không thể đặt CV làm CV chính.');
+      toast.error(error.message || 'Không thể đặt CV làm CV chính.');
     }
   });
 
@@ -143,10 +144,10 @@ export default function ResumesScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resumes'] });
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
-      Alert.alert('Thành công', 'Đã xóa CV thành công');
+      toast.success('Đã xóa CV thành công');
     },
     onError: (error: any) => {
-      Alert.alert('Lỗi', error.message || 'Không thể xóa CV. Vui lòng thử lại.');
+      toast.error(error.message || 'Không thể xóa CV. Vui lòng thử lại.');
     }
   });
 
@@ -177,14 +178,14 @@ export default function ResumesScreen() {
         
         // Validate file size
         if (!file.size || file.size === 0) {
-          Alert.alert('Lỗi', 'Không thể xác định kích thước file hoặc file rỗng. Vui lòng chọn file khác.');
+          toast.error('Không thể xác định kích thước file hoặc file rỗng. Vui lòng chọn file khác.');
           try { if (file.uri) await FileSystem.deleteAsync(file.uri, { idempotent: true }); } catch (err: any) { logger.warn('Failed to delete temp CV file', { error: err?.message || err }); }
           return;
         }
 
         const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB as per plan
         if (file.size > MAX_FILE_SIZE) {
-          Alert.alert('Lỗi', 'Kích thước file không được vượt quá 10MB.');
+          toast.error('Kích thước file không được vượt quá 10MB.');
           try { if (file.uri) await FileSystem.deleteAsync(file.uri, { idempotent: true }); } catch (err: any) { logger.warn('Failed to delete temp CV file', { error: err?.message || err }); }
           return;
         }
@@ -198,7 +199,7 @@ export default function ResumesScreen() {
           } else if (extension === 'docx') {
             resolvedMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
           } else {
-            Alert.alert('Lỗi', 'Định dạng file không được hỗ trợ. Chỉ chấp nhận PDF hoặc DOCX.');
+            toast.error('Định dạng file không được hỗ trợ. Chỉ chấp nhận PDF hoặc DOCX.');
             try { if (file.uri) await FileSystem.deleteAsync(file.uri, { idempotent: true }); } catch (err: any) { logger.warn('Failed to delete temp CV file', { error: err?.message || err }); }
             return;
           }
@@ -210,7 +211,7 @@ export default function ResumesScreen() {
         ];
         
         if (!allowedMimeTypes.includes(resolvedMimeType)) {
-          Alert.alert('Lỗi', 'Định dạng file không được hỗ trợ. Chỉ chấp nhận PDF hoặc DOCX.');
+          toast.error('Định dạng file không được hỗ trợ. Chỉ chấp nhận PDF hoặc DOCX.');
           try { if (file.uri) await FileSystem.deleteAsync(file.uri, { idempotent: true }); } catch (err: any) { logger.warn('Failed to delete temp CV file', { error: err?.message || err }); }
           return;
         }

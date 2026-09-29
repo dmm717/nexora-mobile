@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { GlassCard } from '@/components/ui/glass-card';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { styles } from '@/styles/account.styles';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 export const PrivacyDataCard = ({ currentUserData, colors }: { currentUserData: any; colors: any }) => {
   const [isExporting, setIsExporting] = useState(false);
@@ -33,14 +34,11 @@ export const PrivacyDataCard = ({ currentUserData, colors }: { currentUserData: 
           dialogTitle: 'Xuất Dữ Liệu Cá Nhân Nexora',
         });
       } else {
-        Alert.alert(
-          'Thành Công',
-          `Thiết bị không hỗ trợ chia sẻ. Tệp dữ liệu cá nhân đã được lưu tạm tại: ${fileUri}`
-        );
+        toast.success(`Thiết bị không hỗ trợ chia sẻ. Tệp dữ liệu cá nhân đã được lưu tạm tại: ${fileUri}`);
         fileUriToCleanUp = null;
       }
     } catch (err: any) {
-      Alert.alert('Lỗi', err?.message || 'Không thể trích xuất dữ liệu.');
+      toast.error(err?.message || 'Không thể trích xuất dữ liệu.');
     } finally {
       setIsExporting(false);
       if (fileUriToCleanUp) {

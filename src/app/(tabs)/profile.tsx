@@ -16,6 +16,7 @@ import { AmbientBackground } from '@/components/ui/ambient-background';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { ProductFeedbackCard } from '@/components/profile/ProductFeedbackCard';
 import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
+import { AccountPendingDeletionBanner } from '@/components/account/AccountPendingDeletionBanner';
 import { styles } from '@/styles/profile.styles';
 
 function useUserProfileData() {
@@ -81,7 +82,7 @@ export default function ProfileScreen() {
     <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
         {/* Top Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
           <ThemedText type="title" style={styles.headerTitle}>Hồ Sơ Cá Nhân</ThemedText>
         </View>
 
@@ -96,6 +97,8 @@ export default function ProfileScreen() {
             </View>
           ) : (
             <>
+              <AccountPendingDeletionBanner />
+
               {/* User Account Identity Card (Matching Screenshot Top Block) */}
               <GlassCard style={styles.userInfoCard}>
                 <ThemedText style={styles.accountLabel}>Tài khoản đang đăng nhập</ThemedText>

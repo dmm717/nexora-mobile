@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -24,6 +24,7 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
+  const insets = useSafeAreaInsets();
 
   const {
     user,
@@ -45,10 +46,17 @@ export default function HomeScreen() {
     isLoadingLearningPath,
   } = useHomeState();
 
+  const handleNavigateCvAnalysis = () => {
+    if (primaryResume?.id) {
+      router.push(`/(app)/cv-analysis/${primaryResume.id}` as any);
+    } else {
+      router.push('/(app)/resumes' as any);
+    }
+  };
 
   return (
     <SolidBackground>
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.safeArea, { paddingTop: Math.max(insets.top - 15, 15) }]}>
         {/* TOP BAR */}
         <View style={[styles.topBar, { borderBottomColor: colors.cardBorder }]}>
           <View style={styles.brandHeaderGroup}>
@@ -62,18 +70,10 @@ export default function HomeScreen() {
 
           <View style={styles.headerBtnGroupRight}>
             <TouchableScale
-              style={[styles.headerBtnPrimaryCompact, { backgroundColor: colors.primary }]}
-              onPress={() => router.push('/(app)/cv-analysis' as any)}
-            >
-              <Ionicons name="document-text" size={12} color="#ffffff" />
-              <ThemedText style={styles.headerBtnPrimaryText}>Cải thiện CV</ThemedText>
-            </TouchableScale>
-
-            <TouchableScale
               style={{ borderRadius: 16 }}
               onPress={() => router.push('/(tabs)/profile' as any)}
             >
-              <UserAvatar name={user?.displayName} email={user?.email} size={32} />
+              <UserAvatar name={user?.displayName} email={user?.email} avatarUrl={user?.avatarUrl} size={32} />
             </TouchableScale>
           </View>
         </View>
@@ -86,7 +86,7 @@ export default function HomeScreen() {
             activeGoal={activeGoal}
             primaryResume={primaryResume}
             onNavigateCareerGoals={() => router.push('/(app)/career-goals' as any)}
-            onNavigateCvAnalysis={() => router.push('/(app)/cv-analysis' as any)}
+            onNavigateCvAnalysis={handleNavigateCvAnalysis}
           />
 
           {/* KHỐI 2: UNIFIED EXECUTIVE DASHBOARD CARD */}
@@ -143,7 +143,7 @@ export default function HomeScreen() {
             onNavigateLearningPath={() => router.push('/(app)/growth/learning-path' as any)}
           />
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </SolidBackground>
   );
 }

@@ -21,13 +21,13 @@ import { webSpeechInstance } from '../services/speech.web';
 import { webTtsInstance } from '../services/tts.web';
 
 // Native hooks (only imported on native via lazy require to avoid web bundling issues)
-let useNativeStt: typeof import('../services/speech.native').useNativeStt | null = null;
-let useNativeTts: typeof import('../services/tts.native').useNativeTts | null = null;
+let useNativeStt: typeof import('../services/speech').useNativeStt | null = null;
+let useNativeTts: typeof import('../services/tts').useNativeTts | null = null;
 
 if (Platform.OS !== 'web') {
   // Dynamic require to avoid importing expo-audio on web
-  const speechNative = require('../services/speech.native');
-  const ttsNative = require('../services/tts.native');
+  const speechNative = require('../services/speech');
+  const ttsNative = require('../services/tts');
   useNativeStt = speechNative.useNativeStt;
   useNativeTts = ttsNative.useNativeTts;
 }
@@ -68,7 +68,7 @@ function useInterviewAudioNative(
 
   // Check mic permission on mount
   useEffect(() => {
-    const { getMicrophonePermissionStatus } = require('./speech.native');
+    const { getMicrophonePermissionStatus } = require('../services/speech');
     getMicrophonePermissionStatus().then((status: string) => {
       setIsMicAllowed(status === 'granted');
     });
@@ -103,7 +103,7 @@ function useInterviewAudioNative(
   }, [tts, stt]);
 
   const requestMicPermission = useCallback(async () => {
-    const { requestMicrophonePermission } = require('../services/speech.native');
+    const { requestMicrophonePermission } = require('../services/speech');
     const granted = await requestMicrophonePermission();
     setIsMicAllowed(granted);
     return granted;

@@ -87,6 +87,11 @@ export default function GrowthTabScreen() {
   return (
     <AmbientBackground>
       <SafeAreaView style={styles.safeArea}>
+        {/* Standard Sticky Header */}
+        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
+          <ThemedText type="title" style={styles.headerTitle}>Hồ Sơ Năng Lực</ThemedText>
+        </View>
+
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}

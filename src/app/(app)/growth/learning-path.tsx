@@ -20,6 +20,7 @@ import { styles } from '@/styles/learning-path.styles';
 import { getLocalizedCompetencyLabel } from '@/utils/competencyLocalization';
 import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
 import { ReportContentButton } from '@/components/moderation/ReportContentButton';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 interface ActivityCardProps {
   activity: any;
@@ -256,18 +257,18 @@ export default function LearningPathScreen() {
       queryClient.invalidateQueries({ queryKey: ['learning-path'] });
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể tạo lộ trình. Bạn đã có Mục tiêu Nghề nghiệp chưa?');
+      toast.error(err.message || 'Không thể tạo lộ trình. Bạn đã có Mục tiêu Nghề nghiệp chưa?');
     },
   });
 
   const refreshMutation = useMutation({
     mutationFn: growthApi.refreshLearningPath,
     onSuccess: () => {
-      Alert.alert('Thành công', 'Đã cập nhật lộ trình học tập dựa trên minh chứng mới nhất!');
+      toast.success('Đã cập nhật lộ trình học tập dựa trên minh chứng mới nhất!');
       queryClient.invalidateQueries({ queryKey: ['learning-path'] });
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể làm mới lộ trình học tập.');
+      toast.error(err.message || 'Không thể làm mới lộ trình học tập.');
     },
   });
 
@@ -277,7 +278,7 @@ export default function LearningPathScreen() {
       queryClient.invalidateQueries({ queryKey: ['learning-path'] });
     },
     onError: (err: any) => {
-      Alert.alert('Lỗi', err.message || 'Không thể cập nhật trạng thái nhiệm vụ.');
+      toast.error(err.message || 'Không thể cập nhật trạng thái nhiệm vụ.');
     },
   });
 
