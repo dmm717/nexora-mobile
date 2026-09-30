@@ -21,8 +21,10 @@ import {
   setAudioModeAsync,
   requestRecordingPermissionsAsync,
   getRecordingPermissionsAsync,
+  IOSOutputFormat,
+  RecordingOptions,
 } from 'expo-audio';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { getInterviewSpeechAuthorization } from './speechTokenManager';
 
 // ---------------------------------------------------------------------------
@@ -65,6 +67,37 @@ export async function getMicrophonePermissionStatus(): Promise<'granted' | 'deni
 }
 
 // ---------------------------------------------------------------------------
+// STT Text Cleanup
+// ---------------------------------------------------------------------------
+const VIETNAMESE_FILLER_WORDS = ['ừm', 'ờm', 'ờ', 'à', 'ừ', 'ưm', 'um', 'uh', 'ah'];
+
+function removeFillerWords(text: string): string {
+  if (!text) return '';
+  
+  const fillers = VIETNAMESE_FILLER_WORDS.join('|');
+  // Use capturing group for boundaries since JS \b doesn't support Unicode
+  const fillerRegex = new RegExp(`(^|[\\s,!?.-])(${fillers})(?=[\\s,!?.-]|$)`, 'gi');
+  
+  let cleaned = text.replace(fillerRegex, '$1');
+  // Run twice to catch any back-to-back fillers (e.g. "ừm ờ") separated by space
+  cleaned = cleaned.replace(fillerRegex, '$1');
+  
+  // Clean up punctuation artifacts
+  cleaned = cleaned.replace(/,\\s*,/g, ','); // merge double commas
+  cleaned = cleaned.replace(/\\s+([.,!?])/g, '$1'); // remove spaces before punctuation
+  cleaned = cleaned.replace(/^[.,!?]\\s*/g, ''); // remove leading punctuation
+  cleaned = cleaned.replace(/\\s+/g, ' '); // remove multiple spaces
+  cleaned = cleaned.trim();
+  
+  // Capitalize the first letter if needed
+  if (cleaned.length > 0) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+  
+  return cleaned;
+}
+
+// ---------------------------------------------------------------------------
 // Azure STT REST call
 // ---------------------------------------------------------------------------
 async function transcribeWithAzure(
@@ -76,35 +109,25 @@ async function transcribeWithAzure(
     `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1` +
     `?language=vi-VN&format=detailed`;
 
-  // Read file as base64, convert to binary for fetch body
-  const base64 = await FileSystem.readAsStringAsync(fileUri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
+  const response = await FileSystem.uploadAsync(endpoint, fileUri, {
+    httpMethod: 'POST',
+    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'audio/wav; codecs=audio/pcm; samplerate=16000',
       Accept: 'application/json',
     },
-    body: bytes.buffer,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    throw new Error(`Azure STT returned ${response.status}: ${errorText}`);
+  if (response.status !== 200) {
+    throw new Error(`Azure STT returned ${response.status}: ${response.body}`);
   }
 
-  const json = await response.json();
+  const json = JSON.parse(response.body);
 
   if (json.RecognitionStatus === 'Success') {
-    return (json.NBest?.[0]?.Display || json.DisplayText || '').trim();
+    const rawText = (json.NBest?.[0]?.Display || json.DisplayText || '').trim();
+    return removeFillerWords(rawText);
   }
   if (json.RecognitionStatus === 'NoMatch' || json.RecognitionStatus === 'InitialSilenceTimeout') {
     return ''; // No speech detected
@@ -115,21 +138,23 @@ async function transcribeWithAzure(
 // ---------------------------------------------------------------------------
 // Recording preset for STT (WAV 16kHz mono)
 // ---------------------------------------------------------------------------
-const STT_RECORDING_OPTIONS = {
+const STT_RECORDING_OPTIONS: RecordingOptions = {
   ...RecordingPresets.HIGH_QUALITY,
+  sampleRate: 16000,
+  numberOfChannels: 1,
+  bitRate: 256000,
+  extension: '.wav',
   android: {
-    ...RecordingPresets.HIGH_QUALITY.android,
     extension: '.wav',
+    outputFormat: 'default',
+    audioEncoder: 'default',
     sampleRate: 16000,
-    numberOfChannels: 1,
-    bitRate: 256000,
   },
   ios: {
     ...RecordingPresets.HIGH_QUALITY.ios,
     extension: '.wav',
+    outputFormat: IOSOutputFormat.LINEARPCM,
     sampleRate: 16000,
-    numberOfChannels: 1,
-    bitRate: 256000,
     linearPCMBitDepth: 16,
     linearPCMIsBigEndian: false,
     linearPCMIsFloat: false,
@@ -246,13 +271,17 @@ export function useNativeStt(interviewId: string | undefined): UseNativeSttRetur
   useEffect(() => {
     return () => {
       // Only clean up on actual unmount
-      if (recorderRef.current.isRecording) {
-        recorderRef.current.stop().then(() => {
-          if (recorderRef.current.uri) {
-            FileSystem.deleteAsync(recorderRef.current.uri, { idempotent: true }).catch(() => {});
-          }
-        }).catch(() => {});
-      }
+      try {
+        if (recorderRef.current.isRecording) {
+          recorderRef.current.stop().then(() => {
+            try {
+              if (recorderRef.current.uri) {
+                FileSystem.deleteAsync(recorderRef.current.uri, { idempotent: true }).catch(() => {});
+              }
+            } catch { /* native object already released */ }
+          }).catch(() => {});
+        }
+      } catch { /* native recorder already destroyed on unmount */ }
     };
   }, []);
 

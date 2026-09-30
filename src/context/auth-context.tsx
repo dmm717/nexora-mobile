@@ -58,7 +58,10 @@ async function hydrateSessionAsync(
       }
     } catch (err: any) {
       logger.warn('Failed to refresh token during hydration', { error: err?.message || err });
-      await tokenStorage.clearTokens();
+      const isNetworkError = err?.originalError?.isAxiosError && !err?.originalError?.response;
+      if (!isNetworkError) {
+        await tokenStorage.clearTokens();
+      }
     }
   }
 
@@ -69,7 +72,10 @@ async function hydrateSessionAsync(
     } catch (err: any) {
       logger.warn('Failed to fetch user during hydration', { error: err?.message || err });
       if (signal.mounted) {
-        await tokenStorage.clearTokens();
+        const isNetworkError = err?.originalError?.isAxiosError && !err?.originalError?.response;
+        if (!isNetworkError) {
+          await tokenStorage.clearTokens();
+        }
         setUser(null);
       }
     }

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { styles } from '@/styles/interview-preflight.styles';
 import { Spacing } from '@/constants/theme';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useAudioRecorder, useAudioRecorderState, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio';
 import { logger } from '@/services/logger';
 
@@ -38,13 +38,17 @@ export const MicCheckCard = memo(({ colors, onModeChange }: { colors: any; onMod
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      if (recorder.isRecording) {
-        recorder.stop().then(() => {
-          if (recorder.uri) {
-            FileSystem.deleteAsync(recorder.uri, { idempotent: true }).catch(() => {});
-          }
-        }).catch(() => {});
-      }
+      try {
+        if (recorder.isRecording) {
+          recorder.stop().then(() => {
+            try {
+              if (recorder.uri) {
+                FileSystem.deleteAsync(recorder.uri, { idempotent: true }).catch(() => {});
+              }
+            } catch { /* native object already released */ }
+          }).catch(() => {});
+        }
+      } catch { /* native recorder already destroyed on unmount */ }
     };
   }, [recorder]);
 

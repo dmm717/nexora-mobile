@@ -95,12 +95,12 @@ export const PreflightTypeCard = memo(({
         }}
       >
         {/* Top Header inside card */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
             <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
               <Ionicons name={selectedType.icon as any} size={20} color="#ffffff" />
             </View>
-            <View style={{ flex: 1, marginRight: 8 }}>
+            <View style={{ flex: 1, paddingRight: 8 }}>
               <ThemedText style={{ fontSize: 15, fontWeight: '800', color: colors.primary }} numberOfLines={1}>
                 {selectedType.label}
               </ThemedText>
@@ -109,7 +109,7 @@ export const PreflightTypeCard = memo(({
               </ThemedText>
             </View>
           </View>
-          <View style={{ backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+          <View style={{ backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, flexShrink: 0 }}>
             <ThemedText style={{ fontSize: 11, fontWeight: '800', color: '#ffffff' }}>✓ Đã chọn</ThemedText>
           </View>
         </View>

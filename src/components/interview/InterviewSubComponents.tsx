@@ -138,11 +138,11 @@ export const CurrentQuestionCard = React.memo(({
   }
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-      <View style={[styles.questionHeader, { justifyContent: 'space-between' }]}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: 'transparent', shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 5, padding: Spacing.four }]}>
+      <View style={[styles.questionHeader, { justifyContent: 'space-between', marginBottom: Spacing.three }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.two, flex: 1 }}>
-          <View style={[styles.sequenceChip, { backgroundColor: colors.primary }]}>
-            <ThemedText style={styles.sequenceChipText}>Câu hỏi #{currentQuestion.sequence}</ThemedText>
+          <View style={[styles.sequenceChip, { backgroundColor: 'transparent', paddingHorizontal: 0 }]}>
+            <ThemedText style={[styles.sequenceChipText, { color: colors.primary, fontSize: 14, fontWeight: '800' }]}>Câu hỏi #{currentQuestion.sequence}</ThemedText>
           </View>
           <View style={[styles.topicChip, { backgroundColor: colors.backgroundElement }]}>
             <ThemedText style={styles.topicChipText}>{currentQuestion.topic}</ThemedText>
@@ -152,7 +152,9 @@ export const CurrentQuestionCard = React.memo(({
               <ThemedText style={[styles.kindChipText, { color: colors.warning }]}>Hỏi đào sâu</ThemedText>
             </View>
           )}
-          <AIGeneratedLabel />
+          <View style={{ opacity: 0.6 }}>
+            <AIGeneratedLabel />
+          </View>
         </View>
         <ReportContentButton 
           contentType="interview_question" 
@@ -161,7 +163,7 @@ export const CurrentQuestionCard = React.memo(({
         />
       </View>
 
-      <ThemedText style={styles.questionContent}>
+      <ThemedText style={[styles.questionContent, { lineHeight: 28 }]}>
         {currentQuestion.content}
       </ThemedText>
     </View>
@@ -260,14 +262,14 @@ export const QuestionCoachTipCard = React.memo(({
       : 'Áp dụng cấu trúc STAR: Nêu rõ Bối cảnh (S), Mục tiêu (T), Hành động cụ thể (A), và Kết quả định lượng (R).';
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
-      <View style={styles.cardHeaderRow}>
-        <Ionicons name="bulb-outline" size={18} color={colors.warning} />
+    <View style={{ marginTop: Spacing.two, paddingHorizontal: Spacing.two }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <Ionicons name="bulb" size={14} color={colors.warning} />
         <ThemedText style={{ fontSize: 13, fontWeight: '700', color: colors.warning }}>
-          Mẹo trả lời AI (Coach Tip)
+          Mẹo trả lời AI
         </ThemedText>
       </View>
-      <ThemedText style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 17 }}>
+      <ThemedText style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 20 }}>
         {tipText}
       </ThemedText>
     </View>

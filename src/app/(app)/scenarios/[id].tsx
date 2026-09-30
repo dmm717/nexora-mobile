@@ -8,7 +8,7 @@ import { ThemedView } from '@/components/themed-view';
 import { scenariosApi } from '@/api/scenarios.api';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppBottomNavBar, useAppBottomNavBarHeight } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/scenarios-detail.styles';
 import { ReportContentButton } from '@/components/moderation/ReportContentButton';
@@ -24,6 +24,7 @@ export default function ScenarioDetailScreen() {
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
+  const bottomNavBarHeight = useAppBottomNavBarHeight();
 
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
@@ -187,7 +188,10 @@ export default function ScenarioDetailScreen() {
           }
         />
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomNavBarHeight + 16 }]} 
+          showsVerticalScrollIndicator={false}
+        >
           {/* Scenario Briefing Header */}
           <ScenarioBriefingCard scenario={scenario} colors={colors} />
 

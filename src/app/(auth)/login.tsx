@@ -1,32 +1,32 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Alert,
-  View,
-  Image,
-  StatusBar,
-} from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import Animated, { FadeOut } from 'react-native-reanimated';
-import { validateEmail, validatePassword } from '@/utils/validation';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AppError } from '@/api/types';
 import { authApi } from '@/api/auth.api';
+import { AppError } from '@/api/types';
+import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
+import { TopographicHeader } from '@/components/ui/topographic-header';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { TopographicHeader } from '@/components/ui/topographic-header';
-import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
 import { styles } from '@/styles/login.styles';
+import { validateEmail, validatePassword } from '@/utils/validation';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Alert,
+  Image,
+  StatusBar,
+  View,
+} from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Animated, { FadeOut } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AuthStep } from '@/components/auth/types';
-import { WelcomeSection } from '@/components/auth/WelcomeSection';
+import { ForgotDoneSection } from '@/components/auth/ForgotDoneSection';
+import { ForgotRequestSection } from '@/components/auth/ForgotRequestSection';
 import { SignInSection } from '@/components/auth/SignInSection';
 import { SignUpSection } from '@/components/auth/SignUpSection';
-import { ForgotRequestSection } from '@/components/auth/ForgotRequestSection';
-import { ForgotDoneSection } from '@/components/auth/ForgotDoneSection';
+import { AuthStep } from '@/components/auth/types';
+import { WelcomeSection } from '@/components/auth/WelcomeSection';
 import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function LoginScreen() {

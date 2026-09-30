@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, View, Image, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ActivityIndicator, Pressable, View, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInUp, FadeInDown, Easing } from 'react-native-reanimated';
@@ -19,62 +19,44 @@ import { toast } from '@/components/ui/toast/ToastProvider';
 export default function VerifyEmailScreen() {
   const { email: emailParam } = useLocalSearchParams<{ email: string }>();
   const [email, setEmail] = useState(emailParam || '');
-  const [code, setCode] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  const verifyMutation = useMutation({
-    mutationFn: () =>
-      authApi.verifyEmail({ email: email.trim(), code: code.trim() }),
-    onSuccess: () => {
-      Alert.alert('Thành công', 'Tài khoản của bạn đã được xác thực!', [
-        { text: 'Đăng nhập ngay', onPress: () => router.replace('/(auth)/login') },
-      ]);
-    },
-    onError: (error) => {
-      if (error instanceof AppError) {
-        toast.error(`[${error.code}] ${error.message}`);
-      } else {
-        toast.error('Có lỗi xảy ra khi xác thực tài khoản');
-      }
-    },
-  });
-
   const resendMutation = useMutation({
     mutationFn: () =>
       authApi.resendVerification({ email: email.trim() }),
     onSuccess: () => {
-      toast.success('Mã xác thực mới đã được gửi đến email của bạn.');
+      toast.success('Liên kết xác thực mới đã được gửi đến email của bạn.');
+      setResendCooldown(60);
     },
     onError: (error) => {
       if (error instanceof AppError) {
         toast.error(`[${error.code}] ${error.message}`);
       } else {
-        toast.error('Có lỗi xảy ra khi yêu cầu mã xác thực mới');
+        toast.error('Có lỗi xảy ra khi gửi lại email');
       }
     },
   });
 
-  const handleVerify = () => {
-    if (!email.trim() || !code.trim()) {
-      toast.error('Vui lòng nhập Email và Mã xác thực');
-      return;
-    }
-    verifyMutation.mutate();
-  };
-
   const handleResend = () => {
+    if (resendCooldown > 0) return;
     if (!email.trim()) {
-      toast.error('Vui lòng nhập Email để nhận lại mã');
+      toast.error('Vui lòng nhập Email để nhận lại liên kết');
       return;
     }
     resendMutation.mutate();
   };
 
-  const isLoading = verifyMutation.isPending;
   const isResending = resendMutation.isPending;
 
   return (
@@ -89,10 +71,10 @@ export default function VerifyEmailScreen() {
           <Animated.View entering={FadeInDown.duration(800).easing(Easing.out(Easing.cubic))} style={styles.brandHeader}>
             <Image source={require('@/assets/images/logo.png')} style={styles.logoImage} resizeMode="contain" />
             <ThemedText type="title" style={styles.title}>
-              Xác Thực Email
+              Kiểm tra Email
             </ThemedText>
             <ThemedText style={styles.subtitle}>
-              Nhập mã gồm 6 chữ số vừa được gửi đến email của bạn
+              Xác thực tài khoản để bắt đầu trải nghiệm
             </ThemedText>
           </Animated.View>
 
@@ -100,6 +82,11 @@ export default function VerifyEmailScreen() {
           <Animated.View entering={FadeInUp.delay(200).duration(800).easing(Easing.out(Easing.cubic))}>
             <GlassCard hasGlow glowColor={colors.glowPrimary} style={styles.card}>
               <View style={styles.formStack}>
+                
+                <ThemedText style={{ textAlign: 'center', marginBottom: 24, fontSize: 15, lineHeight: 24, color: colors.textSecondary }}>
+                  Chúng tôi đã gửi một liên kết xác minh đến email của bạn. Vui lòng mở email (bao gồm cả thư mục Spam) và nhấn vào liên kết để kích hoạt tài khoản.
+                </ThemedText>
+
                 <MaterialInput
                   label="Địa chỉ Email"
                   leftIcon="mail-outline"
@@ -110,35 +97,21 @@ export default function VerifyEmailScreen() {
                   editable={!emailParam}
                 />
 
-                <MaterialInput
-                  label="Mã OTP (6 số)"
-                  leftIcon="key-outline"
-                  value={code}
-                  onChangeText={setCode}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                />
-
                 <TouchableScale
-                  style={[styles.submitButton, { backgroundColor: colors.primary }]}
-                  onPress={handleVerify}
-                  disabled={isLoading || isResending}
+                  style={[styles.submitButton, { backgroundColor: colors.primary, marginTop: 12 }]}
+                  onPress={() => router.replace('/(auth)/login')}
                 >
-                  {isLoading ? (
-                    <ActivityIndicator color="#ffffff" />
-                  ) : (
-                    <ThemedText style={styles.submitButtonText}>Xác Thực Tài Khoản</ThemedText>
-                  )}
+                  <ThemedText style={styles.submitButtonText}>Tôi đã xác thực xong</ThemedText>
                 </TouchableScale>
 
                 <View style={styles.resendRow}>
-                  <ThemedText style={styles.footerText}>Chưa nhận được mã? </ThemedText>
-                  <Pressable onPress={handleResend} disabled={isResending || isLoading} hitSlop={8}>
+                  <ThemedText style={styles.footerText}>Không tìm thấy email? </ThemedText>
+                  <Pressable onPress={handleResend} disabled={isResending || resendCooldown > 0} hitSlop={8}>
                     {isResending ? (
                       <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 4 }} />
                     ) : (
-                      <ThemedText style={[styles.linkText, { color: colors.primary }, (isResending || isLoading) && { opacity: 0.5 }]}>
-                        Gửi lại mã
+                      <ThemedText style={[styles.linkText, { color: colors.primary }, (isResending || resendCooldown > 0) && { opacity: 0.5 }]}>
+                        {resendCooldown > 0 ? `Gửi lại sau (${resendCooldown}s)` : 'Gửi lại'}
                       </ThemedText>
                     )}
                   </Pressable>

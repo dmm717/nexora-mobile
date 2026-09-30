@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -7,6 +7,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
+  Keyboard,
+  Platform,
+  Dimensions,
 } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,6 +56,24 @@ export function AudioSpeechDock({
   const [editorOpen, setEditorOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [activeInputMode, setActiveInputMode] = useState<'voice' | 'keyboard'>('voice');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const handleOpenEditor = () => {
     setActiveInputMode('keyboard');
@@ -85,8 +106,101 @@ export function AudioSpeechDock({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.card, borderTopColor: colors.cardBorder }]}>
-      {/* Draft Caption Preview Bar (if candidate has transcribed speech or typed text) */}
+    <>
+      <View style={[styles.container, { backgroundColor: colors.card, borderTopColor: colors.cardBorder }]}>
+      {editorOpen ? (
+        <View style={{ backgroundColor: colors.card, paddingVertical: 16 }}>
+          {/* Header */}
+          <View style={styles.editorHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={[styles.editorHeaderIconBox, { backgroundColor: (colors.primary || '#6366f1') + '15' }]}>
+                <Ionicons name="create-outline" size={20} color={colors.primary || '#6366f1'} />
+              </View>
+              <View>
+                <ThemedText type="subtitle" style={styles.editorTitle}>
+                  Chỉnh sửa câu trả lời
+                </ThemedText>
+                <ThemedText style={{ fontSize: 12, color: colors.icon || '#64748b', marginTop: 1 }}>
+                  Gõ văn bản chi tiết trước khi nộp
+                </ThemedText>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.closeIconBtn, { backgroundColor: (colors.cardBorder || '#e2e8f0') + '50' }]}
+              onPress={() => handleCloseEditor()}
+            >
+              <Ionicons name="close" size={18} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Textarea Container */}
+          <View
+            style={[
+              styles.inputWrapper,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.cardBorder,
+                marginBottom: 16,
+              },
+            ]}
+          >
+            <TextInput
+              style={[
+                styles.editorInput,
+                {
+                  color: colors.text,
+                },
+              ]}
+              autoFocus={true}
+              multiline
+              numberOfLines={6}
+              value={answerText}
+              onChangeText={setAnswerText}
+              placeholder="Nhập nội dung câu trả lời của bạn tại đây..."
+              placeholderTextColor={(colors.icon || '#64748b') + '80'}
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* Footer */}
+          <View style={styles.editorFooter}>
+            <View style={[styles.wordCountBadge, { backgroundColor: (colors.primary || '#6366f1') + '12' }]}>
+              <Ionicons name="document-text-outline" size={14} color={colors.primary || '#6366f1'} />
+              <ThemedText style={[styles.wordCounter, { color: colors.primary || '#6366f1' }]}>
+                {wordCount} từ
+              </ThemedText>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                style={[styles.cancelModalBtn, { borderColor: colors.cardBorder, backgroundColor: colors.card }]}
+                onPress={() => handleCloseEditor()}
+              >
+                <ThemedText style={[styles.cancelModalText, { color: colors.text }]}>Đóng</ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.submitModalBtn,
+                  {
+                    backgroundColor: !answerText.trim()
+                      ? (colors.cardBorder || '#cbd5e1')
+                      : (colors.primary || '#6366f1'),
+                  },
+                ]}
+                disabled={!answerText.trim()}
+                onPress={() => handleCloseEditor(() => onSubmit())}
+              >
+                <Ionicons name="send" size={13} color="#ffffff" style={{ marginRight: 6 }} />
+                <ThemedText style={styles.submitModalText}>Nộp ngay</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <>
+          {/* Draft Caption Preview Bar (if candidate has transcribed speech or typed text) */}
       {Boolean(answerText.trim() || isRecording || isProcessingStt) && (
         <View style={[styles.draftContainer, { backgroundColor: colors.background, borderColor: colors.cardBorder }]}>
           <View style={styles.draftHeader}>
@@ -146,267 +260,87 @@ export function AudioSpeechDock({
         </View>
       )}
 
-      {/* 6-Button Bottom Call Action Bar (Matching Web FE UI) */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.buttonBarScroll}
-      >
-        {/* Nút 1: Trả lời bằng Voice (Microphone STT) - luôn hiển thị */}
-        <TouchableOpacity
-          style={[
-            styles.actionBtnCall,
-            isProcessingStt
-              ? { backgroundColor: colors.warning || '#f59e0b' }
+      {/* Bottom Action Bar */}
+      <View style={{ paddingHorizontal: 20, paddingBottom: 24, paddingTop: 12, backgroundColor: colors.card, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 10, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
+        <View style={{ alignItems: 'center', marginBottom: 16 }}>
+          <ThemedText style={{ fontSize: 12, color: colors.textSecondary, textAlign: 'center' }}>
+            {isProcessingStt
+              ? 'Đang gửi bản ghi âm lên hệ thống...'
               : isRecording
-              ? { backgroundColor: colors.danger || '#ef4444' }
-              : { backgroundColor: '#EEF2FF', borderWidth: 1, borderColor: '#C7D2FE' },
-          ]}
-          onPress={() => {
-            setActiveInputMode('voice');
-            toggleSpeech();
-          }}
-          disabled={isSubmitting || isProcessingStt}
-        >
-          {isProcessingStt ? (
-            <ActivityIndicator size="small" color="#ffffff" />
-          ) : (
-            <Ionicons
-              name={isRecording ? 'stop-circle' : 'mic'}
-              size={18}
-              color={isRecording ? '#ffffff' : (colors.primary || '#6366f1')}
-            />
-          )}
-          <ThemedText style={[styles.actionBtnCallText, { color: isProcessingStt || isRecording ? '#ffffff' : (colors.primary || '#6366f1') }]}>
-            {isProcessingStt ? 'Đang xử lý...' : isRecording ? 'Dừng nói' : 'Trả lời'}
+                ? `Đang nhận diện giọng nói ${formatTimer(durationSeconds)}...`
+                : 'Nhấn micro để trả lời (không tự động nộp)'}
           </ThemedText>
-        </TouchableOpacity>
+        </View>
 
-        {/* Nút 3: Bàn phím */}
-        <TouchableOpacity
-          style={[
-            styles.actionBtnCall,
-            activeInputMode === 'keyboard'
-              ? { backgroundColor: '#EEF2FF', borderWidth: 1, borderColor: '#C7D2FE' }
-              : { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.cardBorder },
-          ]}
-          onPress={handleOpenEditor}
-          disabled={isSubmitting}
-        >
-          <Ionicons
-            name="keypad-outline"
-            size={16}
-            color={activeInputMode === 'keyboard' ? (colors.primary || '#6366f1') : colors.text}
-          />
-          <ThemedText
-            style={[
-              styles.actionBtnCallText,
-              { color: activeInputMode === 'keyboard' ? (colors.primary || '#6366f1') : colors.text },
-            ]}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Bàn phím */}
+          <TouchableOpacity style={{ alignItems: 'center', width: 60 }} onPress={handleOpenEditor} disabled={isSubmitting}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.backgroundElement, justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
+              <Ionicons name="keypad" size={20} color={colors.text} />
+            </View>
+            <ThemedText style={{ fontSize: 10, color: colors.textSecondary }}>Bàn phím</ThemedText>
+          </TouchableOpacity>
+
+          {/* Camera */}
+          <TouchableOpacity style={{ alignItems: 'center', width: 60 }} onPress={onToggleCamera} disabled={isSubmitting}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: isCameraOn ? (colors.primary || '#6366f1') + '20' : colors.backgroundElement, justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
+              <Ionicons name={isCameraOn ? 'videocam' : 'videocam-off'} size={20} color={isCameraOn ? colors.primary : colors.text} />
+            </View>
+            <ThemedText style={{ fontSize: 10, color: colors.textSecondary }}>Camera</ThemedText>
+          </TouchableOpacity>
+
+          {/* MAIN MIC */}
+          <TouchableOpacity
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: 36,
+              backgroundColor: isProcessingStt ? (colors.warning || '#f59e0b') : isRecording ? (colors.danger || '#ef4444') : (colors.primary || '#6366f1'),
+              justifyContent: 'center',
+              alignItems: 'center',
+              shadowColor: isRecording ? (colors.danger || '#ef4444') : (colors.primary || '#6366f1'),
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 8,
+              marginTop: -20,
+            }}
+            onPress={() => {
+              setActiveInputMode('voice');
+              toggleSpeech();
+            }}
+            disabled={isSubmitting || isProcessingStt}
           >
-            Bàn phím
-          </ThemedText>
-        </TouchableOpacity>
+            {isProcessingStt ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Ionicons name={isRecording ? 'stop' : 'mic'} size={32} color="#ffffff" />
+            )}
+          </TouchableOpacity>
 
-        {/* Nút 4: Bật/Tắt Camera */}
-        <TouchableOpacity
-          style={[
-            styles.actionBtnCall,
-            isCameraOn
-              ? { backgroundColor: '#EEF2FF', borderWidth: 1, borderColor: '#C7D2FE' }
-              : { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.cardBorder },
-          ]}
-          onPress={onToggleCamera}
-          disabled={isSubmitting}
-        >
-          <Ionicons
-            name={isCameraOn ? 'videocam' : 'videocam-off-outline'}
-            size={16}
-            color={isCameraOn ? (colors.primary || '#6366f1') : colors.text}
-          />
-          <ThemedText
-            style={[
-              styles.actionBtnCallText,
-              { color: isCameraOn ? (colors.primary || '#6366f1') : colors.text },
-            ]}
-          >
-            {isCameraOn ? 'Tắt camera' : 'Bật camera'}
-          </ThemedText>
-        </TouchableOpacity>
+          {/* Nghe lại */}
+          <TouchableOpacity style={{ alignItems: 'center', width: 60 }} onPress={toggleTts} disabled={isSubmitting}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: isTtsSpeaking ? (colors.accent || '#10b981') + '20' : colors.backgroundElement, justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
+              <Ionicons name={isTtsSpeaking ? 'volume-mute' : 'volume-high'} size={20} color={isTtsSpeaking ? (colors.accent || '#10b981') : colors.text} />
+            </View>
+            <ThemedText style={{ fontSize: 10, color: colors.textSecondary }}>Nghe lại</ThemedText>
+          </TouchableOpacity>
 
-        {/* Nút 5: Nghe lại câu hỏi (TTS Speaker) */}
-        <TouchableOpacity
-          style={[
-            styles.actionBtnCall,
-            isTtsSpeaking
-              ? { backgroundColor: colors.accent || '#10b981' }
-              : { backgroundColor: colors.backgroundElement, borderWidth: 1, borderColor: colors.cardBorder },
-          ]}
-          onPress={toggleTts}
-          disabled={isSubmitting}
-        >
-          <Ionicons
-            name={isTtsSpeaking ? 'volume-mute' : 'volume-high-outline'}
-            size={16}
-            color={isTtsSpeaking ? '#ffffff' : colors.text}
-          />
-          <ThemedText
-            style={[
-              styles.actionBtnCallText,
-              { color: isTtsSpeaking ? '#ffffff' : colors.text },
-            ]}
-          >
-            {isTtsSpeaking ? 'Dừng đọc' : 'Nghe lại câu hỏi'}
-          </ThemedText>
-        </TouchableOpacity>
-
-        {/* Nút 6: Nộp bài sớm */}
-        <TouchableOpacity
-          style={[
-            styles.actionBtnCall,
-            { backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: '#FCA5A5' },
-          ]}
-          onPress={onFinishEarly}
-          disabled={isSubmitting || !canFinishEarly}
-        >
-          <Ionicons name="call-outline" size={16} color={colors.danger || '#ef4444'} />
-          <ThemedText style={[styles.actionBtnCallText, { color: colors.danger || '#ef4444' }]}>
-            Nộp bài sớm
-          </ThemedText>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* Status Hint Caption (Matching Web FE Copy) */}
-      <View style={styles.statusHintContainer}>
-        <ThemedText style={[styles.statusHintText, { color: colors.textSecondary }]}>
-          {isProcessingStt
-            ? 'Đang gửi bản ghi âm lên hệ thống xử lý giọng nói...'
-            : isRecording
-            ? `Đang nhận diện giọng nói ${formatTimer(durationSeconds)} · Bấm Dừng nói để lấy phụ đề (không tự động nộp)`
-            : 'Nhấn microphone để bắt đầu trả lời · không tự động nộp'}
-        </ThemedText>
+          {/* Nộp sớm */}
+          <TouchableOpacity style={{ alignItems: 'center', width: 60 }} onPress={onFinishEarly} disabled={isSubmitting || !canFinishEarly}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: (colors.danger || '#ef4444') + '10', justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
+              <Ionicons name="checkmark-done" size={20} color={colors.danger} />
+            </View>
+            <ThemedText style={{ fontSize: 10, color: colors.danger }}>Nộp sớm</ThemedText>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Text Answer Modal (for typing or deep editing) */}
-      <Modal
-        visible={editorOpen}
-        animationType="none"
-        transparent={true}
-        onRequestClose={() => handleCloseEditor()}
-      >
-        {!isClosing && (
-          <Animated.View
-            entering={FadeIn.duration(180)}
-            exiting={FadeOut.duration(180)}
-            style={styles.modalBackdrop}
-          >
-            <TouchableOpacity
-              style={StyleSheet.absoluteFill}
-              activeOpacity={1}
-              onPress={() => handleCloseEditor()}
-            />
-
-            <Animated.View
-              entering={SlideInDown.duration(320).springify().damping(20).stiffness(140)}
-              exiting={SlideOutDown.duration(200)}
-              style={[styles.editorCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-            >
-              {/* Sheet Handle */}
-              <View style={styles.sheetHandleBox}>
-                <View style={[styles.sheetHandlePill, { backgroundColor: (colors.cardBorder || '#e2e8f0') }]} />
-              </View>
-
-              {/* Header */}
-              <View style={styles.editorHeader}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <View style={[styles.editorHeaderIconBox, { backgroundColor: (colors.primary || '#6366f1') + '15' }]}>
-                    <Ionicons name="create-outline" size={20} color={colors.primary || '#6366f1'} />
-                  </View>
-                  <View>
-                    <ThemedText type="subtitle" style={styles.editorTitle}>
-                      Chỉnh sửa câu trả lời
-                    </ThemedText>
-                    <ThemedText style={{ fontSize: 12, color: colors.icon || '#64748b', marginTop: 1 }}>
-                      Gõ văn bản chi tiết trước khi nộp
-                    </ThemedText>
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={[styles.closeIconBtn, { backgroundColor: (colors.cardBorder || '#e2e8f0') + '50' }]}
-                  onPress={() => handleCloseEditor()}
-                >
-                  <Ionicons name="close" size={18} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Textarea Container */}
-              <View
-                style={[
-                  styles.inputWrapper,
-                  {
-                    backgroundColor: colors.background,
-                    borderColor: colors.cardBorder,
-                  },
-                ]}
-              >
-                <TextInput
-                  style={[
-                    styles.editorInput,
-                    {
-                      color: colors.text,
-                    },
-                  ]}
-                  autoFocus={true}
-                  multiline
-                  numberOfLines={6}
-                  value={answerText}
-                  onChangeText={setAnswerText}
-                  placeholder="Nhập nội dung câu trả lời của bạn tại đây..."
-                  placeholderTextColor={(colors.icon || '#64748b') + '80'}
-                  textAlignVertical="top"
-                />
-              </View>
-
-              {/* Footer */}
-              <View style={styles.editorFooter}>
-                <View style={[styles.wordCountBadge, { backgroundColor: (colors.primary || '#6366f1') + '12' }]}>
-                  <Ionicons name="document-text-outline" size={14} color={colors.primary || '#6366f1'} />
-                  <ThemedText style={[styles.wordCounter, { color: colors.primary || '#6366f1' }]}>
-                    {wordCount} từ
-                  </ThemedText>
-                </View>
-
-                <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <TouchableOpacity
-                    style={[styles.cancelModalBtn, { borderColor: colors.cardBorder, backgroundColor: colors.card }]}
-                    onPress={() => handleCloseEditor()}
-                  >
-                    <ThemedText style={[styles.cancelModalText, { color: colors.text }]}>Đóng</ThemedText>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.submitModalBtn,
-                      {
-                        backgroundColor: !answerText.trim()
-                          ? (colors.cardBorder || '#cbd5e1')
-                          : (colors.primary || '#6366f1'),
-                      },
-                    ]}
-                    disabled={!answerText.trim()}
-                    onPress={() => handleCloseEditor(() => onSubmit())}
-                  >
-                    <Ionicons name="send" size={13} color="#ffffff" style={{ marginRight: 6 }} />
-                    <ThemedText style={styles.submitModalText}>Nộp ngay</ThemedText>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </Animated.View>
-          </Animated.View>
-        )}
-      </Modal>
+        </>
+      )}
     </View>
+    <View style={{ height: keyboardHeight }} />
+    </>
   );
 }
 

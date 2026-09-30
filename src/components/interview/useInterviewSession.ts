@@ -81,9 +81,6 @@ export function useInterviewSession(id: string | undefined) {
       attemptedQuestionsRef.current.add(currentQuestion.id);
       audio.speakTts(currentQuestion.content);
     }
-    return () => {
-      audio.stopTts();
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion?.id, currentQuestion?.content]);
 

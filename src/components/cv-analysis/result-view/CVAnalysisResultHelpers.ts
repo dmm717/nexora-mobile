@@ -1,5 +1,14 @@
 import { ResumeAnalysisView } from '@/api/types';
 
+export const ANALYSIS_ANIMATION_CONFIG = {
+  typingSpeedMs: 35,
+  successTitleDelayMs: 200,
+  successDescDelayMs: 1000,
+  postTypingWaitMs: 2000,
+  successTitleText: 'Đã tạo báo cáo thành công!',
+  successDescText: 'Hệ thống đã trích xuất và đối chiếu toàn bộ dữ liệu thành công.',
+};
+
 export function parseResult(raw: unknown): Record<string, unknown> | null {
   if (!raw) return null;
   if (typeof raw === 'string') {

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, TouchableOpacity, View, AppState, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -31,6 +32,36 @@ export default function InterviewRoomScreen() {
 
   const [showExitModal, setShowExitModal] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [appState, setAppState] = useState(AppState.currentState);
+
+  React.useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      setAppState(nextAppState);
+    });
+    return () => subscription.remove();
+  }, []);
+
+  const handleToggleCamera = async () => {
+    if (isCameraOn) {
+      setIsCameraOn(false);
+      return;
+    }
+    
+    if (!permission?.granted) {
+      const response = await requestPermission();
+      if (!response.granted) {
+        if (!response.canAskAgain) {
+           Alert.alert('Cấp quyền Camera', 'Chúng tôi cần camera để phân tích biểu cảm phỏng vấn. Vui lòng vào Cài đặt để cấp quyền cho Nexora.', [
+             { text: 'Hủy', style: 'cancel' },
+             { text: 'Mở Cài đặt', onPress: () => Linking.openSettings() }
+           ]);
+        }
+        return;
+      }
+    }
+    setIsCameraOn(true);
+  };
 
   const {
     router,
@@ -77,20 +108,22 @@ export default function InterviewRoomScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-            <TouchableOpacity onPress={() => setShowExitModal(true)} style={styles.exitSessionBtn}>
-              <Ionicons name="log-out-outline" size={16} color={colors.danger} />
-              <ThemedText style={[styles.exitSessionText, { color: colors.danger }]}>Thoát phiên</ThemedText>
+          <View style={[styles.header, { borderBottomColor: 'transparent', backgroundColor: colors.background, paddingBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 }]}>
+            <TouchableOpacity onPress={() => setShowExitModal(true)} style={{ padding: 4 }}>
+              <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="title" style={styles.title}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
-              <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {(interview.interviewType || '').toUpperCase()}</ThemedText>
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <ThemedText type="title" style={[styles.title, { fontSize: 18, fontWeight: '800' }]}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 6 }}>
+                <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {(interview.interviewType || '').toUpperCase()}</ThemedText>
+                <View style={[styles.statusBadge, { backgroundColor: colors.accentLight || '#d1fae5', paddingVertical: 2, paddingHorizontal: 6 }]}>
+                  <ThemedText style={[styles.statusText, { color: colors.accent || '#059669', fontSize: 10 }]}>
+                    STARTING
+                  </ThemedText>
+                </View>
+              </View>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
-              <ThemedText style={[styles.statusText, { color: colors.accent }]}>
-                STARTING
-              </ThemedText>
-            </View>
+            <View style={{ width: 32 }} />
           </View>
 
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.four }}>
@@ -124,15 +157,17 @@ export default function InterviewRoomScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-            <TouchableOpacity onPress={() => setShowExitModal(true)} style={styles.exitSessionBtn}>
-              <Ionicons name="log-out-outline" size={16} color={colors.danger} />
-              <ThemedText style={[styles.exitSessionText, { color: colors.danger }]}>Thoát phiên</ThemedText>
+          <View style={[styles.header, { borderBottomColor: 'transparent', backgroundColor: colors.background, paddingBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 }]}>
+            <TouchableOpacity onPress={() => setShowExitModal(true)} style={{ padding: 4 }}>
+              <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="title" style={styles.title}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
-              <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {(interview.interviewType || '').toUpperCase()}</ThemedText>
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <ThemedText type="title" style={[styles.title, { fontSize: 18, fontWeight: '800' }]}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 6 }}>
+                <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {(interview.interviewType || '').toUpperCase()}</ThemedText>
+              </View>
             </View>
+            <View style={{ width: 32 }} />
           </View>
 
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.four }}>
@@ -178,20 +213,22 @@ export default function InterviewRoomScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-            <TouchableOpacity onPress={() => setShowExitModal(true)} style={styles.exitSessionBtn}>
-              <Ionicons name="log-out-outline" size={16} color={colors.danger} />
-              <ThemedText style={[styles.exitSessionText, { color: colors.danger }]}>Thoát phiên</ThemedText>
+          <View style={[styles.header, { borderBottomColor: 'transparent', backgroundColor: colors.background, paddingBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 }]}>
+            <TouchableOpacity onPress={() => setShowExitModal(true)} style={{ padding: 4 }}>
+              <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="title" style={styles.title}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
-              <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {(interview.interviewType || '').toUpperCase()}</ThemedText>
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <ThemedText type="title" style={[styles.title, { fontSize: 18, fontWeight: '800' }]}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 6 }}>
+                <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {(interview.interviewType || '').toUpperCase()}</ThemedText>
+                <View style={[styles.statusBadge, { backgroundColor: colors.accentLight || '#d1fae5', paddingVertical: 2, paddingHorizontal: 6 }]}>
+                  <ThemedText style={[styles.statusText, { color: colors.accent || '#059669', fontSize: 10 }]}>
+                    {interview.status.toUpperCase()}
+                  </ThemedText>
+                </View>
+              </View>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
-              <ThemedText style={[styles.statusText, { color: colors.accent }]}>
-                {interview.status.toUpperCase()}
-              </ThemedText>
-            </View>
+            <View style={{ width: 32 }} />
           </View>
 
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.four }}>
@@ -246,22 +283,46 @@ export default function InterviewRoomScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header Bar */}
-        <View style={[styles.header, { borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity onPress={() => setShowExitModal(true)} style={styles.exitSessionBtn}>
-            <Ionicons name="log-out-outline" size={16} color={colors.danger} />
-            <ThemedText style={[styles.exitSessionText, { color: colors.danger }]}>Thoát phiên</ThemedText>
+        <View style={[styles.header, { borderBottomColor: 'transparent', backgroundColor: colors.background, paddingBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 }]}>
+          <TouchableOpacity onPress={() => setShowExitModal(true)} style={{ padding: 4 }}>
+            <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <ThemedText type="title" style={styles.title}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
-            <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {interview.interviewType.toUpperCase()}</ThemedText>
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <ThemedText type="title" style={[styles.title, { fontSize: 18, fontWeight: '800' }]}>{interview.role || 'Phỏng Vấn AI'}</ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 6 }}>
+              <ThemedText style={styles.subtitle}>Cấp bậc: {interview.seniority} • {(interview.interviewType || '').toUpperCase()}</ThemedText>
+              <View style={[styles.statusBadge, { backgroundColor: colors.accentLight || '#d1fae5', paddingVertical: 2, paddingHorizontal: 6 }]}>
+                <ThemedText style={[styles.statusText, { color: colors.accent || '#059669', fontSize: 10 }]}>
+                  {interview.status.toUpperCase()}
+                </ThemedText>
+              </View>
+            </View>
           </View>
-
-          <View style={[styles.statusBadge, { backgroundColor: colors.accentLight }]}>
-            <ThemedText style={[styles.statusText, { color: colors.accent }]}>
-              {interview.status.toUpperCase()}
-            </ThemedText>
-          </View>
+          <View style={{ width: 32 }} />
         </View>
+
+        {isCameraOn && permission?.granted && appState === 'active' && (
+          <View style={{
+            position: 'absolute',
+            top: 75,
+            right: 16,
+            width: 100,
+            height: 140,
+            borderRadius: 12,
+            overflow: 'hidden',
+            borderWidth: 2,
+            borderColor: colors.cardBorder,
+            backgroundColor: '#000',
+            elevation: 5,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            zIndex: 100,
+          }}>
+            <CameraView style={{ flex: 1 }} facing="front" mute={true} />
+          </View>
+        )}
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* AI Presence Header */}
@@ -336,7 +397,7 @@ export default function InterviewRoomScreen() {
             colors={colors}
             isMicEnabled={isMicEnabled}
             isCameraOn={isCameraOn}
-            onToggleCamera={() => setIsCameraOn(prev => !prev)}
+            onToggleCamera={handleToggleCamera}
           />
         )}
 

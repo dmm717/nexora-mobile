@@ -2,36 +2,7 @@ import { Platform } from 'react-native';
 import { getInterviewSpeechAuthorization } from './speechTokenManager';
 import { INTERVIEW_SPEECH_CONFIG } from '@/config/speech';
 import { logger } from './logger';
-
-function escapeXml(unsafe: string): string {
-  return unsafe.replace(/[<>&'"]/g, (c) => {
-    switch (c) {
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '&':
-        return '&amp;';
-      case '\'':
-        return '&apos;';
-      case '"':
-        return '&quot;';
-      default:
-        return c;
-    }
-  });
-}
-
-function buildSingleVoiceSsml(text: string, voiceName: string = INTERVIEW_SPEECH_CONFIG.voiceName): string {
-  const escaped = escapeXml(text.trim());
-  return (
-    `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xml:lang='vi-VN'>` +
-    `<voice name='${voiceName}'>` +
-    `<prosody rate='0.95'>${escaped}</prosody>` +
-    `</voice>` +
-    `</speak>`
-  );
-}
+import { buildSsml } from './ssml';
 
 class WebTtsService {
   private isSpeaking = false;
@@ -116,7 +87,7 @@ class WebTtsService {
       const auth = await getInterviewSpeechAuthorization(interviewId);
 
       // Attempt 1: Dragon HD Multilingual Voice matching nexora-fe (INTERVIEW_SPEECH_CONFIG.voiceName)
-      let ssml = buildSingleVoiceSsml(text, INTERVIEW_SPEECH_CONFIG.voiceName);
+      let ssml = buildSsml(text, INTERVIEW_SPEECH_CONFIG.voiceName);
 
       let response = await fetch(
         `https://${auth.region}.tts.speech.microsoft.com/cognitiveservices/v1`,
@@ -132,10 +103,10 @@ class WebTtsService {
         }
       );
 
-      // Attempt 2: If primary voice fails, fallback to vi-VN-HoaiMyNeural single-voice SSML
+      // Attempt 2: If primary voice fails, fallback to the configured fallback voice
       if (!response.ok) {
-        logger.warn(`Azure TTS primary voice (${INTERVIEW_SPEECH_CONFIG.voiceName}) returned ${response.status}. Retrying with vi-VN-HoaiMyNeural...`);
-        ssml = buildSingleVoiceSsml(text, 'vi-VN-HoaiMyNeural');
+        logger.warn(`Azure TTS primary voice (${INTERVIEW_SPEECH_CONFIG.voiceName}) returned ${response.status}. Retrying with ${INTERVIEW_SPEECH_CONFIG.fallbackVoiceName}...`);
+        ssml = buildSsml(text, INTERVIEW_SPEECH_CONFIG.fallbackVoiceName);
         response = await fetch(
           `https://${auth.region}.tts.speech.microsoft.com/cognitiveservices/v1`,
           {

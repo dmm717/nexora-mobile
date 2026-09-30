@@ -112,13 +112,15 @@ export function AiInterviewerPresence({
         style={[
           styles.statusBadge,
           {
-            backgroundColor: colors.card,
-            borderColor: config.color,
+            backgroundColor: 'transparent',
+            borderColor: 'transparent',
+            borderWidth: 0,
+            marginTop: 4,
           },
         ]}
       >
         <View style={[styles.statusDot, { backgroundColor: config.color }]} />
-        <ThemedText style={[styles.statusText, { color: colors.text }]}>
+        <ThemedText style={[styles.statusText, { color: config.color }]}>
           {config.label}
         </ThemedText>
       </View>

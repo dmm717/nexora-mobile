@@ -17,12 +17,18 @@ interface AppBottomNavBarProps {
 }
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
-const TAB_BAR_HEIGHT = 60;
-const ARCH_RISE = 28;
-const ARCH_HALF_SPAN = 100;
-const ICON_NORMAL = 22;
-const ICON_CENTER = 26;
-const CENTER_BTN = 54;
+export const TAB_BAR_HEIGHT = 60;
+export const ARCH_RISE = 28;
+export const ARCH_HALF_SPAN = 100;
+export const ICON_NORMAL = 22;
+export const ICON_CENTER = 26;
+export const CENTER_BTN = 54;
+
+export function useAppBottomNavBarHeight() {
+  const insets = useSafeAreaInsets();
+  const bottomPad = Platform.OS === 'web' ? Spacing.two : Math.max(insets.bottom * 0.5, Spacing.two);
+  return TAB_BAR_HEIGHT + bottomPad + ARCH_RISE;
+}
 
 function barShapePath(w: number, h: number): string {
   const cx = w / 2;

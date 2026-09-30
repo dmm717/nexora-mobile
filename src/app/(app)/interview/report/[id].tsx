@@ -10,7 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { interviewApi } from '@/api/interview.api';
 import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
+import { AppBottomNavBar, useAppBottomNavBarHeight } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/interview-report.styles';
 
@@ -37,6 +37,7 @@ export default function ReportScreen() {
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
   const queryClient = useQueryClient();
+  const bottomNavBarHeight = useAppBottomNavBarHeight();
 
   const [selectedQuestionForPractice, setSelectedQuestionForPractice] = useState<string | null>(null);
   const [practiceReason, setPracticeReason] = useState('rubric_weakness');
@@ -218,7 +219,10 @@ export default function ReportScreen() {
           }
         />
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomNavBarHeight + Spacing.four }]} 
+          showsVerticalScrollIndicator={false}
+        >
           {/* Overall Score Badge Card */}
           <ScoreBadgeCard report={report} colors={colors} />
 
@@ -253,7 +257,7 @@ export default function ReportScreen() {
             }}
           >
             <Ionicons name="sparkles" size={20} color="#fff" style={{ marginRight: 8 }} />
-            <ThemedText style={styles.primaryButtonText}>Tạo Phiên Luyện Tập Lại Mô Phỏng (Practice Again)</ThemedText>
+            <ThemedText style={styles.primaryButtonText}>Tạo Phiên Luyện Tập Lại Mô Phỏng</ThemedText>
           </TouchableOpacity>
         </ScrollView>
 

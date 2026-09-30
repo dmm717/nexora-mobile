@@ -1,10 +1,9 @@
-import React from 'react';
-import { View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { CenterExpandView, StaggeredTitle } from '@/components/ui/animated-auth-elements';
 import { TouchableScale } from '@/components/ui/touchable-scale';
-import { StaggeredTitle, CenterExpandView } from '@/components/ui/animated-auth-elements';
 import { styles } from '@/styles/login.styles';
 import { BaseAuthSectionProps } from './types';
 

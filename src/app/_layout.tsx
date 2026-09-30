@@ -1,6 +1,7 @@
 import { DefaultTheme, ThemeProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { setAudioModeAsync } from 'expo-audio';
 
 import { AppProvider } from '@/providers/app-provider';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
@@ -45,6 +46,10 @@ function RootLayout() {
   });
 
   useEffect(() => {
+    // Configure audio mode globally so useAudioRecorder doesn't crash natively on iOS
+    setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true }).catch((err) => 
+      console.warn('Failed to set global audio mode', err)
+    );
     import('@/utils/cache').then(m => m.clearOldCacheFiles());
     if (jakartaLoaded || jakartaError) {
       SplashScreen.hideAsync();

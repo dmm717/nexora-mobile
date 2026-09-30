@@ -95,10 +95,14 @@ apiClient.interceptors.response.use(
       error.response?.status === 409 ||
       errorCode === 'INTERVIEW_REPORT_PROCESSING';
       
+    const isLearningPathNotFound =
+      error.response?.status === 404 &&
+      errorCode === 'LEARNING_PATH_NOT_FOUND';
+      
     const isRecoverableAuthError = error.response?.status === 401 && originalRequest && !originalRequest._retry;
 
-    // Observability Logging (skip expected transient polling status 409 and recoverable 401s)
-    if (!isReportProcessing && !isRecoverableAuthError) {
+    // Observability Logging (skip expected transient polling status 409, expected 404s, and recoverable 401s)
+    if (!isReportProcessing && !isRecoverableAuthError && !isLearningPathNotFound) {
       // SECURITY (Phase 4.1): Scrub PII from error object before sending to Sentry
       // Must preserve instanceof Error for proper Sentry exception capturing
       const safeError = new Error(error.message);
@@ -120,7 +124,9 @@ apiClient.interceptors.response.use(
       (safeError as any).isAxiosError = error.isAxiosError;
 
       const status = error.response?.status;
-      if (status && status >= 400 && status < 500) {
+      const isNetworkError = !error.response || error.code === 'ECONNABORTED';
+
+      if ((status && status >= 400 && status < 500) || isNetworkError) {
         logger.warn(`API Error [${error.config?.method?.toUpperCase() || 'HTTP'}] ${error.config?.url}`, {
           requestId,
           code: errorCode,
@@ -139,9 +145,9 @@ apiClient.interceptors.response.use(
     const reqIdSuffix = requestId ? ` (ReqID: ${requestId.substring(0, 8)})` : '';
     
     // Auto-trigger Toast for API failures (displaying ONLY Vietnamese message, NO raw error codes)
-    // Skip toast for transient polling status (409 INTERVIEW_REPORT_PROCESSING)
-    if (isReportProcessing) {
-      // Do not trigger toast error for expected report processing polling state
+    // Skip toast for transient polling status (409 INTERVIEW_REPORT_PROCESSING) and expected 404s
+    if (isReportProcessing || isLearningPathNotFound) {
+      // Do not trigger toast error for expected polling state or missing initial state
     } else if (!error.response) {
       toast.error(`Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.${reqIdSuffix}`);
     } else if (error.response.status === 401) {

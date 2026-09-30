@@ -7,7 +7,7 @@ import { ResumeAnalysisView } from '@/api/types';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { styles } from './CVAnalysisResultView.styles';
 
-import { parseAnalysisData } from './result-view/CVAnalysisResultHelpers';
+import { parseAnalysisData, ANALYSIS_ANIMATION_CONFIG } from './result-view/CVAnalysisResultHelpers';
 import {
   CVActionCtaBanner,
   CVAnalysisFailedState,
@@ -21,15 +21,6 @@ import {
   CVSegmentedTabs,
   TabKey,
 } from './result-view/CVAnalysisResultTabs';
-
-export const ANALYSIS_ANIMATION_CONFIG = {
-  typingSpeedMs: 35,
-  successTitleDelayMs: 200,
-  successDescDelayMs: 1000,
-  postTypingWaitMs: 2000,
-  successTitleText: 'Đã tạo báo cáo thành công!',
-  successDescText: 'Hệ thống đã trích xuất và đối chiếu toàn bộ dữ liệu thành công.',
-};
 
 interface Props {
   analysisId: string | null;

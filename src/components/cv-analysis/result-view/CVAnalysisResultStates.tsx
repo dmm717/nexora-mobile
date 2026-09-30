@@ -5,7 +5,7 @@ import LottieView from 'lottie-react-native';
 import { ThemedText } from '@/components/themed-text';
 import { styles } from '../CVAnalysisResultView.styles';
 import { useTypewriter } from '@/hooks/useTypewriter';
-import { ANALYSIS_ANIMATION_CONFIG } from '../CVAnalysisResultView';
+import { ANALYSIS_ANIMATION_CONFIG } from './CVAnalysisResultHelpers';
 
 const DynamicText = memo(({ loadingText, successText, delay, speed = 35, isSuccess, style }: { loadingText: string, successText: string, delay: number, speed?: number, isSuccess: boolean, style: any }) => {
   const { displayedText } = useTypewriter(successText, speed, delay, isSuccess);

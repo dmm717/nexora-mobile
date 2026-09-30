@@ -37,6 +37,7 @@ export const styles = StyleSheet.create({
   },
   scoreNumber: {
     fontSize: 42,
+    lineHeight: 48,
     fontWeight: '800',
   },
   scoreMax: {
