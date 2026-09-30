@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View, TouchableOpacity, Alert, Share, AppState } from 'react-native';
+import { ScrollView, View, TouchableOpacity, Share, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -277,4 +277,4 @@ export default function ReportScreen() {
       </SafeAreaView>
     </ThemedView>
   );
-}
+}

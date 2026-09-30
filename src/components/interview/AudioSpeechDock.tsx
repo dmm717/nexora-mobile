@@ -11,11 +11,9 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { styles } from '@/styles/audio-speech-dock.styles';
-
 export interface AudioSpeechDockProps {
   answerText: string;
   setAnswerText: (text: string | ((prev: string) => string)) => void;
@@ -34,7 +32,6 @@ export interface AudioSpeechDockProps {
   isCameraOn?: boolean;
   onToggleCamera?: () => void;
 }
-
 export function AudioSpeechDock({
   answerText,
   setAnswerText,
@@ -57,24 +54,20 @@ export function AudioSpeechDock({
   const [isClosing, setIsClosing] = useState(false);
   const [activeInputMode, setActiveInputMode] = useState<'voice' | 'keyboard'>('voice');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
     const showSub = Keyboard.addListener(showEvent, (e) => {
       setKeyboardHeight(e.endCoordinates.height);
     });
     const hideSub = Keyboard.addListener(hideEvent, () => {
       setKeyboardHeight(0);
     });
-
     return () => {
       showSub.remove();
       hideSub.remove();
     };
   }, []);
-
   const handleOpenEditor = () => {
     setActiveInputMode('keyboard');
     if (isRecording) {
@@ -83,7 +76,6 @@ export function AudioSpeechDock({
     setIsClosing(false);
     setEditorOpen(true);
   };
-
   const handleCloseEditor = (onComplete?: () => void) => {
     if (isClosing) return;
     setIsClosing(true);
@@ -94,17 +86,14 @@ export function AudioSpeechDock({
       }
     }, 250);
   };
-
   const wordCount = answerText.trim()
     ? answerText.trim().split(/\s+/).filter(Boolean).length
     : 0;
-
   const formatTimer = (sec: number) => {
     const mins = Math.floor(sec / 60).toString().padStart(2, '0');
     const secs = (sec % 60).toString().padStart(2, '0');
     return `${mins}:${secs}`;
   };
-
   return (
     <>
       <View style={[styles.container, { backgroundColor: colors.card, borderTopColor: colors.cardBorder }]}>
@@ -125,7 +114,6 @@ export function AudioSpeechDock({
                 </ThemedText>
               </View>
             </View>
-
             <TouchableOpacity
               style={[styles.closeIconBtn, { backgroundColor: (colors.cardBorder || '#e2e8f0') + '50' }]}
               onPress={() => handleCloseEditor()}
@@ -133,7 +121,6 @@ export function AudioSpeechDock({
               <Ionicons name="close" size={18} color={colors.text} />
             </TouchableOpacity>
           </View>
-
           {/* Textarea Container */}
           <View
             style={[
@@ -162,7 +149,6 @@ export function AudioSpeechDock({
               textAlignVertical="top"
             />
           </View>
-
           {/* Footer */}
           <View style={styles.editorFooter}>
             <View style={[styles.wordCountBadge, { backgroundColor: (colors.primary || '#6366f1') + '12' }]}>
@@ -171,7 +157,6 @@ export function AudioSpeechDock({
                 {wordCount} từ
               </ThemedText>
             </View>
-
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity
                 style={[styles.cancelModalBtn, { borderColor: colors.cardBorder, backgroundColor: colors.card }]}
@@ -179,7 +164,6 @@ export function AudioSpeechDock({
               >
                 <ThemedText style={[styles.cancelModalText, { color: colors.text }]}>Đóng</ThemedText>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[
                   styles.submitModalBtn,
@@ -218,13 +202,11 @@ export function AudioSpeechDock({
               {formatTimer(durationSeconds)}
             </ThemedText>
           </View>
-
           <View style={styles.draftPreviewBox}>
             <ThemedText style={styles.draftText} numberOfLines={3}>
               {answerText.trim() || '(Nói vào micro để câu trả lời tự động xuất hiện ở đây...)'}
             </ThemedText>
           </View>
-
           <View style={styles.draftFooter}>
             <TouchableOpacity
               style={[styles.editBtn, { borderColor: colors.cardBorder }]}
@@ -234,7 +216,6 @@ export function AudioSpeechDock({
               <Ionicons name="create-outline" size={14} color={colors.text} style={{ marginRight: 4 }} />
               <ThemedText style={styles.editBtnText}>Chỉnh sửa</ThemedText>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={[
                 styles.submitBtn,
@@ -259,7 +240,6 @@ export function AudioSpeechDock({
           </View>
         </View>
       )}
-
       {/* Bottom Action Bar */}
       <View style={{ paddingHorizontal: 20, paddingBottom: 24, paddingTop: 12, backgroundColor: colors.card, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 10, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
         <View style={{ alignItems: 'center', marginBottom: 16 }}>
@@ -271,7 +251,6 @@ export function AudioSpeechDock({
                 : 'Nhấn micro để trả lời (không tự động nộp)'}
           </ThemedText>
         </View>
-
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           {/* Bàn phím */}
           <TouchableOpacity style={{ alignItems: 'center', width: 60 }} onPress={handleOpenEditor} disabled={isSubmitting}>
@@ -280,7 +259,6 @@ export function AudioSpeechDock({
             </View>
             <ThemedText style={{ fontSize: 10, color: colors.textSecondary }}>Bàn phím</ThemedText>
           </TouchableOpacity>
-
           {/* Camera */}
           <TouchableOpacity style={{ alignItems: 'center', width: 60 }} onPress={onToggleCamera} disabled={isSubmitting}>
             <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: isCameraOn ? (colors.primary || '#6366f1') + '20' : colors.backgroundElement, justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
@@ -288,7 +266,6 @@ export function AudioSpeechDock({
             </View>
             <ThemedText style={{ fontSize: 10, color: colors.textSecondary }}>Camera</ThemedText>
           </TouchableOpacity>
-
           {/* MAIN MIC */}
           <TouchableOpacity
             style={{
@@ -317,7 +294,6 @@ export function AudioSpeechDock({
               <Ionicons name={isRecording ? 'stop' : 'mic'} size={32} color="#ffffff" />
             )}
           </TouchableOpacity>
-
           {/* Nghe lại */}
           <TouchableOpacity style={{ alignItems: 'center', width: 60 }} onPress={toggleTts} disabled={isSubmitting}>
             <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: isTtsSpeaking ? (colors.accent || '#10b981') + '20' : colors.backgroundElement, justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
@@ -325,7 +301,6 @@ export function AudioSpeechDock({
             </View>
             <ThemedText style={{ fontSize: 10, color: colors.textSecondary }}>Nghe lại</ThemedText>
           </TouchableOpacity>
-
           {/* Nộp sớm */}
           <TouchableOpacity style={{ alignItems: 'center', width: 60 }} onPress={onFinishEarly} disabled={isSubmitting || !canFinishEarly}>
             <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: (colors.danger || '#ef4444') + '10', justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
@@ -335,7 +310,6 @@ export function AudioSpeechDock({
           </TouchableOpacity>
         </View>
       </View>
-
         </>
       )}
     </View>
@@ -343,4 +317,3 @@ export function AudioSpeechDock({
     </>
   );
 }
-

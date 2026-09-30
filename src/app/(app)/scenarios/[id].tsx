@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-
 import { ThemedView } from '@/components/themed-view';
 import { scenariosApi } from '@/api/scenarios.api';
 import { Colors } from '@/constants/theme';
@@ -12,12 +11,10 @@ import { AppBottomNavBar, useAppBottomNavBarHeight } from '@/components/navigati
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { styles } from '@/styles/scenarios-detail.styles';
 import { ReportContentButton } from '@/components/moderation/ReportContentButton';
-
 import { ScenarioBriefingCard } from '@/components/scenarios/ScenarioBriefingCard';
 import { ActiveAttemptWorkbench } from '@/components/scenarios/ActiveAttemptWorkbench';
 import { ScenarioHistorySection } from '@/components/scenarios/ScenarioHistorySection';
 import { toast } from '@/components/ui/toast/ToastProvider';
-
 export default function ScenarioDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>(); // slug or id
   const queryClient = useQueryClient();
@@ -25,25 +22,21 @@ export default function ScenarioDetailScreen() {
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
   const bottomNavBarHeight = useAppBottomNavBarHeight();
-
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
   const [expandedAttemptId, setExpandedAttemptId] = useState<string | null>(null);
-
   // Fetch scenario details
   const { data: scenario, isLoading: isScenarioLoading } = useQuery({
     queryKey: ['scenario-detail', id],
     queryFn: () => scenariosApi.get(id!),
     enabled: !!id,
   });
-
   // Fetch attempt history
   const { data: history, isLoading: historyLoading } = useQuery({
     queryKey: ['scenario-history', id],
     queryFn: () => scenariosApi.getHistory(id!),
     enabled: !!id,
   });
-
   // Automatically select in-progress or latest attempt ID
   const activeAttemptId = useMemo(() => {
     if (selectedAttemptId) return selectedAttemptId;
@@ -53,7 +46,6 @@ export default function ScenarioDetailScreen() {
     );
     return inProgress ? inProgress.id : history.attempts[0].id;
   }, [selectedAttemptId, history]);
-
   // Fetch active attempt details
   const {
     data: activeAttempt,
@@ -70,14 +62,12 @@ export default function ScenarioDetailScreen() {
       return false;
     },
   });
-
   // Sync answer text if active attempt is draft
   useEffect(() => {
     if (activeAttempt?.status === 'draft' && activeAttempt.answer) {
       setAnswer(activeAttempt.answer);
     }
   }, [activeAttempt?.id, activeAttempt?.status]);
-
   // Start new attempt mutation
   const startAttemptMutation = useMutation({
     mutationFn: async () => {
@@ -93,13 +83,11 @@ export default function ScenarioDetailScreen() {
       toast.error(err.message || 'Không thể tạo lượt thử mới.');
     },
   });
-
   // Submit attempt mutation
   const submitAttemptMutation = useMutation({
     mutationFn: async () => {
       if (!answer.trim()) throw new Error('Vui lòng nhập hoặc thu âm câu trả lời');
       let targetAttemptId = activeAttemptId;
-
       if (!targetAttemptId || activeAttempt?.status !== 'draft') {
         try {
           const draftAttempt = await scenariosApi.createAttempt(scenario!.id);
@@ -120,7 +108,6 @@ export default function ScenarioDetailScreen() {
           }
         }
       }
-
       const submitted = await scenariosApi.submitAttempt(targetAttemptId!, answer.trim());
       return submitted;
     },
@@ -133,7 +120,6 @@ export default function ScenarioDetailScreen() {
       toast.error(err.message || 'Không thể nộp bài làm tình huống. Vui lòng thử lại.');
     },
   });
-
   // Retry scenario mutation
   const retryMutation = useMutation({
     mutationFn: async () => {
@@ -161,7 +147,6 @@ export default function ScenarioDetailScreen() {
       toast.error(err.message || 'Không thể tạo lượt luyện tập mới.');
     },
   });
-
   if (isScenarioLoading || !scenario) {
     return (
       <ThemedView style={styles.centerContainer}>
@@ -169,7 +154,6 @@ export default function ScenarioDetailScreen() {
       </ThemedView>
     );
   }
-
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -187,14 +171,12 @@ export default function ScenarioDetailScreen() {
             ) : undefined
           }
         />
-
         <ScrollView 
           contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomNavBarHeight + 16 }]} 
           showsVerticalScrollIndicator={false}
         >
           {/* Scenario Briefing Header */}
           <ScenarioBriefingCard scenario={scenario} colors={colors} />
-
           {/* Interactive Workbench Area */}
           <ActiveAttemptWorkbench
             activeAttemptId={activeAttemptId}
@@ -208,7 +190,6 @@ export default function ScenarioDetailScreen() {
             retryMutation={retryMutation}
             colors={colors}
           />
-
           {/* History View */}
           {history && history.attempts && history.attempts.length > 0 && (
             <ScenarioHistorySection

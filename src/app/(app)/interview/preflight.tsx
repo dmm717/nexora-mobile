@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { interviewApi } from '@/api/interview.api';
@@ -231,4 +231,4 @@ export default function PreflightScreen() {
       </SafeAreaView>
     </ThemedView>
   );
-}
+}

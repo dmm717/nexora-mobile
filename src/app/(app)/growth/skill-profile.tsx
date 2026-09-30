@@ -17,7 +17,6 @@ import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
 import { ReportContentButton } from '@/components/moderation/ReportContentButton';
 
 export default function SkillProfileScreen() {
-  const router = useRouter();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
@@ -183,4 +182,4 @@ export default function SkillProfileScreen() {
       </SafeAreaView>
     </ThemedView>
   );
-}
+}

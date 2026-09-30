@@ -1,11 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing } from '@/constants/theme';
 import { logger } from '@/services/logger';
 import { useRouter } from 'expo-router';
 import { toast } from '@/components/ui/toast/ToastProvider';
-
 export class GlobalErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error: Error | null }
@@ -14,19 +13,15 @@ export class GlobalErrorBoundary extends React.Component<
     super(props);
     this.state = { hasError: false, error: null };
   }
-
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
-
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     logger.error('Global React Crash', error, { errorInfo });
   }
-
   retry = () => {
     this.setState({ hasError: false, error: null });
   };
-
   render() {
     if (this.state.hasError && this.state.error) {
       return <ErrorBoundary error={this.state.error} retry={this.retry} />;
@@ -34,20 +29,16 @@ export class GlobalErrorBoundary extends React.Component<
     return this.props.children;
   }
 }
-
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   const router = useRouter();
-
   const handleReport = () => {
     logger.error('App Crashed (User Reported)', error);
     toast.success('Cảm ơn bạn đã thông báo sự cố cho chúng tôi.');
   };
-
   const handleGoHome = () => {
     retry();
     router.replace('/(tabs)/home' as any);
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -60,13 +51,11 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
         <Text style={styles.description}>
           Xin lỗi, ứng dụng Nexora vừa gặp lỗi và không thể tiếp tục. Chúng tôi đã ghi nhận sự cố này.
         </Text>
-
         {__DEV__ && (
           <View style={styles.devErrorBox}>
             <Text style={styles.devErrorText}>{error.message}</Text>
           </View>
         )}
-
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={retry}>
             <Text style={styles.primaryButtonText}>Thử lại ngay</Text>
@@ -84,7 +73,6 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

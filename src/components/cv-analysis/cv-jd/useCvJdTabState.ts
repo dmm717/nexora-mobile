@@ -1,46 +1,36 @@
 import { useCallback, useMemo, useState } from 'react';
-import { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
-
 import { jobDescriptionsApi } from '@/api/job-descriptions.api';
 import { profileApi } from '@/api/profile.api';
 import { resumeAnalysesApi } from '@/api/resume-analyses.api';
 import { resumesApi } from '@/api/resumes.api';
 import { tokenStorage } from '@/services/storage';
 import { toast } from '@/components/ui/toast/ToastProvider';
-
 type UploadResumeParams = {
   useCurrentProfile: boolean;
   queryClient: ReturnType<typeof useQueryClient>;
   setSelectedResumeId: (id: string) => void;
   setCurrentFileName: (name: string) => void;
 };
-
 async function uploadResumeFile(params: UploadResumeParams): Promise<void> {
   const { useCurrentProfile, queryClient, setSelectedResumeId, setCurrentFileName } = params;
-
   const res = await DocumentPicker.getDocumentAsync({
     type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     copyToCacheDirectory: true,
   });
-
   if (res.canceled || !res.assets || res.assets.length === 0) return;
   const file = res.assets[0];
-
   if (file.size && file.size > 10 * 1024 * 1024) {
     toast.error('Dung lượng file vượt quá 10MB.');
     return;
   }
-
   const fileUri = file.uri;
   const fileName = file.name || 'resume.pdf';
   const contentType = file.mimeType || 'application/pdf';
-
   let fileData: ArrayBuffer | Blob;
   let fileSize = file.size || 0;
-
   if (typeof window !== 'undefined' && 'file' in file && file.file) {
     fileData = file.file as File;
     fileSize = (file.file as File).size;
@@ -51,28 +41,22 @@ async function uploadResumeFile(params: UploadResumeParams): Promise<void> {
     });
     fileSize = (fileData as Blob).size || file.size || 0;
   }
-
   if (!fileSize) {
     toast.error('Không thể xác định kích thước file.');
     return;
   }
-
   const presignData = await resumesApi.presign({ fileName, contentType, size: fileSize });
   await resumesApi.uploadRawBytes(presignData.uploadUrl, fileData, contentType);
   const finalizedResume = await resumesApi.finalize({ uploadToken: presignData.token });
-
   setSelectedResumeId(finalizedResume.id);
   setCurrentFileName(finalizedResume.fileName);
-
   if (useCurrentProfile) {
     await profileApi.setPrimaryResume({ resumeId: finalizedResume.id });
     queryClient.invalidateQueries({ queryKey: ['career-profile'] });
   }
-
   queryClient.invalidateQueries({ queryKey: ['resumes-list'] });
   toast.success('Đã tải lên CV thành công.');
 }
-
 export const getFileIconProps = (fileName?: string) => {
   if (!fileName) return { color: '#6B7280', label: 'FILE' };
   const ext = fileName.split('.').pop()?.toLowerCase();
@@ -81,32 +65,25 @@ export const getFileIconProps = (fileName?: string) => {
   if (ext === 'txt') return { color: '#4B5563', label: 'TXT' };
   return { color: '#6B7280', label: 'FILE' };
 };
-
 export function useCvJdTabState() {
   const router = useRouter();
   const queryClient = useQueryClient();
-
   const [useCurrentProfile, setUseCurrentProfile] = useState(true);
   const [mode, setMode] = useState<'job_targeted' | 'field_benchmark'>('field_benchmark');
   const [jdTitle, setJdTitle] = useState('');
   const [jdContent, setJdContent] = useState('');
-
   const [industry, setIndustry] = useState('');
   const [targetRole, setTargetRole] = useState('');
   const [seniority, setSeniority] = useState('');
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
   const [currentFileName, setCurrentFileName] = useState<string | null>(null);
-
   const [showPopup, setShowPopup] = useState(false);
   const [doNotShowAgain, setDoNotShowAgain] = useState(false);
-
   const itemsPerPage = 5;
-
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['career-profile'],
     queryFn: profileApi.getCareerProfile,
   });
-
   const { data: historyData, isLoading: isHistoryLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['resume-analysis-history'],
     queryFn: ({ pageParam = 1 }) => resumeAnalysesApi.list(pageParam, itemsPerPage),
@@ -120,7 +97,6 @@ export function useCvJdTabState() {
       return hasPending ? 3000 : false;
     }
   });
-
   const { data: userResumes } = useQuery({
     queryKey: ['resumes-list'],
     queryFn: () => resumesApi.list(),
@@ -130,7 +106,6 @@ export function useCvJdTabState() {
       return hasPending ? 3000 : false;
     }
   });
-
   const latestCompletedAnalysis = useMemo(() => {
     if (!historyData?.pages) return null;
     for (const page of historyData.pages) {
@@ -139,11 +114,9 @@ export function useCvJdTabState() {
     }
     return null;
   }, [historyData]);
-
   const currentHistoryItems = useMemo(() => {
     return historyData?.pages.flatMap(page => page.items) || [];
   }, [historyData]);
-
   const isResumeReady = useMemo(() => {
     if (useCurrentProfile) {
       return profile?.primaryResume?.status === 'ready';
@@ -152,7 +125,6 @@ export function useCvJdTabState() {
       return selected?.status === 'ready';
     }
   }, [useCurrentProfile, profile, userResumes, selectedResumeId]);
-
   useFocusEffect(
     useCallback(() => {
       const checkPopupStatus = async () => {
@@ -166,14 +138,12 @@ export function useCvJdTabState() {
       checkPopupStatus();
     }, [isHistoryLoading, latestCompletedAnalysis])
   );
-
   const handleClosePopup = async () => {
     if (doNotShowAgain) {
       await tokenStorage.setHidePopup('true');
     }
     setShowPopup(false);
   };
-
   const setPrimaryResumeMutation = useMutation({
     mutationFn: (resumeId: string) => profileApi.setPrimaryResume({ resumeId }),
     onSuccess: (_, resumeId) => {
@@ -190,13 +160,11 @@ export function useCvJdTabState() {
       toast.error(err.message || 'Không thể thiết lập CV chính.');
     }
   });
-
   const analyzeMutation = useMutation({
     mutationFn: async () => {
       let finalResumeId: string | null = useCurrentProfile
         ? (profile?.primaryResume?.id || null)
         : selectedResumeId;
-
       if (!finalResumeId) {
         if (useCurrentProfile) {
           throw new Error('Chưa chọn CV chính. Vui lòng tải lên hoặc đặt một CV làm Primary CV trước.');
@@ -204,9 +172,7 @@ export function useCvJdTabState() {
           throw new Error('Vui lòng tải lên hoặc chọn một CV để phân tích.');
         }
       }
-
       let payload: any;
-
       if (mode === 'job_targeted') {
         if (!jdTitle.trim() || !jdContent.trim()) {
           throw new Error('Vui lòng nhập tiêu đề và nội dung Mô Tả Công Việc (JD)');
@@ -215,7 +181,6 @@ export function useCvJdTabState() {
           title: jdTitle.trim(),
           content: jdContent.trim(),
         });
-
         payload = {
           resumeId: finalResumeId,
           mode: 'job_targeted',
@@ -247,7 +212,6 @@ export function useCvJdTabState() {
           };
         }
       }
-
       const res = await resumeAnalysesApi.create(payload);
       return res;
     },
@@ -268,7 +232,6 @@ export function useCvJdTabState() {
       }
     }
   });
-
   const handleStartAnalysis = useCallback(() => {
     if (useCurrentProfile && !profile?.primaryResume) {
       toast.error('Vui lòng tải lên và chọn một CV làm Primary CV trước khi bắt đầu phân tích.');
@@ -276,7 +239,6 @@ export function useCvJdTabState() {
     }
     analyzeMutation.mutate();
   }, [profile, useCurrentProfile, analyzeMutation]);
-
   const uploadMutation = useMutation({
     mutationFn: () =>
       uploadResumeFile({
@@ -289,9 +251,7 @@ export function useCvJdTabState() {
       toast.error(error.message || 'Đã xảy ra lỗi khi upload CV.');
     },
   });
-
   const handleUploadResume = useCallback(() => uploadMutation.mutate(), [uploadMutation]);
-
   return {
     router,
     useCurrentProfile,

@@ -5,6 +5,7 @@ import { setAudioModeAsync } from 'expo-audio';
 
 import { AppProvider } from '@/providers/app-provider';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
+import { logger } from '@/services/logger';
 import * as Sentry from '@sentry/react-native';
 
 import { 
@@ -48,7 +49,7 @@ function RootLayout() {
   useEffect(() => {
     // Configure audio mode globally so useAudioRecorder doesn't crash natively on iOS
     setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true }).catch((err) => 
-      console.warn('Failed to set global audio mode', err)
+      logger.warn('Failed to set global audio mode', { error: err })
     );
     import('@/utils/cache').then(m => m.clearOldCacheFiles());
     if (jakartaLoaded || jakartaError) {

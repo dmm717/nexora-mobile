@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, ScrollView, View, Alert, RefreshControl } from 'react-native';
+import { ActivityIndicator, ScrollView, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -388,4 +388,4 @@ export default function LearningPathScreen() {
       </SafeAreaView>
     </ThemedView>
   );
-}
+}

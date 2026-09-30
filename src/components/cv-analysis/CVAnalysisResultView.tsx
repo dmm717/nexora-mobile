@@ -71,6 +71,7 @@ export function CVAnalysisResultView({ analysisId, analysisResult, setAnalysisId
     }
   }, [internalState, pulseAnim, simulatedProgressAnim]);
 
+  const [initialStatus] = useState(analysisResult?.status);
   const prevStatus = React.useRef(analysisResult?.status);
 
   useEffect(() => {
@@ -137,7 +138,7 @@ export function CVAnalysisResultView({ analysisId, analysisResult, setAnalysisId
     );
   }
 
-  const displayState = (analysisResult?.status === 'completed' && !prevStatus.current && internalState === 'loading') 
+  const displayState = (analysisResult?.status === 'completed' && !initialStatus && internalState === 'loading') 
     ? 'completed' 
     : internalState;
 

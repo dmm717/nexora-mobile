@@ -2,6 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor, screen, act } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { validatePassword, validateEmail } from '../src/utils/validation';
+import { toast } from '../src/components/ui/toast/ToastProvider';
 import LoginScreen from '../src/app/(auth)/login';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '../src/context/auth-context';
@@ -132,15 +133,14 @@ describe('Auth Parity & Validation Tests', () => {
       
       const submitButton = screen.getByText('Tạo tài khoản');
       
-      const alertSpy = jest.spyOn(Alert, 'alert');
+      const toastSpy = jest.spyOn(toast, 'error');
       
       await act(async () => {
         fireEvent.press(submitButton);
       });
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(
-          'Lỗi',
+        expect(toastSpy).toHaveBeenCalledWith(
           expect.stringContaining('8 ký tự')
         );
       }, { timeout: 5000 });

@@ -1,19 +1,16 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
 import { userApi } from '@/api/user.api';
 import { ThemedText } from '@/components/themed-text';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Radius, Spacing } from '@/constants/theme';
 import { toast } from '@/components/ui/toast/ToastProvider';
-
 export const AccountPendingDeletionBanner = () => {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-
   const { data: request, isLoading, isError } = useQuery({
     queryKey: ['deletion-request'],
     queryFn: async () => {
@@ -26,7 +23,6 @@ export const AccountPendingDeletionBanner = () => {
     },
     retry: false,
   });
-
   const cancelMutation = useMutation({
     mutationFn: () => userApi.cancelDeletionRequest(),
     onSuccess: () => {
@@ -37,13 +33,10 @@ export const AccountPendingDeletionBanner = () => {
       toast.error(err?.message || 'Không thể hủy yêu cầu xóa. Vui lòng thử lại sau.');
     },
   });
-
   if (isLoading || isError || !request) {
     return null; // Don't show anything if no pending request
   }
-
   const scheduledDate = request.scheduledHardDeleteAt ? new Date(request.scheduledHardDeleteAt).toLocaleDateString('vi-VN') : 'Sắp tới';
-
   return (
     <View style={[styles.bannerContainer, { paddingTop: Spacing.three }]}>
       <View style={styles.contentRow}>
@@ -69,7 +62,6 @@ export const AccountPendingDeletionBanner = () => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   bannerContainer: {
     backgroundColor: '#fef2f2',

@@ -7,7 +7,7 @@ export interface LogContext {
 }
 
 export class LoggerService {
-  private formatLog(level: 'INFO' | 'WARN' | 'ERROR', message: string, context?: LogContext) {
+  private formatLog(level: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR', message: string, context?: LogContext) {
     const timestamp = new Date().toISOString();
     const reqIdStr = context?.requestId ? ` [ReqID: ${context.requestId}]` : '';
     const scopeStr = context?.scope ? ` [${context.scope}]` : '';
@@ -17,6 +17,12 @@ export class LoggerService {
   public info(message: string, context?: LogContext) {
     if (__DEV__) {
       console.log(this.formatLog('INFO', message, context), context ? JSON.stringify(context) : '');
+    }
+  }
+
+  public debug(message: string, context?: LogContext) {
+    if (__DEV__) {
+      console.debug(this.formatLog('DEBUG', message, context), context ? JSON.stringify(context) : '');
     }
   }
 

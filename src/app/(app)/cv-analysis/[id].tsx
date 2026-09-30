@@ -3,7 +3,6 @@ import { StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-
 import { ThemedView } from '@/components/themed-view';
 import { resumeAnalysesApi } from '@/api/resume-analyses.api';
 import { CVAnalysisResultView } from '@/components/cv-analysis/CVAnalysisResultView';
@@ -12,16 +11,12 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppBottomNavBar } from '@/components/navigation/app-bottom-nav-bar';
 import { AppScreenHeader } from '@/components/navigation/app-screen-header';
 import { ReportContentButton } from '@/components/moderation/ReportContentButton';
-
 export default function CVAnalysisDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
-
   const [analysisId, setAnalysisId] = useState<string | null>(id || null);
-
   const { data: analysisResult } = useQuery({
     queryKey: ['resume-analysis', analysisId],
     queryFn: () => resumeAnalysesApi.get(analysisId!),
@@ -34,7 +29,6 @@ export default function CVAnalysisDetailScreen() {
       return false;
     }
   });
-
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -51,7 +45,6 @@ export default function CVAnalysisDetailScreen() {
             />
           }
         />
-
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <CVAnalysisResultView
             analysisId={analysisId}
@@ -66,7 +59,6 @@ export default function CVAnalysisDetailScreen() {
     </ThemedView>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },

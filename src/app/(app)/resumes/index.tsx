@@ -24,7 +24,6 @@ import { styles } from '@/styles/resumes.styles';
 import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function ResumesScreen() {
-  const router = useRouter();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
@@ -352,4 +351,4 @@ export default function ResumesScreen() {
       </SafeAreaView>
     </AmbientBackground>
   );
-}
+}

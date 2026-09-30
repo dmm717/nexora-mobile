@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, TouchableOpacity, View, AppState, Linking, Platform } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, TouchableOpacity, View, AppState, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
@@ -23,25 +22,21 @@ import {
   ExitConfirmationModal,
 } from '@/components/interview/InterviewSubComponents';
 import { styles } from '@/styles/interview-room.styles';
-
 export default function InterviewRoomScreen() {
   const { id, micMode } = useLocalSearchParams<{ id: string; micMode?: string }>();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
-
   const [showExitModal, setShowExitModal] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [appState, setAppState] = useState(AppState.currentState);
-
   React.useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       setAppState(nextAppState);
     });
     return () => subscription.remove();
   }, []);
-
   const handleToggleCamera = async () => {
     if (isCameraOn) {
       setIsCameraOn(false);
@@ -62,7 +57,6 @@ export default function InterviewRoomScreen() {
     }
     setIsCameraOn(true);
   };
-
   const {
     router,
     interview,
@@ -91,9 +85,7 @@ export default function InterviewRoomScreen() {
     retryQuestionPreparationMutation,
     isMicAllowed,
   } = useInterviewSession(id);
-
   const isMicEnabled = true;
-
   if (isLoading || !interview) {
     return (
       <ThemedView style={styles.centerContainer}>
@@ -102,7 +94,6 @@ export default function InterviewRoomScreen() {
       </ThemedView>
     );
   }
-
   // 1. Preparing State (status === 'starting')
   if (interview.status === 'starting' && interview.questionPreparationState !== 'failed') {
     return (
@@ -125,7 +116,6 @@ export default function InterviewRoomScreen() {
             </View>
             <View style={{ width: 32 }} />
           </View>
-
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.four }}>
             <GlassCard style={{ padding: Spacing.five, borderRadius: 24, alignItems: 'center', width: '100%', maxWidth: 450, gap: Spacing.three }}>
               <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: Spacing.two }} />
@@ -137,7 +127,6 @@ export default function InterviewRoomScreen() {
               </ThemedText>
             </GlassCard>
           </View>
-
           <ExitConfirmationModal
             visible={showExitModal}
             colors={colors}
@@ -151,7 +140,6 @@ export default function InterviewRoomScreen() {
       </ThemedView>
     );
   }
-
   // 1.5. Preparation Failed State
   if (interview.status === 'starting' && interview.questionPreparationState === 'failed') {
     return (
@@ -169,7 +157,6 @@ export default function InterviewRoomScreen() {
             </View>
             <View style={{ width: 32 }} />
           </View>
-
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.four }}>
             <GlassCard style={{ padding: Spacing.five, borderRadius: 24, alignItems: 'center', width: '100%', maxWidth: 450, gap: Spacing.three, borderColor: colors.danger }}>
               <Ionicons name="warning" size={48} color={colors.danger} />
@@ -179,7 +166,6 @@ export default function InterviewRoomScreen() {
               <ThemedText style={{ textAlign: 'center', color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
                 Đã có sự cố khi AI sinh câu hỏi phỏng vấn. Vui lòng thử lại.
               </ThemedText>
-
               <TouchableOpacity
                 style={[styles.primaryButton, { backgroundColor: colors.danger, marginTop: Spacing.three, width: '100%' }]}
                 onPress={() => retryQuestionPreparationMutation.mutate()}
@@ -193,7 +179,6 @@ export default function InterviewRoomScreen() {
               </TouchableOpacity>
             </GlassCard>
           </View>
-
           <ExitConfirmationModal
             visible={showExitModal}
             colors={colors}
@@ -207,7 +192,6 @@ export default function InterviewRoomScreen() {
       </ThemedView>
     );
   }
-
   // 2. Processing / Completing State (status === 'completing' || status === 'evaluating')
   if (interview.status === 'completing' || interview.status === 'evaluating') {
     return (
@@ -230,7 +214,6 @@ export default function InterviewRoomScreen() {
             </View>
             <View style={{ width: 32 }} />
           </View>
-
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.four }}>
             <GlassCard style={{ padding: Spacing.five, borderRadius: 24, alignItems: 'center', width: '100%', maxWidth: 450, gap: Spacing.three }}>
               <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: Spacing.two }} />
@@ -242,7 +225,6 @@ export default function InterviewRoomScreen() {
               </ThemedText>
             </GlassCard>
           </View>
-
           <ExitConfirmationModal
             visible={showExitModal}
             colors={colors}
@@ -256,10 +238,8 @@ export default function InterviewRoomScreen() {
       </ThemedView>
     );
   }
-
   const answeredCount = interview.answers?.length || 0;
   const currentSequence = currentQuestion?.sequence ?? (answeredCount + 1);
-
   const handleEarlyExit = () => {
     if (answeredCount === 0) {
       setShowExitModal(true);
@@ -278,7 +258,6 @@ export default function InterviewRoomScreen() {
       ]
     );
   };
-
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -300,7 +279,6 @@ export default function InterviewRoomScreen() {
           </View>
           <View style={{ width: 32 }} />
         </View>
-
         {isCameraOn && permission?.granted && appState === 'active' && (
           <View style={{
             position: 'absolute',
@@ -323,7 +301,6 @@ export default function InterviewRoomScreen() {
             <CameraView style={{ flex: 1 }} facing="front" mute={true} />
           </View>
         )}
-
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* AI Presence Header */}
           <AiInterviewerPresence
@@ -332,7 +309,6 @@ export default function InterviewRoomScreen() {
             roleLabel={`${interview.role} (${interview.seniority})`}
             colors={colors}
           />
-
           {/* Current Question Card or Question Preparation Status */}
           {!currentQuestion && interview.questionPreparationState === 'processing' ? (
             <GlassCard style={{ padding: Spacing.four, borderRadius: 16, alignItems: 'center', marginVertical: Spacing.two }}>
@@ -365,12 +341,10 @@ export default function InterviewRoomScreen() {
               isCompleting={completeMutation.isPending}
             />
           )}
-
           {/* AI Coach Tip Card */}
           {currentQuestion && (
             <QuestionCoachTipCard sequence={currentSequence} colors={colors} />
           )}
-
           {/* Session Transcript Accordion for answered questions */}
           <SessionTranscriptAccordion
             answers={interview.answers}
@@ -378,7 +352,6 @@ export default function InterviewRoomScreen() {
             colors={colors}
           />
         </ScrollView>
-
         {/* Bottom Audio Speech Call Dock */}
         {currentQuestion && (
           <AudioSpeechDock
@@ -400,7 +373,6 @@ export default function InterviewRoomScreen() {
             onToggleCamera={handleToggleCamera}
           />
         )}
-
         {/* Quick Coaching Drawer / Modal */}
         <QuickCoachingModal
           visible={showCoachingModal}
@@ -410,7 +382,6 @@ export default function InterviewRoomScreen() {
           onClose={() => setShowCoachingModal(false)}
           colors={colors}
         />
-
         {/* Q2 Boundary Modal */}
         <Q2BoundaryModal
           visible={showQ2BoundaryModal}
@@ -418,7 +389,6 @@ export default function InterviewRoomScreen() {
           onContinue={() => setShowQ2BoundaryModal(false)}
           onComplete={() => completeMutation.mutate()}
         />
-
         {/* Q3 Boundary Modal */}
         <Q3BoundaryModal
           visible={showQ3BoundaryModal}
@@ -428,7 +398,6 @@ export default function InterviewRoomScreen() {
           onContinueDeep={() => continueMutation.mutate()}
           isContinuing={continueMutation.isPending}
         />
-
         {/* Exit Confirmation Modal */}
         <ExitConfirmationModal
           visible={showExitModal}

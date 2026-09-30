@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Modal, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, TouchableOpacity, Modal, StyleSheet, ScrollView, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { reportApi, ReportContentType, ReportReasonCode } from '@/api/report.api';
 import { toast } from '@/components/ui/toast/ToastProvider';
-
 interface ReportContentButtonProps {
   contentType: ReportContentType;
   contentId: string;
@@ -14,7 +13,6 @@ interface ReportContentButtonProps {
   iconSize?: number;
   color?: string;
 }
-
 const REASONS: { code: ReportReasonCode; label: string }[] = [
   { code: 'inaccurate', label: 'Nội dung không chính xác / sai sự thật' },
   { code: 'offensive', label: 'Ngôn từ xúc phạm / phản cảm' },
@@ -23,7 +21,6 @@ const REASONS: { code: ReportReasonCode; label: string }[] = [
   { code: 'privacy_violation', label: 'Vi phạm quyền riêng tư' },
   { code: 'other', label: 'Lý do khác' },
 ];
-
 export function ReportContentButton({ 
   contentType, 
   contentId, 
@@ -36,13 +33,11 @@ export function ReportContentButton({
   const [reasonCode, setReasonCode] = useState<ReportReasonCode | null>(null);
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleSubmit = async () => {
     if (!reasonCode) {
       toast.error('Vui lòng chọn một lý do báo cáo.');
       return;
     }
-
     try {
       setIsSubmitting(true);
       await reportApi.submitReport({
@@ -63,7 +58,6 @@ export function ReportContentButton({
       setIsSubmitting(false);
     }
   };
-
   return (
     <>
       <TouchableOpacity 
@@ -73,7 +67,6 @@ export function ReportContentButton({
       >
         <Ionicons name="flag-outline" size={iconSize} color={color || colors.textMuted} />
       </TouchableOpacity>
-
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -90,19 +83,16 @@ export function ReportContentButton({
             <View style={styles.handleContainer}>
               <View style={[styles.handle, { backgroundColor: colors.border }]} />
             </View>
-
             <View style={styles.header}>
               <ThemedText style={styles.headerTitle}>Báo cáo nội dung AI</ThemedText>
               <TouchableOpacity onPress={() => setModalVisible(false)} disabled={isSubmitting}>
                 <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
-
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
               <ThemedText style={[styles.description, { color: colors.textSecondary }]}>
                 Vui lòng cho chúng tôi biết lý do bạn báo cáo nội dung này. Phản hồi của bạn giúp chúng tôi cải thiện hệ thống AI tốt hơn.
               </ThemedText>
-
               <View style={styles.optionsList}>
                 {REASONS.map(reason => (
                   <TouchableOpacity
@@ -130,7 +120,6 @@ export function ReportContentButton({
                   </TouchableOpacity>
                 ))}
               </View>
-
               <View style={styles.inputContainer}>
                 <ThemedText style={[styles.inputLabel, { color: colors.textSecondary }]}>Chi tiết thêm (Tùy chọn)</ThemedText>
                 <TextInput
@@ -152,7 +141,6 @@ export function ReportContentButton({
                   textAlignVertical="top"
                 />
               </View>
-
               <TouchableOpacity
                 style={[
                   styles.submitButton,
@@ -175,7 +163,6 @@ export function ReportContentButton({
     </>
   );
 }
-
 const styles = StyleSheet.create({
   flagButton: {
     padding: Spacing.one,

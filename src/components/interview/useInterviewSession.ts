@@ -1,25 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Alert } from 'react-native';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-
 import { interviewApi } from '@/api/interview.api';
 import { useInterviewAudio } from '@/hooks/useInterviewAudio';
 import { toast } from '@/components/ui/toast/ToastProvider';
-
 export function useInterviewSession(id: string | undefined) {
   const router = useRouter();
-
   const [answerText, setAnswerText] = useState('');
   const [durationSeconds, setDurationSeconds] = useState(0);
   const [showQ2BoundaryModal, setShowQ2BoundaryModal] = useState(false);
   const [showQ3BoundaryModal, setShowQ3BoundaryModal] = useState(false);
   const [lastCoaching, setLastCoaching] = useState<any | null>(null);
   const [showCoachingModal, setShowCoachingModal] = useState(false);
-
   const attemptedQuestionsRef = useRef<Set<string>>(new Set());
   const timerRef = useRef<any>(null);
-
   // Platform-aware audio hook (native: expo-audio+Azure, web: Web Speech API)
   const onTranscriptionComplete = useCallback((text: string) => {
     setAnswerText((prev) => {
@@ -29,9 +23,7 @@ export function useInterviewSession(id: string | undefined) {
       return `${prev.trim()} ${text}`;
     });
   }, []);
-
   const audio = useInterviewAudio(id, onTranscriptionComplete);
-
   const { data: interview, isLoading, refetch } = useQuery({
     queryKey: ['interview', id],
     queryFn: () => interviewApi.get(id!),
@@ -53,11 +45,9 @@ export function useInterviewSession(id: string | undefined) {
       return false;
     }
   });
-
   // Find unanswered current question
   const answeredQuestionIds = new Set(interview?.answers?.map((a) => a.questionId) || []);
   const currentQuestion = interview?.questions?.find((q) => !answeredQuestionIds.has(q.id));
-
   // Automatically check completion and navigate to report
   useEffect(() => {
     if (
@@ -70,7 +60,6 @@ export function useInterviewSession(id: string | undefined) {
       router.replace(`/(app)/interview/report/${interview.id}` as any);
     }
   }, [interview?.status, interview?.reportState, interview?.id, router]);
-
   // Auto-play TTS question reading on question change
   useEffect(() => {
     if (
@@ -83,14 +72,12 @@ export function useInterviewSession(id: string | undefined) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion?.id, currentQuestion?.content]);
-
   // Manual TTS Speaker Toggle
   const toggleTts = useCallback(() => {
     if (currentQuestion?.content) {
       audio.toggleTts(currentQuestion.content);
     }
   }, [audio, currentQuestion]);
-
   // Answer duration timer (for web; native STT handles its own duration)
   useEffect(() => {
     if (audio.isRecording) {
@@ -104,30 +91,25 @@ export function useInterviewSession(id: string | undefined) {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [audio.isRecording]);
-
   // Speech Recognition toggle
   const toggleSpeech = useCallback(() => {
     audio.toggleSpeech();
   }, [audio]);
-
   // Show STT errors
   useEffect(() => {
     if (audio.sttErrorMessage) {
       toast.error(audio.sttErrorMessage);
     }
   }, [audio.sttErrorMessage]);
-
   // Submit answer mutation
   const submitAnswerMutation = useMutation({
     mutationFn: async () => {
       if (!currentQuestion) throw new Error('Không có câu hỏi hiện tại');
       if (!answerText.trim()) throw new Error('Vui lòng nhập hoặc thu âm câu trả lời');
-
       audio.stopTts();
       if (audio.isRecording) {
         audio.toggleSpeech();
       }
-
       const res = await interviewApi.submitAnswer(id!, {
         questionId: currentQuestion.id,
         content: answerText.trim(),
@@ -138,30 +120,25 @@ export function useInterviewSession(id: string | undefined) {
     onSuccess: (data) => {
       setAnswerText('');
       setDurationSeconds(0);
-
       const isMaxReached = data.isComplete === true && !data.nextQuestion && data.continuation?.state === 'max_questions_reached';
       if (isMaxReached) {
         completeMutation.mutate();
         return;
       }
-
       const evalData = data.answer?.evaluation || data.answer?.evaluation?.coachingFeedback;
       const isUpgradeRequired = !data.nextQuestion && data.continuation?.state === 'upgrade_required';
-
       if (isUpgradeRequired) {
         setShowQ3BoundaryModal(true);
       } else if (evalData) {
         setLastCoaching(evalData);
         setShowCoachingModal(true);
       }
-
       refetch();
     },
     onError: (err: any) => {
       toast.error(err.message || 'Không thể nộp câu trả lời. Vui lòng thử lại.');
     }
   });
-
   // Derived AI Presence State
   const aiState: 'idle' | 'speaking' | 'listening' | 'thinking' | 'processing' =
     submitAnswerMutation.isPending
@@ -173,12 +150,10 @@ export function useInterviewSession(id: string | undefined) {
       : audio.isTtsSpeaking
       ? 'speaking'
       : 'idle';
-
   // Handle continuing from coaching modal
   const handleContinueAfterCoaching = () => {
     setShowCoachingModal(false);
   };
-
   // Complete Interview mutation
   const completeMutation = useMutation({
     mutationFn: async () => {
@@ -195,7 +170,6 @@ export function useInterviewSession(id: string | undefined) {
       toast.error(err.message || 'Không thể hoàn thành phỏng vấn.');
     }
   });
-
   // Continue Interview mutation (Paid / Deep Continuation)
   const continueMutation = useMutation({
     mutationFn: async () => {
@@ -211,7 +185,6 @@ export function useInterviewSession(id: string | undefined) {
       toast.error(err.message || 'Không thể tiếp tục phỏng vấn.');
     }
   });
-
   const retryQuestionPreparationMutation = useMutation({
     mutationFn: async () => {
       const res = await interviewApi.retryQuestionPreparation(id!);
@@ -224,7 +197,6 @@ export function useInterviewSession(id: string | undefined) {
       toast.error(err.message || 'Không thể thử lại chuẩn bị câu hỏi.');
     }
   });
-
   return {
     router,
     interview,

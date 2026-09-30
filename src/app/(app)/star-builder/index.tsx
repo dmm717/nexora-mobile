@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, TouchableOpacity, Alert } from 'react-native';
+import { ScrollView, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -22,7 +22,6 @@ import { StarEvaluationResultCard } from '@/components/star-builder/StarEvaluati
 import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function StarBuilderScreen() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
@@ -151,4 +150,4 @@ export default function StarBuilderScreen() {
       </SafeAreaView>
     </ThemedView>
   );
-}
+}

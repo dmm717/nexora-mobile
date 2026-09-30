@@ -59,7 +59,6 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (isDirectSignIn) {
-      setIsSplash(false);
       SplashScreen.hideAsync();
       return;
     }

@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
-import { View, ActivityIndicator, Alert } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-
 import { userApi } from '@/api/user.api';
 import { ThemedText } from '@/components/themed-text';
 import { GlassCard } from '@/components/ui/glass-card';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { styles } from '@/styles/account.styles';
 import { toast } from '@/components/ui/toast/ToastProvider';
-
 export const PrivacyDataCard = ({ currentUserData, colors }: { currentUserData: any; colors: any }) => {
   const [isExporting, setIsExporting] = useState(false);
-
   const handleExportData = async () => {
     let fileUriToCleanUp: string | null = null;
     try {
@@ -27,7 +24,6 @@ export const PrivacyDataCard = ({ currentUserData, colors }: { currentUserData: 
         encoding: FileSystem.EncodingType.UTF8,
       });
       fileUriToCleanUp = fileUri;
-
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri, {
           mimeType: 'application/json',
@@ -46,7 +42,6 @@ export const PrivacyDataCard = ({ currentUserData, colors }: { currentUserData: 
       }
     }
   };
-
   return (
     <GlassCard style={styles.card}>
       <View>
@@ -55,7 +50,6 @@ export const PrivacyDataCard = ({ currentUserData, colors }: { currentUserData: 
           Bạn có toàn quyền kiểm soát dữ liệu cá nhân của mình trên hệ thống Nexora.
         </ThemedText>
       </View>
-
       <View style={[styles.downloadBox, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
         <View style={styles.downloadBoxHeader}>
           <Ionicons name="download-outline" size={18} color={colors.primary} />

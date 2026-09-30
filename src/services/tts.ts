@@ -8,7 +8,6 @@ import { getInterviewSpeechAuthorization } from './speechTokenManager';
 import { INTERVIEW_SPEECH_CONFIG } from '@/config/speech';
 import { logger } from './logger';
 import * as Crypto from 'expo-crypto';
-
 const _global = globalThis as any;
 if (typeof _global.crypto !== 'object') {
   _global.crypto = {};
@@ -16,8 +15,6 @@ if (typeof _global.crypto !== 'object') {
 if (typeof _global.crypto.getRandomValues !== 'function') {
   _global.crypto.getRandomValues = Crypto.getRandomValues.bind(Crypto);
 }
-
-import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
 
 async function synthesizeToFile(
   text: string,
@@ -36,9 +33,7 @@ async function synthesizeToFile(
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
-
   const ssml = `<speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' name='${INTERVIEW_SPEECH_CONFIG.voiceName}'>${escapedText}</voice></speak>`;
-
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -50,15 +45,12 @@ async function synthesizeToFile(
     body: ssml,
     signal,
   });
-
   const tNetwork = Date.now();
-  console.log(`[TTS Perf] HTTP POST completed in ${tNetwork - tStart}ms`);
-
+  logger.debug(`[TTS Perf] HTTP POST completed in ${tNetwork - tStart}ms`);
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`TTS REST API failed: ${response.status} ${response.statusText} - ${errorText}`);
   }
-
   const arrayBuffer = await response.arrayBuffer();
   
   // React Native's blob/FileReader is notoriously slow. 
@@ -84,27 +76,23 @@ async function synthesizeToFile(
   destFile.write(base64Data, { encoding: 'base64' });
   
   const tEnd = Date.now();
-  console.log(`[TTS Perf] File write completed. Total: ${tEnd - tStart}ms`);
+  logger.debug(`[TTS Perf] File write completed. Total: ${tEnd - tStart}ms`);
   
   return destFile.uri;
 }
-
 export interface UseNativeTtsReturn {
   isSpeaking: boolean;
   speak: (text: string) => Promise<void>;
   stop: () => void;
 }
-
 export function useNativeTts(interviewId: string | undefined): UseNativeTtsReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const currentFileRef = useRef<ExpoFile | null>(null);
   const shouldPlayRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isWaitingForNewFileRef = useRef(false);
-
   const player = useAudioPlayer(null);
   const playerStatus = useAudioPlayerStatus(player);
-
   const cleanupFile = useCallback(() => {
     const file = currentFileRef.current;
     if (file) {
@@ -112,19 +100,16 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
       currentFileRef.current = null;
     }
   }, []);
-
   const cleanupNetwork = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
   }, []);
-
   const cleanup = useCallback(() => {
     cleanupNetwork();
     cleanupFile();
   }, [cleanupNetwork, cleanupFile]);
-
   useEffect(() => {
     if (shouldPlayRef.current && playerStatus.isLoaded && !playerStatus.playing) {
       shouldPlayRef.current = false;
@@ -137,16 +122,13 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
       }
     }
   }, [playerStatus.isLoaded, playerStatus.playing, player, cleanup]);
-
   useEffect(() => {
     if (playerStatus.playing) {
       isWaitingForNewFileRef.current = false;
     }
   }, [playerStatus.playing]);
-
   useEffect(() => {
     if (isWaitingForNewFileRef.current) return;
-
     if (isSpeaking && playerStatus.playing === false && playerStatus.isLoaded) {
       if (playerStatus.currentTime > 0 && playerStatus.currentTime >= (playerStatus.duration - 0.1)) {
         setIsSpeaking(false);
@@ -154,12 +136,10 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
       }
     }
   }, [playerStatus.playing, playerStatus.currentTime, playerStatus.duration, playerStatus.isLoaded, isSpeaking, cleanup]);
-
   const speak = useCallback(async (text: string) => {
     cleanupNetwork();
     abortControllerRef.current = new AbortController();
     const currentSignal = abortControllerRef.current.signal;
-
     isWaitingForNewFileRef.current = true;
     shouldPlayRef.current = false;
     try {
@@ -169,21 +149,15 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
     }
     cleanupFile();
     setIsSpeaking(false);
-
     if (!text.trim() || !interviewId) return;
-
     try {
       setIsSpeaking(true);
-
       const t0 = Date.now();
       const auth = await getInterviewSpeechAuthorization(interviewId);
       const t1 = Date.now();
-
       const fileUri = await synthesizeToFile(text, auth.token, auth.region, currentSignal);
       const t2 = Date.now();
-
-      console.log(`[TTS Perf] Token: ${t1 - t0}ms | SDK+File: ${t2 - t1}ms | Total: ${t2 - t0}ms`);
-
+      logger.debug(`[TTS Perf] Token: ${t1 - t0}ms | SDK+File: ${t2 - t1}ms | Total: ${t2 - t0}ms`);
       currentFileRef.current = new ExpoFile(fileUri);
       shouldPlayRef.current = true;
       player.replace(fileUri);
@@ -198,7 +172,6 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
       cleanup();
     }
   }, [interviewId, player, cleanup]);
-
   const stop = useCallback(() => {
     isWaitingForNewFileRef.current = false;
     shouldPlayRef.current = false;
@@ -210,7 +183,6 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
     setIsSpeaking(false);
     cleanup();
   }, [player, cleanup]);
-
   useEffect(() => {
     return () => {
       shouldPlayRef.current = false;
@@ -222,6 +194,5 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
       cleanup();
     };
   }, [cleanup, player]);
-
   return { isSpeaking, speak, stop };
 }

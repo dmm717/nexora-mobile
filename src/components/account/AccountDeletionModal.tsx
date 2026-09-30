@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { View, Modal, ActivityIndicator, StyleSheet, TextInput, Alert } from 'react-native';
+import { View, Modal, ActivityIndicator, StyleSheet, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation } from '@tanstack/react-query';
-
 import { userApi } from '@/api/user.api';
 import { ThemedText } from '@/components/themed-text';
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { Radius, Shadows, Spacing } from '@/constants/theme';
 import { toast } from '@/components/ui/toast/ToastProvider';
-
 interface AccountDeletionModalProps {
   visible: boolean;
   onClose: () => void;
@@ -16,12 +14,10 @@ interface AccountDeletionModalProps {
   colors: any;
   userEmail: string;
 }
-
 export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEmail }: AccountDeletionModalProps) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [confirmText, setConfirmText] = useState('');
   const [deleteScheduledAt, setDeleteScheduledAt] = useState<string | null>(null);
-
   const deleteAccountMutation = useMutation({
     mutationFn: () => userApi.deleteAccount(),
     onSuccess: (data: any) => {
@@ -34,11 +30,9 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
       onClose();
     },
   });
-
   const handleNext = () => {
     setStep(2);
   };
-
   const handleConfirm = () => {
     if (confirmText !== 'XÓA' && confirmText !== userEmail) {
       toast.error('Vui lòng nhập chính xác từ "XÓA" hoặc email của bạn để xác nhận.');
@@ -46,13 +40,10 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
     }
     deleteAccountMutation.mutate();
   };
-
   const handleFinalOk = () => {
     logout();
   };
-
   if (!visible) return null;
-
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -88,19 +79,16 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
               <ThemedText style={[styles.subTitle, { color: colors.text }]}>
                 Vui lòng đọc kỹ các thông tin sau trước khi tiếp tục:
               </ThemedText>
-
               <View style={[styles.listContainer, { backgroundColor: colors.backgroundElement }]}>
                 <ThemedText style={[styles.listHeader, { color: colors.text }]}>Dữ liệu sẽ bị xóa hoàn toàn:</ThemedText>
                 <ThemedText style={styles.listItem}>• Hồ sơ CV và Mục tiêu nghề nghiệp</ThemedText>
                 <ThemedText style={styles.listItem}>• Lịch sử phỏng vấn và các báo cáo AI</ThemedText>
                 <ThemedText style={styles.listItem}>• Điểm năng lực và lộ trình học tập</ThemedText>
                 <ThemedText style={styles.listItem}>• Gói PRO (nếu có, không hoàn tiền)</ThemedText>
-
                 <ThemedText style={[styles.listHeader, { color: colors.text, marginTop: Spacing.three }]}>Dữ liệu được giữ lại (để tuân thủ pháp luật):</ThemedText>
                 <ThemedText style={styles.listItem}>• Hóa đơn thanh toán (giữ theo luật kế toán)</ThemedText>
                 <ThemedText style={styles.listItem}>• Lịch sử vi phạm nội dung AI (giữ 90 ngày để audit)</ThemedText>
               </View>
-
               <View style={styles.buttonRow}>
                 <TouchableScale style={[styles.cancelButton, { borderColor: colors.cardBorder }]} onPress={onClose}>
                   <ThemedText style={{ color: colors.text }}>Hủy Bỏ</ThemedText>
@@ -120,7 +108,6 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
               <ThemedText style={[styles.subTitle, { color: colors.text }]}>
                 Hành động này sẽ gửi yêu cầu xóa tài khoản. Hệ thống sẽ có một khoảng thời gian ân hạn (grace period) trước khi xóa cứng dữ liệu.
               </ThemedText>
-
               <View style={{ marginVertical: Spacing.four }}>
                 <ThemedText style={{ fontSize: 13, marginBottom: Spacing.one, color: colors.textSecondary }}>
                   Để xác nhận, vui lòng nhập chữ <ThemedText style={{ fontWeight: 'bold', color: colors.text }}>XÓA</ThemedText> hoặc email <ThemedText style={{ fontWeight: 'bold', color: colors.text }}>{userEmail}</ThemedText>:
@@ -134,7 +121,6 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
                   autoCapitalize="none"
                 />
               </View>
-
               <View style={styles.buttonRow}>
                 <TouchableScale style={[styles.cancelButton, { borderColor: colors.cardBorder }]} onPress={() => setStep(1)} disabled={deleteAccountMutation.isPending}>
                   <ThemedText style={{ color: colors.text }}>Quay Lại</ThemedText>
@@ -150,13 +136,11 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
               </View>
             </View>
           )}
-
         </View>
       </View>
     </Modal>
   );
 };
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,

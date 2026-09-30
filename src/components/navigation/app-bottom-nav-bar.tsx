@@ -2,20 +2,16 @@ import React, { useEffect } from 'react';
 import { View, TouchableOpacity, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useSegments, usePathname } from 'expo-router';
-import { Home, FileText, Mic, Wrench, LineChart, User } from 'lucide-react-native';
+import { Home, FileText, Mic, Wrench, LineChart } from 'lucide-react-native';
 import Svg, { Circle, Defs, Path, Rect, Stop, LinearGradient as SvgGradient } from 'react-native-svg';
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-
 export type TabId = 'home' | 'cv-jd' | 'interview' | 'practice' | 'growth' | 'profile';
-
 interface AppBottomNavBarProps {
   activeTab?: TabId | 'none';
 }
-
 // ─── Layout constants ─────────────────────────────────────────────────────────
 export const TAB_BAR_HEIGHT = 60;
 export const ARCH_RISE = 28;
@@ -23,13 +19,11 @@ export const ARCH_HALF_SPAN = 100;
 export const ICON_NORMAL = 22;
 export const ICON_CENTER = 26;
 export const CENTER_BTN = 54;
-
 export function useAppBottomNavBarHeight() {
   const insets = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'web' ? Spacing.two : Math.max(insets.bottom * 0.5, Spacing.two);
   return TAB_BAR_HEIGHT + bottomPad + ARCH_RISE;
 }
-
 function barShapePath(w: number, h: number): string {
   const cx = w / 2;
   const lx = cx - ARCH_HALF_SPAN;
@@ -47,7 +41,6 @@ function barShapePath(w: number, h: number): string {
     `Z`,
   ].join(' ');
 }
-
 function topEdgePath(w: number): string {
   const cx = w / 2;
   const lx = cx - ARCH_HALF_SPAN;
@@ -62,13 +55,11 @@ function topEdgePath(w: number): string {
     `L ${w} ${ARCH_RISE}`,
   ].join(' ');
 }
-
 function CenterTabIcon({ focused, iconSize }: { focused: boolean; iconSize: number }) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const colors = Colors[isDark ? 'dark' : 'light'];
   const shimmerProgress = useSharedValue(0);
-
   useEffect(() => {
     shimmerProgress.value = withRepeat(
       withTiming(1, { duration: 1500, easing: Easing.linear }),
@@ -76,16 +67,13 @@ function CenterTabIcon({ focused, iconSize }: { focused: boolean; iconSize: numb
       false,
     );
   }, []);
-
   const shimmerStyle = useAnimatedStyle(() => {
     const x = interpolate(shimmerProgress.value, [0, 0.4, 0.401, 1], [-CENTER_BTN, CENTER_BTN * 1.2, -CENTER_BTN, -CENTER_BTN]);
     const opacity = interpolate(shimmerProgress.value, [0, 0.1, 0.3, 0.4, 0.401, 1], [0, 0.55, 0.55, 0, 0, 0]);
     return { transform: [{ translateX: x }, { skewX: '-18deg' }], opacity };
   });
-
   const gradStart = '#4d65ff';
   const gradEnd = colors.primary;
-
   return (
     <View style={{ width: CENTER_BTN, height: CENTER_BTN, justifyContent: 'center', alignItems: 'center' }}>
       <View
@@ -122,7 +110,6 @@ function CenterTabIcon({ focused, iconSize }: { focused: boolean; iconSize: numb
     </View>
   );
 }
-
 export function AppBottomNavBar({ activeTab = 'none' }: AppBottomNavBarProps) {
   const router = useRouter();
   const segments = useSegments();
@@ -132,20 +119,16 @@ export function AppBottomNavBar({ activeTab = 'none' }: AppBottomNavBarProps) {
   const isDark = colorScheme === 'dark';
   const colors = Colors[isDark ? 'dark' : 'light'];
   const { width: W } = useWindowDimensions();
-
   const isInsideTabs = (segments as string[]).includes('(tabs)') || (typeof pathname === 'string' && pathname.startsWith('/(tabs)'));
-
   if (isInsideTabs) {
     return null;
   }
-
   const bottomPad = Platform.OS === 'web' ? Spacing.two : Math.max(insets.bottom * 0.5, Spacing.two);
   const barH = TAB_BAR_HEIGHT + bottomPad;
   const wrapperH = barH + ARCH_RISE;
   const bgColor = isDark ? colors.surface : colors.card;
   const border = isDark ? colors.cardBorder : colors.cardBorder;
   const inactive = colors.textMuted;
-
   const tabs: {
     id: TabId;
     title: string;
@@ -158,7 +141,6 @@ export function AppBottomNavBar({ activeTab = 'none' }: AppBottomNavBarProps) {
     { id: 'practice', title: 'Luyện tập', route: '/(tabs)/practice', IconComponent: Wrench },
     { id: 'growth', title: 'Năng lực', route: '/(tabs)/growth', IconComponent: LineChart },
   ];
-
   return (
     <View style={[s.wrapper, { height: wrapperH }]}>
       <Svg width={W} height={wrapperH} style={StyleSheet.absoluteFill}>
@@ -166,14 +148,12 @@ export function AppBottomNavBar({ activeTab = 'none' }: AppBottomNavBarProps) {
         <Path d={barShapePath(W, wrapperH)} fill={bgColor} />
         <Path d={topEdgePath(W)} fill="none" stroke={border} strokeWidth={StyleSheet.hairlineWidth * 2} />
       </Svg>
-
       <View style={[s.row, { height: barH, paddingBottom: bottomPad }]}>
         {tabs.map((tab) => {
           const focused = activeTab === tab.id;
           const isCenter = tab.id === 'interview';
           const iconColor = focused ? colors.primary : inactive;
           const iconSize = isCenter ? ICON_CENTER : ICON_NORMAL;
-
           return (
             <TouchableOpacity
               key={tab.id}
@@ -210,7 +190,6 @@ export function AppBottomNavBar({ activeTab = 'none' }: AppBottomNavBarProps) {
     </View>
   );
 }
-
 const s = StyleSheet.create({
   wrapper: {
     position: 'absolute',
