@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ScrollView, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
@@ -20,6 +20,7 @@ import { StarQuestionInputCard } from '@/components/star-builder/StarQuestionInp
 import { StarAnswerInputCard } from '@/components/star-builder/StarAnswerInputCard';
 import { StarEvaluationResultCard } from '@/components/star-builder/StarEvaluationResultCard';
 import { toast } from '@/components/ui/toast/ToastProvider';
+import { exportStarPdf } from '@/utils/exportOtherPdfs';
 
 export default function StarBuilderScreen() {
   const queryClient = useQueryClient();
@@ -45,7 +46,7 @@ export default function StarBuilderScreen() {
     queryFn: starApi.list,
   });
 
-  const { data: activeAttempt } = useQuery({
+  const { data: activeAttempt, isError: isActiveAttemptError } = useQuery({
     queryKey: ['star-attempt', attemptId],
     queryFn: () => starApi.get(attemptId!),
     enabled: !!attemptId,
@@ -63,7 +64,11 @@ export default function StarBuilderScreen() {
       if (activeAttempt.question) setQuestion(activeAttempt.question);
       if (activeAttempt.answer) setAnswer(activeAttempt.answer);
     }
-  }, [activeAttempt]);
+    if (isActiveAttemptError) {
+      toast.error('Không tìm thấy lịch sử phân tích STAR này.');
+      setAttemptId(null);
+    }
+  }, [activeAttempt, isActiveAttemptError]);
 
   const createStarMutation = useMutation({
     mutationFn: async () => {
@@ -87,6 +92,20 @@ export default function StarBuilderScreen() {
 
   const evaluation = activeAttempt?.evaluation || (activeAttempt as any)?.Evaluation;
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPdf = useCallback(async () => {
+    if (!activeAttempt || activeAttempt.status !== 'completed' || isExporting) return;
+    setIsExporting(true);
+    try {
+      await exportStarPdf(activeAttempt);
+    } catch {
+      toast.error('Không thể xuất báo cáo PDF. Vui lòng thử lại.');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [activeAttempt, isExporting]);
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -96,12 +115,17 @@ export default function StarBuilderScreen() {
           fallbackRoute="/(tabs)/practice" 
           rightElement={
             activeAttempt ? (
-              <ReportContentButton 
-                contentType="star_suggestion"
-                contentId={activeAttempt.id || 'star-builder'}
-                iconSize={20}
-                color={colors.primary}
-              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <ReportContentButton 
+                  contentType="star_suggestion"
+                  contentId={activeAttempt.id || 'star-builder'}
+                  iconSize={20}
+                  color={colors.primary}
+                />
+                <TouchableOpacity onPress={handleExportPdf} disabled={isExporting} style={{ padding: 6, opacity: isExporting ? 0.5 : 1 }}>
+                  <Ionicons name="download-outline" size={20} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
             ) : undefined
           }
         />
@@ -150,4 +174,4 @@ export default function StarBuilderScreen() {
       </SafeAreaView>
     </ThemedView>
   );
-}
+}

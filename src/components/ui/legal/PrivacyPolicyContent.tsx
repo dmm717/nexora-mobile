@@ -5,7 +5,7 @@ import { renderBullet, renderSectionHeader } from './LegalContentHelpers';
 
 export const PrivacyPolicyContent = ({ colors, styles }: { colors: any, styles: any }) => (
   <View style={styles.docSection}>
-    <ThemedText style={[styles.docMeta, { color: colors.textMuted }]}>Cập nhật lần cuối: 28 tháng 9, 2026</ThemedText>
+    <ThemedText style={[styles.docMeta, { color: colors.textMuted }]}>Cập nhật lần cuối: 02 tháng 10, 2026</ThemedText>
 
     <View style={styles.contentBlock}>
       {renderSectionHeader('1', 'Thu thập dữ liệu', colors, styles)}

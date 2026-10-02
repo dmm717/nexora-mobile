@@ -11,8 +11,10 @@
       "bundleIdentifier": "com.nexora.app",
       "icon": "./assets/images/icon.png",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Nexora cần quyền truy cập microphone để bạn thực hành phỏng vấn qua giọng nói."
-      }
+        "NSMicrophoneUsageDescription": "Nexora cần quyền truy cập microphone để bạn thực hành phỏng vấn qua giọng nói.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "26100213"
     },
     "android": {
       "package": "com.nexora.app",
@@ -68,7 +70,6 @@
           "photosPermission": "Nexora cần quyền truy cập thư viện ảnh để thay đổi ảnh đại diện."
         }
       ],
-      "expo-iap",
       [
         "expo-build-properties",
         {
@@ -79,7 +80,7 @@
             "enableShrinkResourcesInReleaseBuilds": true,
             "usesCleartextTraffic": false,
             "networkInspector": false,
-            "extraProguardRules": "-keep class com.dooboolab.RNIap.** { *; }\n-keep class com.android.billingclient.** { *; }\n-keep class com.swmansion.reanimated.** { *; }"
+            "extraProguardRules": "-keep class com.swmansion.reanimated.** { *; }"
           },
           "ios": {
             "networkInspector": false
@@ -90,14 +91,20 @@
         "@sentry/react-native/expo",
         {
           "url": "https://sentry.io/",
-          "project": "nexora-mobile",
-          "organization": "nexora"
+          "project": "react-native",
+          "organization": "personal-ms2"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "da63c7d8-7552-415a-afa1-da0785ae3f16"
+      }
     }
   }
 }

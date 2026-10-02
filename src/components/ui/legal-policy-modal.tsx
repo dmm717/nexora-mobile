@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useRef, useState, memo } from 'react';
@@ -535,3 +536,4 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.semibold,
   },
 });
+

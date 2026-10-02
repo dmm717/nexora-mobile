@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 
-export type InterviewPresenceState = 'idle' | 'speaking' | 'listening' | 'thinking' | 'processing';
+export type InterviewPresenceState = 'idle' | 'speaking' | 'listening' | 'thinking' | 'processing' | 'preparing_audio';
 
 const PRESENCE_CONFIG: Record<
   InterviewPresenceState,
@@ -35,6 +35,11 @@ const PRESENCE_CONFIG: Record<
     color: '#f59e0b', // Amber
     icon: 'cloud-upload-outline',
   },
+  preparing_audio: {
+    label: 'Đang chuẩn bị giọng đọc...',
+    color: '#6366f1', // Indigo
+    icon: 'hourglass-outline',
+  },
 };
 
 export interface AiInterviewerPresenceProps {
@@ -55,7 +60,7 @@ export function AiInterviewerPresence({
 
   useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
-    if (state === 'speaking' || state === 'listening' || state === 'thinking') {
+    if (state === 'speaking' || state === 'listening' || state === 'thinking' || state === 'preparing_audio') {
       animation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {

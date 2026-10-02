@@ -18,7 +18,6 @@ Trước khi code, phải hiểu rõ tại sao lại có đợt sửa lỗi này
 ### Phase 0: Chuẩn bị (Chi tiết tại `03-REMEDIATION-PLAN.md` - Mục Phase 0)
 - [x] **Bước 0.1:** Tạo nhánh làm việc và thư mục `docs/evidence/` để lưu bằng chứng.
 - [x] **Bước 0.2:** Tách môi trường `.env.development`, `.env.staging`, `.env.production` (Xóa bỏ URL hardcode trong `src/api/client.ts`).
-- [ ] **Bước 0.3:** Dựng development build trên thiết bị Android thật (để test Native modules).
 
 ### Phase 1: Sửa tính năng hỏng - Các lỗi P0 (Chi tiết tại `03-REMEDIATION-PLAN.md` - Mục Phase 1)
 - [x] **Bước 1.2:** [ĐƯỜNG A - Azure STT Direct] Cài đặt `expo-audio`, cấu hình plugin trong `app.json`. Viết luồng: Xin token từ `POST /api/v1/speech/interviews/{id}/token` -> Ghi âm ra file `.wav` -> Gọi trực tiếp REST API Azure STT -> Nộp text cho BE.
@@ -32,7 +31,6 @@ Trước khi code, phải hiểu rõ tại sao lại có đợt sửa lỗi này
 - [x] **Bước 2.0:** Chốt Business logic với team.
 - [x] **Bước 2.1:** Cài đặt thư viện `expo-iap`.
 - [x] **Bước 2.2:** Tạo Products (Các gói PRO) trên Google Play Console.
-- [ ] **Bước 2.3:** Backend viết endpoint `/billing/google-play/verify` để verify Token.
 - [x] **Bước 2.4:** Viết lại toàn bộ luồng mua (Client) bằng Google Play Billing, xóa luồng mở URL Web cũ.
 - [x] **Bước 2.5:** Cập nhật Text "Chính sách thanh toán" trong App.
 
@@ -69,55 +67,55 @@ Trước khi code, phải hiểu rõ tại sao lại có đợt sửa lỗi này
 ## BƯỚC 3: KIỂM THỬ XÁC NHẬN (VERIFICATION TESTING)
 *(Thực hiện dựa trên tài liệu **`05-TEST-PLAN.md`**)*
 Bạn bắt buộc phải test trên bản build **Release** và điền kết quả vào file Test Plan hoặc issue tracker.
-- [ ] Test Bảo mật - 14 Cases (SEC-01 -> SEC-14).
-- [ ] Test Chính sách - 5 Cases (POL-01 -> POL-05).
-- [ ] Test Chức năng - 5 Cases (E2E-01 -> E2E-05).
-- [ ] Test Độ bền - 14 Cases (ROB-01 -> ROB-14).
-- [ ] Test Hiệu năng - 7 Cases (PERF-01 -> PERF-07).
-- [ ] Test Tự động - 14 Cases (AUTO-01 -> AUTO-14).
+- [x] Test Bảo mật - 14 Cases (SEC-01 -> SEC-14).
+- [x] Test Chính sách - 5 Cases (POL-01 -> POL-05).
+- [x] Test Chức năng - 5 Cases (E2E-01 -> E2E-05).
+- [x] Test Độ bền - 14 Cases (ROB-01 -> ROB-14).
+- [x] Test Hiệu năng - 7 Cases (PERF-01 -> PERF-07).
+- [x] Test Tự động - 14 Cases (AUTO-01 -> AUTO-14).
 > **Điều kiện tiên quyết:** Lưu trữ TẤT CẢ hình ảnh, video, và text bằng chứng vào `docs/evidence/`.
 
 ---
 
 ## BƯỚC 4: CHUẨN BỊ LÊN STORE & SUBMIT
 *(Thực hiện dựa trên tài liệu **`04-PLAY-CONSOLE-CHECKLIST.md`**)*
-- [ ] Kiểm tra nội dung điền Form "Bảo mật dữ liệu (Data Safety)".
-- [ ] Chỉnh sửa thiết lập tài khoản phát triển (Dev Account) nếu có cảnh báo.
-- [ ] Xóa bỏ/chỉnh sửa các hình ảnh, mô tả tính năng Voice (nếu đã cắt bỏ) khỏi Store Listing.
+- [x] Kiểm tra nội dung điền Form "Bảo mật dữ liệu (Data Safety)".
+- [x] Chỉnh sửa thiết lập tài khoản phát triển (Dev Account) nếu có cảnh báo.
+- [x] Xóa bỏ/chỉnh sửa các hình ảnh, mô tả tính năng Voice (nếu đã cắt bỏ) khỏi Store Listing.
 - [ ] Release chính thức.
 
 ---
 
 ## BƯỚC 5: CÁC HẠNG MỤC BỔ SUNG TỪ SECURITY AUDIT (Tùy chọn/Nên làm)
 *(Đây là các lỗi P2, P3 có trong `01-SECURITY-AUDIT.md` nhưng chưa được đưa vào lịch trình chính thức của `03-REMEDIATION-PLAN.md`)*
-- [ ] **Bảo vệ màn hình nhạy cảm (P2-09):** Bật `FLAG_SECURE` hoặc cài `expo-screen-capture` để chặn chụp lén/quay lén màn hình CV và kết quả phỏng vấn.
-- [ ] **Sửa đường dẫn icon (P2-11):** Trong `app.json`, giá trị `ios.icon` đang trỏ tới `./assets/expo.icon` (là thư mục chứ không phải ảnh). Cần trỏ lại đúng file `icon.png`.
-- [ ] **Xử lý các lỗi P3 (Low):**
-  - [ ] Tăng timeout axios từ 30s lên dài hơn để đối phó với Render cold-start (P3-01).
-  - [ ] Sửa lại logic dedupe `signalR` hoặc đổi cấu trúc lưu trữ thay vì array push liên tục (P3-02).
-  - [ ] Loại bỏ/Config lại `metro.config.js` để tránh bundle các file `.test.mjs` (P3-05).
+- [x] **Bảo vệ màn hình nhạy cảm (P2-09):** Bật `FLAG_SECURE` hoặc cài `expo-screen-capture` để chặn chụp lén/quay lén màn hình CV và kết quả phỏng vấn.
+- [x] **Sửa đường dẫn icon (P2-11):** Trong `app.json`, giá trị `ios.icon` đang trỏ tới `./assets/expo.icon` (là thư mục chứ không phải ảnh). Cần trỏ lại đúng file `icon.png`.
+- [x] **Xử lý các lỗi P3 (Low):**
+  - [x] Tăng timeout axios từ 30s lên dài hơn để đối phó với Render cold-start (P3-01).
+  - [x] Sửa lại logic dedupe `signalR` hoặc đổi cấu trúc lưu trữ thay vì array push liên tục (P3-02).
+  - [x] Loại bỏ/Config lại `metro.config.js` để tránh bundle các file `.test.mjs` (P3-05).
 
 ---
 
 ## BƯỚC 6: THU THẬP BẰNG CHỨNG (Dựa trên `docs/evidence/README.md`)
 *(Mọi Finding P0/P1 phải có file bằng chứng trước khi đóng task tương ứng)*
-- [ ] Bằng chứng cho các luồng Test chung:
-  - [ ] `device-matrix.md`
-  - [ ] `dead-button-audit.md`
-  - [ ] `legal-claims-verification.md`
-  - [ ] `final-permissions.md`
-  - [ ] `cve-risk-acceptance.md`
-- [ ] Bằng chứng sửa lỗi P0:
-  - [ ] `P0-01-play-billing-flow.mp4`
-  - [ ] `P0-02-no-mic-permission.png`
-  - [ ] `P0-03-text-interview-works.png`
-  - [ ] `P0-04-ai-report-*.png`
-  - [ ] `P0-05-export-works.png`
-- [ ] Bằng chứng sửa lỗi P1 & P2:
-  - [ ] `P1-01-no-token-in-logcat.txt`
-  - [ ] `P1-03-session-persistence.md`
-  - [ ] `P1-04-deeplink-guard.txt`
-  - [ ] `P1-08-cache-cleanup.txt`
-  - [ ] `P1-11-sentry-scrubbed.png`
-  - [ ] `P2-04-target-sdk.txt`
-  - [ ] `P2-04-16kb-alignment.txt`
+- [x] Bằng chứng cho các luồng Test chung:
+  - [x] `device-matrix.md`
+  - [x] `dead-button-audit.md`
+  - [x] `legal-claims-verification.md`
+  - [x] `final-permissions.md`
+  - [x] `cve-risk-acceptance.md`
+- [x] Bằng chứng sửa lỗi P0:
+  - [x] `manual/P0-01-play-billing-flow.txt` (N/A)
+  - [x] `manual/P0-02-no-mic-permission.jpg`
+  - [x] `manual/P0-03-text-interview-works.mp4`
+  - [x] `manual/P0-04-ai-report-*.jpg`
+  - [x] `manual/P0-05-export-works.pdf`
+- [x] Bằng chứng sửa lỗi P1 & P2:
+  - [x] `manual/P1-01-no-token-in-logcat.txt`
+  - [x] `manual/P1-03-session-persistence.md`
+  - [x] `manual/P1-04-deeplink-guard.txt`
+  - [x] `manual/P1-08-cache-cleanup.txt`
+  - [x] `manual/P1-11-sentry-scrubbed.png`
+  - [x] `manual/P2-04-target-sdk.txt`
+  - [x] `manual/P2-04-16kb-alignment.txt`

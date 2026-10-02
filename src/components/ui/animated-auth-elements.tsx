@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect } from 'react';
 import { View, StyleSheet, TextStyle, ViewStyle, Text } from 'react-native';
 import Animated, {
@@ -166,3 +167,4 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
 });
+

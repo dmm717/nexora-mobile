@@ -134,7 +134,7 @@ adb shell am start -a android.intent.action.VIEW -d "nexoramobile://(app)/scenar
 6. Test riêng: reboot thiết bị → mở app → vẫn đăng nhập.
 
 **Pass**: không lần nào bị logout ngoài ý muốn.
-**Ghi kết quả**: `evidence/P1-03-session-persistence.md` với timestamp từng lần test.
+**Ghi kết quả**: `evidence/manual/P1-03-session-persistence.md` với timestamp từng lần test.
 
 ☐ Pass ☐ Fail
 
@@ -195,7 +195,7 @@ adb shell am start -a android.intent.action.VIEW -d "nexoramobile://(app)/scenar
 5. Liệt kê files dir: `adb shell run-as com.nexora.app ls -laR /data/data/com.nexora.app/files`
 
 **Pass**: không còn file `.pdf`, `.docx`, `.json` export, hay `.m4a` nào chứa dữ liệu cá nhân.
-**Ghi kết quả**: `evidence/P1-08-cache-cleanup.txt`
+**Ghi kết quả**: `evidence/manual/P1-08-cache-cleanup.txt`
 
 ☐ Pass ☐ Fail
 
@@ -335,9 +335,9 @@ adb shell am start -a android.intent.action.VIEW -d "nexoramobile://(app)/scenar
 | Scenario content | ☐ | ☐ | ☐ | ☐ |
 
 **Thêm**
-- [ ] Có nhãn "Nội dung do AI tạo" hiển thị ở các surface trên.
-- [ ] User nhận được xác nhận sau khi gửi báo cáo.
-- [ ] Gửi báo cáo khi mất mạng → hiện lỗi, cho retry, không mất nội dung đã nhập.
+- [x] Có nhãn "Nội dung do AI tạo" hiển thị ở các surface trên.
+- [x] User nhận được xác nhận sau khi gửi báo cáo.
+- [x] Gửi báo cáo khi mất mạng → hiện lỗi, cho retry, không mất nội dung đã nhập.
 
 ☐ Pass ☐ Fail
 
@@ -530,3 +530,5 @@ Xem POL-01. Thêm:
 **Chỉ khi cả 4 ô trên được tick → được phép submit lên Google Play.**
 
 Người phê duyệt release: ________________  Ngày: __________
+
+

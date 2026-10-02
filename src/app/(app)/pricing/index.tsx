@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
@@ -11,7 +12,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useIAP, deepLinkToSubscriptions } from 'expo-iap';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -42,7 +42,6 @@ export default function PricingScreen() {
   const colors = Colors[themeKey];
 
   const [selectedPriceId, setSelectedPriceId] = useState<string | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
 
   // 1. Fetch Current User (with billing entitlement & orders)
   const {
@@ -65,107 +64,10 @@ export default function PricingScreen() {
     queryFn: pricingApi.listPlans,
   });
 
-  // 3. Setup IAP
-  const {
-    connected,
-    subscriptions,
-    products,
-    fetchProducts,
-    requestPurchase,
-    getAvailablePurchases,
-    availablePurchases,
-    finishTransaction,
-  } = useIAP({
-    onPurchaseSuccess: async (purchase) => {
-      try {
-        setIsVerifying(true);
-        // Step 2.4 & 2.3: POST /billing/google-play/verify -> backend cấp entitlement
-        await pricingApi.verifyGooglePlayPurchase(
-          purchase.productId,
-          purchase.purchaseToken || '',
-          purchase.id
-        );
-        // Step 2.4: BẮT BUỘC
-        await finishTransaction({ purchase, isConsumable: false });
-        toast.success('Nâng cấp gói dịch vụ thành công!');
-        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      } catch (err: any) {
-        toast.error('Thanh toán thành công nhưng có lỗi khi xác nhận với Server. Vui lòng thử lại bằng cách "Khôi phục giao dịch".');
-      } finally {
-        setIsVerifying(false);
-        setSelectedPriceId(null);
-      }
-    },
-    onPurchaseError: (err: any) => {
-      setIsVerifying(false);
-      setSelectedPriceId(null);
-      if (err?.code !== 'E_USER_CANCELLED') {
-        toast.error('Không thể hoàn tất thanh toán qua Google Play.');
-      }
-    },
-  });
-
-  useEffect(() => {
-    if (connected && plans.length > 0) {
-      // Fetch products from store using backend plan codes as SKUs
-      // Quy ước: productId trên store giống code của plan (e.g. nexora_pro_1m)
-      const skus = plans.map(p => p.code.toLowerCase());
-      fetchProducts({ skus, type: 'subs' }).catch(logger.error);
-      fetchProducts({ skus, type: 'in-app' }).catch(logger.error);
-      
-      // Khôi phục giao dịch chưa xử lý khi khởi động
-      getAvailablePurchases().catch(logger.error);
-    }
-  }, [connected, plans]);
-
-  // Xử lý các giao dịch có sẵn (restore/pending)
-  useEffect(() => {
-    const processAvailablePurchases = async () => {
-      if (!availablePurchases || availablePurchases.length === 0) return;
-      
-      for (const purchase of availablePurchases) {
-        // Chỉ xử lý nếu chưa được verify hoặc app cần verify lại
-        try {
-          await pricingApi.verifyGooglePlayPurchase(
-            purchase.productId,
-            purchase.purchaseToken || '',
-            purchase.id
-          );
-          await finishTransaction({ purchase, isConsumable: false });
-          queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-        } catch (e) {
-          logger.error('Lỗi khi xử lý availablePurchase', e);
-        }
-      }
-    };
-    
-    processAvailablePurchases();
-  }, [availablePurchases]);
+  // (Removed IAP logic for policy compliance)
 
   const handleRefresh = async () => {
     await Promise.all([refetchUser(), refetchPlans()]);
-  };
-
-  const handleRestorePurchases = async () => {
-    try {
-      setIsVerifying(true);
-      await getAvailablePurchases();
-      toast.info('Đã yêu cầu kiểm tra lại các giao dịch đang treo.');
-    } catch (e) {
-      toast.error('Không thể khôi phục giao dịch lúc này.');
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleManageSubscriptions = async () => {
-    try {
-      if (currentPlanCode) {
-        await deepLinkToSubscriptions({ skuAndroid: currentPlanCode, packageNameAndroid: 'com.nexora.app' });
-      }
-    } catch (e) {
-      toast.error('Không thể mở trình quản lý gói cước Google Play.');
-    }
   };
 
   // Billing Entitlement Calculations
@@ -261,24 +163,13 @@ export default function PricingScreen() {
                 <ThemedText style={styles.quotaBoxValue}>{interviewQuestionLimitText}</ThemedText>
               </View>
             </View>
-
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: Spacing.four, gap: Spacing.three }}>
-               <TouchableOpacity onPress={handleRestorePurchases}>
-                 <ThemedText style={{ color: colors.textMuted, fontSize: 13, textDecorationLine: 'underline' }}>Khôi phục giao dịch</ThemedText>
-               </TouchableOpacity>
-               {currentPlanCode && currentPlanCode !== 'free' && (
-                 <TouchableOpacity onPress={handleManageSubscriptions}>
-                   <ThemedText style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>Quản lý gia hạn (Google Play)</ThemedText>
-                 </TouchableOpacity>
-               )}
-            </View>
           </GlassCard>
 
-          {/* SECTION 2: NÂNG CẤP GÓI DỊCH VỤ */}
+          {/* SECTION 2: GÓI DỊCH VỤ */}
           <View style={[styles.sectionHeaderBlock, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.sectionTitle}>Nâng cấp gói dịch vụ</ThemedText>
+            <ThemedText style={styles.sectionTitle}>Thông tin các gói dịch vụ</ThemedText>
             <ThemedText style={styles.sectionSubtitle}>
-              Thanh toán an toàn qua Google Play. Giá cả được hiển thị trực tiếp từ kho ứng dụng.
+              Dưới đây là thông tin chi tiết về hạn mức và tính năng của các gói dịch vụ.
             </ThemedText>
           </View>
 
@@ -307,10 +198,7 @@ export default function PricingScreen() {
                   .map(describePlanFeature)
                   .filter(Boolean) as string[];
                   
-                // Match with store product if available
-                const storeSub = subscriptions.find(s => s.id === sku);
-                const storeProd = products.find(p => p.id === sku);
-                const displayPrice = isFree ? 'Miễn phí' : (storeSub?.displayPrice || storeProd?.displayPrice || formatCurrency(priceMeta.amountMinor, priceMeta.currency));
+                const displayPrice = isFree ? 'Miễn phí' : formatCurrency(priceMeta.amountMinor, priceMeta.currency);
 
                 return (
                   <View
@@ -383,56 +271,26 @@ export default function PricingScreen() {
                       ))}
                     </View>
 
-                    <TouchableOpacity
-                      style={[
-                        styles.planActionButton,
-                        {
-                          backgroundColor: isCurrentPlan
-                            ? colors.cardBorder
-                            : isHighlighted
-                            ? colors.primary
-                            : 'transparent',
-                          borderWidth: isCurrentPlan || isHighlighted ? 0 : 1,
-                          borderColor: colors.primary,
-                        },
-                        isVerifying && selectedPriceId === sku && { opacity: 0.6 },
-                      ]}
-                      onPress={() => {
-                        if (isCurrentPlan) return;
-                        if (!isFree) {
-                          setSelectedPriceId(sku);
-                          requestPurchase({ request: { google: { skus: [sku] }, apple: { sku } }, type: storeSub ? 'subs' : 'in-app' }).catch(logger.error);
-                        } else {
-                          router.push('/(tabs)/home' as any);
-                        }
-                      }}
-                      disabled={isCurrentPlan || isVerifying || (!storeSub && !storeProd && !isFree)}
-                    >
-                      {isVerifying && selectedPriceId === sku ? (
-                        <ActivityIndicator color="#ffffff" size="small" />
-                      ) : (
+                    {isCurrentPlan && (
+                      <View
+                        style={[
+                          styles.planActionButton,
+                          {
+                            backgroundColor: colors.cardBorder,
+                            borderWidth: 0,
+                          },
+                        ]}
+                      >
                         <ThemedText
                           style={[
                             styles.planActionText,
-                            {
-                              color: isCurrentPlan
-                                ? colors.textMuted
-                                : isHighlighted
-                                ? '#ffffff'
-                                : colors.primary,
-                            },
+                            { color: colors.textMuted },
                           ]}
                         >
-                          {isCurrentPlan
-                            ? 'Gói hiện tại'
-                            : (!storeSub && !storeProd && !isFree) 
-                            ? 'Sản phẩm đang được cập nhật'
-                            : isHighlighted
-                            ? 'Nâng cấp ngay'
-                            : 'Chọn gói này'}
+                          Gói hiện tại
                         </ThemedText>
-                      )}
-                    </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                 );
               })}
@@ -486,3 +344,4 @@ export default function PricingScreen() {
     </ThemedView>
   );
 }
+

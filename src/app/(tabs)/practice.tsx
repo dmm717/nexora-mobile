@@ -64,6 +64,7 @@ export default function PracticeTabScreen() {
   const { data: recommendation } = useQuery({
     queryKey: ['next-recommendation'],
     queryFn: growthApi.getNextRecommendation,
+    retry: false,
   });
 
   const { data: careerProfile } = useQuery({
@@ -74,6 +75,7 @@ export default function PracticeTabScreen() {
   const { data: progress } = useQuery({
     queryKey: ['progress-dashboard'],
     queryFn: growthApi.getProgressDashboard,
+    retry: false,
   });
 
   // Fetch Learning Path summary
@@ -108,7 +110,7 @@ export default function PracticeTabScreen() {
 
     let label = 'Tạo buổi thực hành tiếp theo';
     let description = 'Chọn bài luyện phù hợp với điều bạn muốn cải thiện tiếp theo.';
-    let destination: string | null = '/(app)/interview/preflight';
+    let destination: string | null = '/(tabs)/interview';
     let estimatedMinutes: number | undefined =
       recommendation?.estimatedMinutes && recommendation.estimatedMinutes > 0
         ? recommendation.estimatedMinutes
@@ -126,7 +128,7 @@ export default function PracticeTabScreen() {
       const isRetry = recommendation.action?.type === 'repeat_question';
       label = isRetry ? 'Luyện lại câu hỏi phỏng vấn' : 'Luyện phỏng vấn AI';
       description = recommendation.reason || 'Trả lời câu hỏi 1-1 với AI, nhận phân tích Rubric 4 tiêu chí.';
-      destination = '/(app)/interview/preflight';
+      destination = '/(tabs)/interview';
     } else if (recommendation?.activityType === 'resume' || recommendation?.activityType === 'resume_improvement') {
       label = 'Cải thiện CV';
       description = recommendation.reason || 'Tải lên hoặc phân tích CV để cập nhật bằng chứng năng lực.';
@@ -301,7 +303,7 @@ export default function PracticeTabScreen() {
             {/* Card 1: Mock Interview */}
             <TouchableScale
               style={{ width: 200 }}
-              onPress={() => router.push('/(app)/interview/preflight' as any)}
+              onPress={() => router.push('/(tabs)/interview' as any)}
             >
               <GlassCard style={styles.gridCard}>
                 <View style={[styles.gridIconBadge, { backgroundColor: colors.primaryLight }]}>

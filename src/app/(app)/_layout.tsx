@@ -25,7 +25,7 @@ export default function AppLayout() {
         <Stack.Screen name="career-goals" options={{ headerShown: false }} />
         <Stack.Screen name="career-profile" options={{ headerShown: false }} />
         <Stack.Screen name="resumes" options={{ headerShown: false }} />
-        <Stack.Screen name="cv-analysis" options={{ headerShown: false }} />
+        <Stack.Screen name="cv-analysis/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="interview" options={{ headerShown: false }} />
         <Stack.Screen name="scenarios" options={{ headerShown: false }} />
         <Stack.Screen name="star-builder" options={{ headerShown: false }} />

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * useInterviewAudio.ts — Platform-aware audio hook for interview sessions.
  *
@@ -45,6 +46,7 @@ export interface UseInterviewAudioReturn {
 
   // TTS
   isTtsSpeaking: boolean;
+  isTtsLoading: boolean;
   speakTts: (text: string) => void;
   stopTts: () => void;
   toggleTts: (text: string) => void;
@@ -116,6 +118,7 @@ function useInterviewAudioNative(
     sttErrorMessage: stt.errorMessage,
     toggleSpeech,
     isTtsSpeaking: tts.isSpeaking,
+    isTtsLoading: tts.isLoading,
     speakTts: tts.speak,
     stopTts: tts.stop,
     toggleTts,
@@ -242,6 +245,7 @@ function useInterviewAudioWeb(
     sttErrorMessage: null,
     toggleSpeech,
     isTtsSpeaking,
+    isTtsLoading: false, // Web TTS doesn't have an explicit loading state yet
     speakTts,
     stopTts,
     toggleTts,
@@ -269,3 +273,4 @@ export function useInterviewAudio(
   // eslint-disable-next-line react-hooks/rules-of-hooks
   return useInterviewAudioNative(interviewId, onTranscriptionComplete);
 }
+

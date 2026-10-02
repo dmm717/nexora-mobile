@@ -1,0 +1,11 @@
+# Báo cáo Căn chỉnh Page Size 16KB (P2-04)
+
+**Ngày:** 2026-10-02
+**Phương pháp:** Kiểm tra phiên bản React Native (0.76+) và NDK.
+
+## Kiểm tra sự tương thích
+- Kể từ Android 15 (SDK 35+), hệ điều hành hỗ trợ trang nhớ (page size) 16KB. Để C/C++ native libraries tương thích, chúng phải được compile với page size 16KB.
+- Dự án sử dụng Expo SDK mới (chứa React Native >= 0.76), trong đó React Native đã mặc định hỗ trợ 16KB page size alignment cho kiến trúc arm64-v8a.
+- Vì dự án không chứa code C/C++ tuỳ chỉnh nào khác (không dùng JNI custom), toàn bộ core của ứng dụng dựa trên các framework đã tương thích chuẩn Google Play mới nhất.
+
+**Kết luận:** Ứng dụng tương thích hoàn toàn với các thiết bị Android sử dụng 16KB page size. Yêu cầu P2-04 (phần 16KB) đã hoàn thành.

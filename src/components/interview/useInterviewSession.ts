@@ -24,7 +24,7 @@ export function useInterviewSession(id: string | undefined) {
     });
   }, []);
   const audio = useInterviewAudio(id, onTranscriptionComplete);
-  const { data: interview, isLoading, refetch } = useQuery({
+  const { data: interview, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['interview', id],
     queryFn: () => interviewApi.get(id!),
     enabled: !!id,
@@ -140,13 +140,15 @@ export function useInterviewSession(id: string | undefined) {
     }
   });
   // Derived AI Presence State
-  const aiState: 'idle' | 'speaking' | 'listening' | 'thinking' | 'processing' =
+  const aiState: 'idle' | 'speaking' | 'listening' | 'thinking' | 'processing' | 'preparing_audio' =
     submitAnswerMutation.isPending
       ? 'thinking'
       : audio.isProcessingStt
       ? 'processing'
       : audio.isRecording
       ? 'listening'
+      : audio.isTtsLoading
+      ? 'preparing_audio'
       : audio.isTtsSpeaking
       ? 'speaking'
       : 'idle';
@@ -201,6 +203,8 @@ export function useInterviewSession(id: string | undefined) {
     router,
     interview,
     isLoading,
+    isError,
+    error,
     currentQuestion,
     answerText,
     setAnswerText,
@@ -208,6 +212,7 @@ export function useInterviewSession(id: string | undefined) {
     isProcessingStt: audio.isProcessingStt,
     toggleSpeech,
     isTtsSpeaking: audio.isTtsSpeaking,
+    isTtsLoading: audio.isTtsLoading,
     toggleTts,
     durationSeconds: audio.isRecording ? audio.durationSeconds || durationSeconds : durationSeconds,
     aiState,

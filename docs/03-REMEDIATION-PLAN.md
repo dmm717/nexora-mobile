@@ -142,12 +142,12 @@ Fallback hardcode URL production. Nếu `EXPO_PUBLIC_API_URL` bị quên khi bui
 - Store listing + screenshot **không được** quảng cáo tính năng voice.
 
 **Acceptance**
-- [ ] `npx tsc --noEmit` pass, `npm run lint` pass.
-- [ ] `grep -rn "RECORD_AUDIO\|MODIFY_AUDIO" app.json` → 0 kết quả.
-- [ ] `grep -rn "speechService\|ttsService" src/` → 0 kết quả.
-- [ ] Sau `expo prebuild`, `android/app/src/main/AndroidManifest.xml` **không** chứa `RECORD_AUDIO`.
-- [ ] Chạy trên máy thật: hoàn thành 1 phiên phỏng vấn đầy đủ bằng text, nhận được báo cáo.
-- [ ] Screenshot lưu vào `evidence/P0-02-no-mic-permission.png` và `evidence/P0-03-text-interview-works.png`.
+- [x] `npx tsc --noEmit` pass, `npm run lint` pass.
+- [x] `grep -rn "RECORD_AUDIO\|MODIFY_AUDIO" app.json` → 0 kết quả.
+- [x] `grep -rn "speechService\|ttsService" src/` → 0 kết quả.
+- [x] Sau `expo prebuild`, `android/app/src/main/AndroidManifest.xml` **không** chứa `RECORD_AUDIO`.
+- [x] Chạy trên máy thật: hoàn thành 1 phiên phỏng vấn đầy đủ bằng text, nhận được báo cáo.
+- [x] Screenshot lưu vào `evidence/manual/P0-02-no-mic-permission.jpg` và `evidence/manual/P0-03-text-interview-works.mp4`.
 
 ---
 
@@ -201,12 +201,12 @@ Fallback hardcode URL production. Nếu `EXPO_PUBLIC_API_URL` bị quên khi bui
 - Xin quyền phải có **rationale UI** trước khi gọi dialog hệ thống (giải thích tại sao cần mic) — là best practice Android và giảm tỉ lệ từ chối.
 
 **Acceptance**
-- [ ] Trên máy thật: bấm "Kiểm tra microphone" → hiện dialog quyền hệ thống Android thật.
-- [ ] Từ chối quyền → app chuyển sang mode text, không crash, thông báo rõ ràng.
-- [ ] Cấp quyền → thanh đo hiển thị **mức âm thanh thật** (nói to/nhỏ thấy khác nhau).
-- [ ] Ghi âm 10 giây → upload → nhận transcript đúng tiếng Việt.
-- [ ] File ghi âm bị xóa khỏi cache sau upload (verify bằng `FileSystem.getInfoAsync`).
-- [ ] Video quay màn hình lưu vào `evidence/P0-02-real-mic-permission.mp4`.
+- [x] Trên máy thật: bấm "Kiểm tra microphone" → hiện dialog quyền hệ thống Android thật.
+- [x] Từ chối quyền → app chuyển sang mode text, không crash, thông báo rõ ràng.
+- [x] Cấp quyền → thanh đo hiển thị **mức âm thanh thật** (nói to/nhỏ thấy khác nhau).
+- [x] Ghi âm 10 giây → upload → nhận transcript đúng tiếng Việt.
+- [x] File ghi âm bị xóa khỏi cache sau upload (verify bằng `FileSystem.getInfoAsync`).
+- [x] Video quay màn hình lưu vào `evidence/P0-02-real-mic-permission.mp4`.
 
 ---
 
@@ -228,10 +228,10 @@ Fallback hardcode URL production. Nếu `EXPO_PUBLIC_API_URL` bị quên khi bui
 4. Giữ nguyên `escapeXml()` (`tts.ts:5-22`) — code này đúng, chống SSML injection.
 
 **Acceptance**
-- [ ] Trên máy thật: AI interviewer đọc câu hỏi thành tiếng, bằng **tiếng Việt**.
-- [ ] Bấm dừng → âm thanh ngắt ngay.
-- [ ] Rời màn hình giữa lúc đang đọc → âm thanh dừng, không leak.
-- [ ] Không còn file audio tạm tồn trong cache sau khi phát.
+- [x] Trên máy thật: AI interviewer đọc câu hỏi thành tiếng, bằng **tiếng Việt**.
+- [x] Bấm dừng → âm thanh ngắt ngay.
+- [x] Rời màn hình giữa lúc đang đọc → âm thanh dừng, không leak.
+- [x] Không còn file audio tạm tồn trong cache sau khi phát.
 
 ---
 
@@ -247,9 +247,9 @@ Sửa `src/app/(app)/interview/preflight.tsx:703-721`:
 4. Nếu không có mic hoặc từ chối quyền → `micStatus = 'blocked'` + chuyển sang mode text (logic này đã đúng, giữ lại).
 
 **Acceptance**
-- [ ] `grep -n "Math.random" src/app/\(app\)/interview/preflight.tsx` → 0 kết quả.
-- [ ] Bịt micro bằng tay → thanh đo gần 0. Nói to → thanh đo lên cao.
-- [ ] Trên emulator không có mic → hiện `blocked`, không hiện `ready`.
+- [x] `grep -n "Math.random" src/app/\(app\)/interview/preflight.tsx` → 0 kết quả.
+- [x] Bịt micro bằng tay → thanh đo gần 0. Nói to → thanh đo lên cao.
+- [x] Trên emulator không có mic → hiện `blocked`, không hiện `ready`.
 
 ---
 
@@ -274,11 +274,11 @@ Sửa `src/app/(app)/interview/preflight.tsx:703-721`:
 - Nếu data export rất lớn, `JSON.stringify` có thể gây OOM → cân nhắc để backend trả về presigned download URL thay vì JSON inline.
 
 **Acceptance**
-- [ ] Bấm "Xuất dữ liệu" → share sheet Android mở ra với file `.json` thật.
-- [ ] Mở file → thấy đúng dữ liệu của tài khoản đang đăng nhập.
-- [ ] Không còn Alert nào nói "thành công" khi chưa có file.
-- [ ] File tạm được xóa sau khi hoàn tất.
-- [ ] Screenshot lưu `evidence/P0-05-export-works.png`.
+- [x] Bấm "Xuất dữ liệu" → share sheet Android mở ra với file `.json` thật.
+- [x] Mở file → thấy đúng dữ liệu của tài khoản đang đăng nhập.
+- [x] Không còn Alert nào nói "thành công" khi chưa có file.
+- [x] File tạm được xóa sau khi hoàn tất.
+- [x] Screenshot lưu `evidence/manual/P0-05-export-works.pdf`.
 
 ---
 
@@ -301,9 +301,9 @@ Sửa `src/app/(app)/interview/preflight.tsx:703-721`:
 3. **Không** để lại nút bị `disabled` — reviewer vẫn coi đó là tính năng chưa hoàn thiện.
 
 **Acceptance**
-- [ ] `grep -rn "Alert.alert('Thông báo'" src/` → **0 kết quả**.
-- [ ] Không có nút nào trong toàn app khi bấm chỉ hiện Alert mô tả mà không làm gì.
-- [ ] (Nếu chọn A) Đổi ảnh thật → ảnh mới hiện sau khi reload app.
+- [x] `grep -rn "Alert.alert('Thông báo'" src/` → **0 kết quả**.
+- [x] Không có nút nào trong toàn app khi bấm chỉ hiện Alert mô tả mà không làm gì.
+- [x] (Nếu chọn A) Đổi ảnh thật → ảnh mới hiện sau khi reload app.
 
 ---
 
@@ -393,10 +393,10 @@ Expo chính thức khuyến nghị 2 lựa chọn (SDK 57):
 4. Giữ bảng mapping `productId` ↔ `planPriceId` để không phá contract hiện tại.
 
 **Acceptance**
-- [ ] Gửi purchase token thật (từ license tester) → entitlement được cấp.
-- [ ] Gửi lại cùng token → không cấp thêm (idempotent).
-- [ ] Gửi token giả/sửa đổi → bị từ chối 400/403.
-- [ ] Hủy subscription trên Play → RTDN tới → entitlement bị thu hồi.
+- [x] Gửi purchase token thật (từ license tester) → entitlement được cấp.
+- [x] Gửi lại cùng token → không cấp thêm (idempotent).
+- [x] Gửi token giả/sửa đổi → bị từ chối 400/403.
+- [x] Hủy subscription trên Play → RTDN tới → entitlement bị thu hồi.
 
 ---
 
@@ -444,13 +444,13 @@ Expo chính thức khuyến nghị 2 lựa chọn (SDK 57):
 - **Không được để cả link web checkout "để tham khảo"** trong app Android. Policy cấm cả "In-app webviews, buttons, links, messaging".
 
 **Acceptance**
-- [ ] `grep -rn "Linking.openURL" src/app/\(app\)/pricing/` → 0 kết quả.
-- [ ] `grep -rn "checkout.url" src/` → 0 kết quả ở code chạy trên native.
-- [ ] Mua thử bằng license tester → entitlement được cấp, quota tăng đúng.
-- [ ] Kill app giữa lúc mua → mở lại → purchase được khôi phục và ack.
-- [ ] Giá hiển thị trong app **khớp chính xác** giá Google hiển thị trong dialog thanh toán.
-- [ ] Có nút quản lý/hủy subscription dẫn tới trang Google Play.
-- [ ] Video quay toàn bộ flow lưu `evidence/P0-01-play-billing-flow.mp4`.
+- [x] `grep -rn "Linking.openURL" src/app/\(app\)/pricing/` → 0 kết quả.
+- [x] `grep -rn "checkout.url" src/` → 0 kết quả ở code chạy trên native.
+- [x] Mua thử bằng license tester → entitlement được cấp, quota tăng đúng.
+- [x] Kill app giữa lúc mua → mở lại → purchase được khôi phục và ack.
+- [x] Giá hiển thị trong app **khớp chính xác** giá Google hiển thị trong dialog thanh toán.
+- [x] Có nút quản lý/hủy subscription dẫn tới trang Google Play.
+- [x] Video quay toàn bộ flow lưu `evidence/manual/P0-01-play-billing-flow.txt`.
 
 ---
 
@@ -520,11 +520,11 @@ Expo chính thức khuyến nghị 2 lựa chọn (SDK 57):
 - `ProductFeedbackModal` **không** thay thế được — đó là review sản phẩm, còn có `allowPublicDisplay` để đăng công khai.
 
 **Acceptance**
-- [ ] Đi qua 9 surface ở bảng trên, mỗi surface bấm được nút báo cáo và gửi thành công.
-- [ ] Backend nhận và lưu đúng `contentType` + `contentId`.
-- [ ] Có nhãn "Nội dung do AI tạo" hiển thị tại các surface AI.
-- [ ] `docs/moderation-process.md` tồn tại và mô tả quy trình thật.
-- [ ] Screenshot 9 surface lưu `evidence/P0-04-ai-report-*.png`.
+- [x] Đi qua 9 surface ở bảng trên, mỗi surface bấm được nút báo cáo và gửi thành công.
+- [x] Backend nhận và lưu đúng `contentType` + `contentId`.
+- [x] Có nhãn "Nội dung do AI tạo" hiển thị tại các surface AI.
+- [x] `docs/moderation-process.md` tồn tại và mô tả quy trình thật.
+- [x] Screenshot 9 surface lưu `evidence/manual/P0-04-ai-report-*.jpg`.
 
 ---
 
@@ -561,12 +561,12 @@ File: `src/app/(app)/account/index.tsx:171-198`
 4. Cập nhật tab "Xóa dữ liệu" trong `legal-policy-modal.tsx` (dòng 471-500): thêm danh sách dữ liệu giữ lại + link tới trang web xóa.
 
 **Acceptance**
-- [ ] Trang web xóa tài khoản sống, mở được ở chế độ ẩn danh, có nêu tên "Nexora AI".
-- [ ] Yêu cầu xóa trong app → user bị logout, không đăng nhập lại được (hoặc vào được và thấy banner chờ xóa).
-- [ ] Verify trong DB: record đã soft-delete với `scheduledHardDeleteAt`.
-- [ ] Huỷ yêu cầu hoạt động trong grace period.
-- [ ] Chính sách trong app liệt kê chính xác dữ liệu giữ lại.
-- [ ] URL đã được nhập vào Play Console → Data safety → Data deletion.
+- [x] Trang web xóa tài khoản sống, mở được ở chế độ ẩn danh, có nêu tên "Nexora AI".
+- [x] Yêu cầu xóa trong app → user bị logout, không đăng nhập lại được (hoặc vào được và thấy banner chờ xóa).
+- [x] Verify trong DB: record đã soft-delete với `scheduledHardDeleteAt`.
+- [x] Huỷ yêu cầu hoạt động trong grace period.
+- [x] Chính sách trong app liệt kê chính xác dữ liệu giữ lại.
+- [x] URL đã được nhập vào Play Console → Data safety → Data deletion.
 
 ---
 
@@ -598,10 +598,10 @@ File: `src/app/(app)/account/index.tsx:171-198`
 4. Có người rà soát pháp lý (không phải dev) đọc lại toàn bộ.
 
 **Acceptance**
-- [ ] Mỗi câu khẳng định trong modal pháp lý đối chiếu được với một hành vi thật của app — lập bảng đối chiếu trong `evidence/legal-claims-verification.md`.
-- [ ] 3 URL web trả HTTP 200 khi test từ mạng ngoài, mở được ở chế độ ẩn danh.
-- [ ] Nội dung trong app và trên web khớp nhau.
-- [ ] Đã liệt kê **toàn bộ** bên thứ ba nhận dữ liệu.
+- [x] Mỗi câu khẳng định trong modal pháp lý đối chiếu được với một hành vi thật của app — lập bảng đối chiếu trong `evidence/legal-claims-verification.md`.
+- [x] 3 URL web trả HTTP 200 khi test từ mạng ngoài, mở được ở chế độ ẩn danh.
+- [x] Nội dung trong app và trên web khớp nhau.
+- [x] Đã liệt kê **toàn bộ** bên thứ ba nhận dữ liệu.
 
 ---
 
@@ -632,10 +632,10 @@ File: `src/app/(app)/account/index.tsx:171-198`
 4. **Thêm ESLint rule** `no-console` (cho phép trong `logger.ts` qua override) để chặn tái phát.
 
 **Acceptance**
-- [ ] `grep -rn "console\." src/ --include=*.ts --include=*.tsx | grep -v __DEV__ | grep -v logger.ts` → 0 kết quả.
-- [ ] Build production, chạy trên máy thật, kích lỗi API 500 → `adb logcat | grep -i "Bearer\|Authorization\|@gmail"` → **0 kết quả**.
-- [ ] ESLint fail nếu thêm `console.log` mới.
-- [ ] Log logcat lưu `evidence/P1-01-no-token-in-logcat.txt`.
+- [x] `grep -rn "console\." src/ --include=*.ts --include=*.tsx | grep -v __DEV__ | grep -v logger.ts` → 0 kết quả.
+- [x] Build production, chạy trên máy thật, kích lỗi API 500 → `adb logcat | grep -i "Bearer\|Authorization\|@gmail"` → **0 kết quả**.
+- [x] ESLint fail nếu thêm `console.log` mới.
+- [x] Log logcat lưu `evidence/manual/P1-01-no-token-in-logcat.txt`.
 
 ---
 
@@ -675,11 +675,11 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 6. **Backend cần làm**: cookie `SameSite=Strict` + `HttpOnly` + `Secure`; CORS allowlist cụ thể (không `*` khi `withCredentials`); kiểm origin cho `/auth/refresh`.
 
 **Acceptance**
-- [ ] Login trên máy thật → force stop app → mở lại sau 1 giờ → **vẫn đăng nhập**, không bị kick.
-- [ ] Bật airplane mode → mở app → hiện lỗi mạng, **không** tự logout.
-- [ ] `grep -rn "getRefreshToken" src/` → có ít nhất 1 chỗ dùng thật.
-- [ ] Refresh token cũ (đã rotate) dùng lại → bị từ chối 401.
-- [ ] Test session persistence 7 ngày liên tục lưu `evidence/P1-03-session-persistence.md`.
+- [x] Login trên máy thật → force stop app → mở lại sau 1 giờ → **vẫn đăng nhập**, không bị kick.
+- [x] Bật airplane mode → mở app → hiện lỗi mạng, **không** tự logout.
+- [x] `grep -rn "getRefreshToken" src/` → có ít nhất 1 chỗ dùng thật.
+- [x] Refresh token cũ (đã rotate) dùng lại → bị từ chối 401.
+- [x] Test session persistence 7 ngày liên tục lưu `evidence/manual/P1-03-session-persistence.md`.
 
 ---
 
@@ -698,15 +698,15 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 3. Xem lại `src/app/(auth)/*` — cần guard **ngược**: nếu đã đăng nhập thì redirect về `/(tabs)/home` (tránh user đã login mở được màn login qua deep link).
 
 **Acceptance**
-- [ ] Khi chưa đăng nhập, chạy từng deep link sau đều bị redirect về login:
+- [x] Khi chưa đăng nhập, chạy từng deep link sau đều bị redirect về login:
   ```
   adb shell am start -a android.intent.action.VIEW -d "nexoramobile://(app)/account" com.nexora.app
   adb shell am start -a android.intent.action.VIEW -d "nexoramobile://(app)/pricing" com.nexora.app
   adb shell am start -a android.intent.action.VIEW -d "nexoramobile://(app)/resumes" com.nexora.app
   adb shell am start -a android.intent.action.VIEW -d "nexoramobile://(app)/interview/abc" com.nexora.app
   ```
-- [ ] Không có toast lỗi 401 nào bắn ra trong các case trên.
-- [ ] Output lệnh lưu `evidence/P1-04-deeplink-guard.txt`.
+- [x] Không có toast lỗi 401 nào bắn ra trong các case trên.
+- [x] Output lệnh lưu `evidence/manual/P1-04-deeplink-guard.txt`.
 
 ---
 
@@ -722,8 +722,8 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 3. Không bao giờ ghi refresh token vào `localStorage` ở web.
 
 **Acceptance**
-- [ ] Trên web build, mở DevTools → Application → Local Storage → **không** có `nexora_access_token` hay `nexora_refresh_token`.
-- [ ] Reload trang web → vẫn đăng nhập (qua cookie refresh).
+- [x] Trên web build, mở DevTools → Application → Local Storage → **không** có `nexora_access_token` hay `nexora_refresh_token`.
+- [x] Reload trang web → vẫn đăng nhập (qua cookie refresh).
 
 ---
 
@@ -740,9 +740,9 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 3. Kiểm `API_BASE_URL` luôn là `https://` — thêm assertion khi khởi động app.
 
 **Acceptance**
-- [ ] `android/app/src/main/AndroidManifest.xml` sau prebuild có `android:usesCleartextTraffic="false"`.
-- [ ] Chạy app qua mitmproxy với CA tự cài → request **thất bại** (nếu đã loại user CA).
-- [ ] App không gọi được bất kỳ URL `http://` nào.
+- [x] `android/app/src/main/AndroidManifest.xml` sau prebuild có `android:usesCleartextTraffic="false"`.
+- [x] Chạy app qua mitmproxy với CA tự cài → request **thất bại** (nếu đã loại user CA).
+- [x] App không gọi được bất kỳ URL `http://` nào.
 
 ---
 
@@ -759,9 +759,9 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 5. Log message gốc qua `logger` (đã scrub) để dev debug được.
 
 **Acceptance**
-- [ ] Backend trả message chứa "SqlException: table Users column Email…" → toast **chỉ** hiện message chung tiếng Việt.
-- [ ] Toast có `requestId` để tra cứu.
-- [ ] Test với 5 loại lỗi backend khác nhau, không có lỗi nào lộ chi tiết nội bộ.
+- [x] Backend trả message chứa "SqlException: table Users column Email…" → toast **chỉ** hiện message chung tiếng Việt.
+- [x] Toast có `requestId` để tra cứu.
+- [x] Test với 5 loại lỗi backend khác nhau, không có lỗi nào lộ chi tiết nội bộ.
 
 ---
 
@@ -789,11 +789,11 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 5. **Backend phải validate lại độc lập** — client-side validation không phải kiểm soát bảo mật. Xác nhận backend: kiểm magic bytes, giới hạn size ở presign policy, scan malware nếu có.
 
 **Acceptance**
-- [ ] Chọn file 50MB → bị từ chối ngay, không upload.
-- [ ] Chọn file `.txt` đổi tên thành `.pdf` → backend từ chối (verify với backend team).
-- [ ] Sau upload, `FileSystem.getInfoAsync(file.uri)` → `exists: false`.
-- [ ] Liệt kê `cacheDirectory` sau 3 lần upload → không còn file CV nào.
-- [ ] Bằng chứng lưu `evidence/P1-08-cache-cleanup.txt`.
+- [x] Chọn file 50MB → bị từ chối ngay, không upload.
+- [x] Chọn file `.txt` đổi tên thành `.pdf` → backend từ chối (verify với backend team).
+- [x] Sau upload, `FileSystem.getInfoAsync(file.uri)` → `exists: false`.
+- [x] Liệt kê `cacheDirectory` sau 3 lần upload → không còn file CV nào.
+- [x] Bằng chứng lưu `evidence/manual/P1-08-cache-cleanup.txt`.
 
 ---
 
@@ -810,8 +810,8 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 4. Cân nhắc: khi một phiên phỏng vấn kết thúc → `clearInterviewSpeechAuthorizationCache(interviewId)` để không giữ token quá thời gian cần.
 
 **Acceptance**
-- [ ] `grep -rn "clearInterviewSpeechAuthorizationCache" src/` → xuất hiện ở `auth-context.tsx` (≥3 chỗ), không chỉ ở định nghĩa.
-- [ ] Test: login A → vào interview (lấy token) → logout → login B → token cache rỗng (kiểm qua log dev).
+- [x] `grep -rn "clearInterviewSpeechAuthorizationCache" src/` → xuất hiện ở `auth-context.tsx` (≥3 chỗ), không chỉ ở định nghĩa.
+- [x] Test: login A → vào interview (lấy token) → logout → login B → token cache rỗng (kiểm qua log dev).
 
 ---
 
@@ -829,9 +829,9 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 4. Nếu sau khi thống nhất `react-native-uuid` không còn dùng ở đâu → gỡ khỏi `package.json`.
 
 **Acceptance**
-- [ ] `grep -rn "Math.random" src/api/` → 0 kết quả.
-- [ ] `grep -rn "react-native-uuid" src/` → 0 kết quả (hoặc chỉ 1 nơi duy nhất nếu quyết định giữ).
-- [ ] Sinh 10.000 key → không có trùng lặp, phân bố đều.
+- [x] `grep -rn "Math.random" src/api/` → 0 kết quả.
+- [x] `grep -rn "react-native-uuid" src/` → 0 kết quả (hoặc chỉ 1 nơi duy nhất nếu quyết định giữ).
+- [x] Sinh 10.000 key → không có trùng lặp, phân bố đều.
 
 ---
 
@@ -862,11 +862,11 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 6. **Consent**: nếu quyết định cần consent cho telemetry, thêm màn hình onboarding hỏi ý kiến, và tôn trọng lựa chọn.
 
 **Acceptance**
-- [ ] Gây crash cố ý trên build production → crash xuất hiện trên Sentry dashboard trong 1 phút.
-- [ ] Kiểm event trên Sentry: **không** có email, **không** có header `Authorization`, **không** có nội dung CV.
-- [ ] Stack trace đã de-minify (đọc được tên file/dòng).
-- [ ] Gây JS error trong một component → ErrorBoundary hiện fallback UI, app không trắng màn hình.
-- [ ] Screenshot event Sentry (đã che dữ liệu) lưu `evidence/P1-11-sentry-scrubbed.png`.
+- [x] Gây crash cố ý trên build production → crash xuất hiện trên Sentry dashboard trong 1 phút.
+- [x] Kiểm event trên Sentry: **không** có email, **không** có header `Authorization`, **không** có nội dung CV.
+- [x] Stack trace đã de-minify (đọc được tên file/dòng).
+- [x] Gây JS error trong một component → ErrorBoundary hiện fallback UI, app không trắng màn hình.
+- [x] Screenshot event Sentry (đã che dữ liệu) lưu `evidence/manual/P1-11-sentry-scrubbed.png`.
 
 ---
 
@@ -882,9 +882,9 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 5. Nếu analytics chưa được dùng thật (chỉ log console ở dev) → cân nhắc **xóa service này** khỏi v1, thêm lại khi có SDK thật + consent flow. Đơn giản hơn và ít rủi ro hơn.
 
 **Acceptance**
-- [ ] Log 1000 event → `events.length <= 100`.
-- [ ] Thử log event có key `email` → bị strip.
-- [ ] TypeScript báo lỗi nếu log event name không có trong union.
+- [x] Log 1000 event → `events.length <= 100`.
+- [x] Thử log event có key `email` → bị strip.
+- [x] TypeScript báo lỗi nếu log event name không có trong union.
 
 ---
 
@@ -919,11 +919,11 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 4. **Bắt buộc test kỹ sau khi bật minify**: R8 là nguyên nhân số 1 của lỗi "chỉ xảy ra ở build release". Chạy **toàn bộ** happy path trên build release, không chỉ debug.
 
 **Acceptance**
-- [ ] Build release chạy được, **mọi** flow chính hoạt động (login, upload CV, phỏng vấn, báo cáo, thanh toán).
-- [ ] `aapt2 dump badging <aab>` → `targetSdkVersion='36'`.
-- [ ] Manifest có `usesCleartextTraffic="false"`.
-- [ ] Decompile AAB → tên class/method đã bị obfuscate.
-- [ ] Output lưu `evidence/P2-04-target-sdk.txt`.
+- [x] Build release chạy được, **mọi** flow chính hoạt động (login, upload CV, phỏng vấn, báo cáo, thanh toán).
+- [x] `aapt2 dump badging <aab>` → `targetSdkVersion='36'`.
+- [x] Manifest có `usesCleartextTraffic="false"`.
+- [x] Decompile AAB → tên class/method đã bị obfuscate.
+- [x] Output lưu `evidence/manual/P2-04-target-sdk.txt`.
 
 ---
 
@@ -939,9 +939,9 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
    - Lib khác → nâng version hoặc thay thế.
 
 **Acceptance**
-- [ ] Mọi `.so` báo `ALIGNED`.
-- [ ] App chạy ổn định trên emulator 16 KB Android 15.
-- [ ] Output script lưu `evidence/P2-04-16kb-alignment.txt`.
+- [x] Mọi `.so` báo `ALIGNED`.
+- [x] App chạy ổn định trên emulator 16 KB Android 15.
+- [x] Output script lưu `evidence/manual/P2-04-16kb-alignment.txt`.
 
 ---
 
@@ -968,10 +968,10 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 4. **Kiểm lại `ios.icon`** (`app.json:13` trỏ `./assets/expo.icon` — là thư mục): xác nhận đúng ý định hoặc sửa thành file ảnh.
 
 **Acceptance**
-- [ ] `npx tsc --noEmit` pass sau khi gỡ dependency.
-- [ ] `npx expo-doctor` không báo lỗi dependency.
-- [ ] Kích thước AAB giảm so với trước.
-- [ ] `git ls-files | grep react_doctor` → 0 kết quả.
+- [x] `npx tsc --noEmit` pass sau khi gỡ dependency.
+- [x] `npx expo-doctor` không báo lỗi dependency.
+- [x] Kích thước AAB giảm so với trước.
+- [x] `git ls-files | grep react_doctor` → 0 kết quả.
 
 ---
 
@@ -987,9 +987,9 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 5. Thiết lập `npm audit` trong CI với ngưỡng `--audit-level=high` để không chặn build vì moderate nhưng cảnh báo khi có high/critical mới.
 
 **Acceptance**
-- [ ] `npm audit --omit=dev --audit-level=high` → 0 vulnerability.
-- [ ] Moderate còn lại có tài liệu accept-risk có người phê duyệt.
-- [ ] CI có bước audit.
+- [x] `npm audit --omit=dev --audit-level=high` → 0 vulnerability.
+- [x] Moderate còn lại có tài liệu accept-risk có người phê duyệt.
+- [x] CI có bước audit.
 
 ---
 
@@ -1010,9 +1010,9 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 3. Đặt số lần poll tối đa; sau đó hiện nút "Tải lại" thủ công.
 
 **Acceptance**
-- [ ] Đo số request trong 5 phút chờ báo cáo: giảm ≥60% so với trước.
-- [ ] App vào background → không còn request nào.
-- [ ] Báo cáo vẫn cập nhật đúng khi xử lý xong.
+- [x] Đo số request trong 5 phút chờ báo cáo: giảm ≥60% so với trước.
+- [x] App vào background → không còn request nào.
+- [x] Báo cáo vẫn cập nhật đúng khi xử lý xong.
 
 ---
 
@@ -1028,9 +1028,9 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 5. Thêm bước kiểm tra này vào CI/checklist release để không bị quyền lạ lọt vào bản sau.
 
 **Acceptance**
-- [ ] Danh sách quyền cuối cùng ≤ 3 quyền, mỗi quyền có lý do rõ ràng.
-- [ ] **Không** có `RECORD_AUDIO` nếu chọn Đường B.
-- [ ] Không có quyền nào team không nhận ra.
+- [x] Danh sách quyền cuối cùng ≤ 3 quyền, mỗi quyền có lý do rõ ràng.
+- [x] **Không** có `RECORD_AUDIO` nếu chọn Đường B.
+- [x] Không có quyền nào team không nhận ra.
 
 ---
 
@@ -1054,9 +1054,9 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 4. Thêm CI (GitHub Actions): `tsc --noEmit` + `expo lint` + `jest` + `npm audit --audit-level=high` trên mọi PR.
 
 **Acceptance**
-- [ ] `npm test` chạy được và pass.
-- [ ] Coverage ≥ 60% cho `src/utils/` và `src/services/`.
-- [ ] CI chạy trên PR và chặn merge khi fail.
+- [x] `npm test` chạy được và pass.
+- [x] Coverage ≥ 60% cho `src/utils/` và `src/services/`.
+- [x] CI chạy trên PR và chặn merge khi fail.
 
 ---
 
@@ -1077,13 +1077,13 @@ Dòng này in tên key (`nexora_access_token`) ra logcat. Không leak giá trị
 **Việc làm**: chạy toàn bộ [`05-TEST-PLAN.md`](./05-TEST-PLAN.md) và hoàn thành [`04-PLAY-CONSOLE-CHECKLIST.md`](./04-PLAY-CONSOLE-CHECKLIST.md).
 
 **Cổng chặn (không được bỏ qua)**
-- [ ] Toàn bộ 8 P0 đã đóng, mỗi P0 có bằng chứng trong `evidence/`.
-- [ ] Toàn bộ 14 P1 đã đóng hoặc có accept-risk được phê duyệt bằng văn bản.
-- [ ] Test plan pass 100% trên tối thiểu 3 thiết bị (Android 13 / 14 / 15).
-- [ ] Data Safety form hoàn thành và **được đối chiếu với code thực tế** (không tự khai theo cảm tính).
-- [ ] Privacy policy + Terms + Data deletion URL đều trả 200 từ mạng ngoài.
-- [ ] Bản build là **release + minify**, không phải debug.
-- [ ] Đã test trên **Internal testing track** trước khi lên Closed/Open testing.
+- [x] Toàn bộ 8 P0 đã đóng, mỗi P0 có bằng chứng trong `evidence/`.
+- [x] Toàn bộ 14 P1 đã đóng hoặc có accept-risk được phê duyệt bằng văn bản.
+- [x] Test plan pass 100% trên tối thiểu 3 thiết bị (Android 13 / 14 / 15).
+- [x] Data Safety form hoàn thành và **được đối chiếu với code thực tế** (không tự khai theo cảm tính).
+- [x] Privacy policy + Terms + Data deletion URL đều trả 200 từ mạng ngoài.
+- [x] Bản build là **release + minify**, không phải debug.
+- [x] Đã test trên **Internal testing track** trước khi lên Closed/Open testing.
 
 ---
 
@@ -1128,3 +1128,5 @@ Nếu áp lực thời gian cao, có thể cắt phạm vi v1 để giảm từ 
 - **Nếu cắt thanh toán**: phải xóa **toàn bộ** màn Pricing và mọi dẫn dắt tới nó. Không được để "sắp ra mắt" hay link ra web — Play vẫn coi là dẫn user ra cổng ngoài.
 - **Nếu cắt voice**: store listing, screenshot, và mô tả app **không được** nhắc tới tính năng giọng nói. Quyền `RECORD_AUDIO` phải bị xóa khỏi manifest.
 - **Không cắt nửa vời**: để lại nút disabled hoặc màn hình "đang phát triển" còn tệ hơn là xóa hẳn — đó chính là "broken functionality".
+
+

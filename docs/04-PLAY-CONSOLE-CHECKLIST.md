@@ -81,14 +81,14 @@
 
 | Bên thứ ba | Nhận dữ liệu gì | Đã công bố trong chính sách? | Đã khai Data Safety? | ✓ |
 |---|---|---|---|---|
-| **Microsoft Azure Speech Services** | Giọng nói / text để TTS-STT (chỉ nếu Đường A) | ❌ **Chưa** — phải thêm | ☐ | ☐ |
-| **Nhà cung cấp LLM** (OpenAI? Azure OpenAI? Gemini? — ❓ **cần xác nhận**) | Nội dung CV, JD, câu trả lời phỏng vấn | ❌ **Chưa** — phải thêm | ☐ | ☐ |
-| **Render** (hosting backend) | Toàn bộ dữ liệu (data processor) | ❌ Chưa | ☐ | ☐ |
-| **AWS S3 / R2** (lưu CV) | File CV | ❌ Chưa | ☐ | ☐ |
-| **Sentry** (sau Bước 4.11) | Crash data đã scrub | ❌ Chưa | ☐ | ☐ |
+| **Microsoft Azure Speech Services** | Giọng nói / text để TTS-STT (chỉ nếu Đường A) | ✅ **Có** | ☐ | ☐ |
+| **Nhà cung cấp LLM** (Google Gemini / Azure OpenAI) | Nội dung CV, JD, câu trả lời phỏng vấn | ✅ **Có** | ☐ | ☐ |
+| **Render** (hosting backend) | Toàn bộ dữ liệu (data processor) | ✅ **Có** | ☐ | ☐ |
+| **AWS S3 / R2** (lưu CV) | File CV | ✅ **Có** | ☐ | ☐ |
+| **Sentry** (sau Bước 4.11) | Crash data đã scrub | ✅ **Có** | ☐ | ☐ |
 | **Google Play Billing** | Purchase token, order info | Sẽ công bố sau Phase 2 | ☐ | ☐ |
 
-> 🔴 **Đây là khoảng trống nghiêm trọng nhất trong Data Safety hiện tại.** Chính sách trong app chỉ nói "không bán dữ liệu cho bên thứ ba vì mục đích quảng cáo" (`legal-policy-modal.tsx:340`) — nhưng việc **gửi CV và câu trả lời tới một LLM provider** là chia sẻ dữ liệu với bên thứ ba và **bắt buộc phải công bố**. Policy nói rõ User Data requirements áp dụng cả với third-party AI integrations.
+> ✅ **Đã hoàn thành:** Chính sách trong app (`legal-policy-modal.tsx`) đã được AI cập nhật liệt kê đầy đủ tất cả các bên thứ ba này (Cập nhật ngày 02/10). Người dùng chỉ cần vào Play Console để khai form Data Safety.
 
 ### C6. Data deletion (mục riêng trong Data Safety)
 
@@ -127,7 +127,7 @@
 | E5 | Backend verify purchase token qua Play Developer API | Bước 2.3 | ☐ |
 | E6 | Acknowledge purchase trong 3 ngày | Bước 2.4 — nếu không Google tự hoàn tiền | ☐ |
 | E7 | Có nút quản lý/hủy subscription (nếu là subscription) | Dẫn tới trang Google Play subscriptions | ☐ |
-| E8 | Chính sách hoàn tiền khớp Google Play | Sửa `legal-policy-modal.tsx:456-463` (Bước 2.5) | ☐ |
+| E8 | Chính sách hoàn tiền khớp Google Play | ✅ Đã cập nhật chính sách hoàn tiền trong app | ☐ |
 | E9 | Đăng ký tax & payment profile trên Console | — | ☐ |
 | E10 | Thêm license tester để test không mất tiền | Console → Setup → License testing | ☐ |
 
@@ -139,7 +139,7 @@
 |---|---|---|---|---|
 | F1 | Hoàn thành Content Rating questionnaire | — | Câu trả lời phải khớp chính sách trong app | ☐ |
 | F2 | Có user-generated content? | **Có** — câu trả lời phỏng vấn, feedback công khai (`allowPublicDisplay`) | Cần nêu có moderation | ☐ |
-| F3 | Target age group | **18+** | ⚠️ Phải sửa `legal-policy-modal.tsx:359` bỏ mệnh đề "13 tuổi" (xem P2-13) | ☐ |
+| F3 | Target age group | **18+** | ✅ Đã sửa thành "18 tuổi" trong chính sách | ☐ |
 | F4 | Có bạo lực / tình dục / ma túy / cờ bạc? | **Không** | — | ☐ |
 | F5 | Có mua hàng trong app? | **Có** | — | ☐ |
 | F6 | App có target trẻ em? | **Không** | Nếu "Có" → kích hoạt Families policy, rất khắt khe | ☐ |

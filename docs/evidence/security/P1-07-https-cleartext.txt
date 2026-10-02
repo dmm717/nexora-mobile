@@ -1,0 +1,1 @@
+PASS: app.json sets usesCleartextTraffic: false, ensuring no unencrypted HTTP traffic can leave the app.

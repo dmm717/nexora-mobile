@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, Modal, StyleSheet, ScrollView, TextInput, ActivityIndicator, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { Radius, Spacing, Typography } from '@/constants/theme';
 import { reportApi, ReportContentType, ReportReasonCode } from '@/api/report.api';
 import { toast } from '@/components/ui/toast/ToastProvider';
+import { Radius, Spacing, Typography } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { ActivityIndicator, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ThemedText } from '../themed-text';
 interface ReportContentButtonProps {
   contentType: ReportContentType;
   contentId: string;
@@ -21,9 +21,9 @@ const REASONS: { code: ReportReasonCode; label: string }[] = [
   { code: 'privacy_violation', label: 'Vi phạm quyền riêng tư' },
   { code: 'other', label: 'Lý do khác' },
 ];
-export function ReportContentButton({ 
-  contentType, 
-  contentId, 
+export function ReportContentButton({
+  contentType,
+  contentId,
   contentSnapshot,
   iconSize = 16,
   color
@@ -38,30 +38,51 @@ export function ReportContentButton({
       toast.error('Vui lòng chọn một lý do báo cáo.');
       return;
     }
+    if (!contentId || contentId === 'unknown') {
+      toast.error('Dữ liệu chưa sẵn sàng. Vui lòng thử lại sau.');
+      return;
+    }
+    const mapContentTypeToBackend = (type: string) => {
+      switch (type) {
+        case 'cv_analysis': return 'resume_analysis';
+        case 'coaching_note': return 'interview_answer_evaluation';
+        case 'scenario_result': return 'scenario_evaluation';
+        case 'star_suggestion': return 'star_evaluation';
+        default: return type;
+      }
+    };
+
+    const backendContentType = mapContentTypeToBackend(contentType);
+    if (backendContentType === 'skill_profile' || backendContentType === 'learning_path') {
+      toast.error('Tính năng báo cáo chưa được hỗ trợ cho nội dung này trên máy chủ.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
+
       await reportApi.submitReport({
-        contentType,
+        contentType: backendContentType as any,
         contentId,
         reasonCode,
-        description: description.trim(),
+        description: description.trim() || undefined,
         contentSnapshot
       });
-      
+
       toast.success('Cảm ơn bạn. Chúng tôi sẽ xem xét nội dung này.');
       setModalVisible(false);
       setReasonCode(null);
       setDescription('');
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || 'Không thể gửi báo cáo lúc này. Vui lòng thử lại sau.');
+      toast.error(e.message || 'Không thể gửi báo cáo lúc này. Vui lòng thử lại sau.');
     } finally {
       setIsSubmitting(false);
     }
   };
   return (
     <>
-      <TouchableOpacity 
-        style={styles.flagButton} 
+      <TouchableOpacity
+        style={styles.flagButton}
         onPress={() => setModalVisible(true)}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
@@ -74,10 +95,10 @@ export function ReportContentButton({
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <TouchableOpacity 
-            style={StyleSheet.absoluteFill} 
-            activeOpacity={1} 
-            onPress={() => !isSubmitting && setModalVisible(false)} 
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => !isSubmitting && setModalVisible(false)}
           />
           <View style={[styles.bottomSheet, { backgroundColor: colors.background }]}>
             <View style={styles.handleContainer}>
@@ -99,20 +120,20 @@ export function ReportContentButton({
                     key={reason.code}
                     style={[
                       styles.optionItem,
-                      { 
+                      {
                         borderColor: reasonCode === reason.code ? colors.primary : colors.cardBorder,
                         backgroundColor: reasonCode === reason.code ? colors.primaryLight + '20' : 'transparent'
                       }
                     ]}
                     onPress={() => setReasonCode(reason.code)}
                   >
-                    <Ionicons 
-                      name={reasonCode === reason.code ? "radio-button-on" : "radio-button-off"} 
-                      size={20} 
-                      color={reasonCode === reason.code ? colors.primary : colors.textMuted} 
+                    <Ionicons
+                      name={reasonCode === reason.code ? "radio-button-on" : "radio-button-off"}
+                      size={20}
+                      color={reasonCode === reason.code ? colors.primary : colors.textMuted}
                     />
                     <ThemedText style={[
-                      styles.optionText, 
+                      styles.optionText,
                       reasonCode === reason.code && { color: colors.primary, fontFamily: Typography.fontFamily.medium }
                     ]}>
                       {reason.label}
@@ -125,7 +146,7 @@ export function ReportContentButton({
                 <TextInput
                   style={[
                     styles.textInput,
-                    { 
+                    {
                       backgroundColor: colors.backgroundElement,
                       color: colors.text,
                       borderColor: colors.cardBorder

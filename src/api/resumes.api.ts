@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { apiClient, API_BASE_URL } from './client';
 import { PresignUploadRequest, UploadIntent, FinalizeResumeRequest, ResumeView } from './types';
 import { tokenStorage } from '@/services/storage';
@@ -99,3 +100,4 @@ export const resumesApi = {
     await apiClient.delete(`/resumes/${id}`);
   }
 };
+

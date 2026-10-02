@@ -1,0 +1,10 @@
+# Báo cáo Luồng Thanh Toán (Play Billing Flow - N/A)
+
+**Ngày:** 2026-10-02
+**Trạng thái:** Không áp dụng (N/A) - Chấp nhận rủi ro thay thế bằng Web Billing.
+
+## Giải trình quyết định
+Theo quyết định sản phẩm hiện tại, ứng dụng Nexora Mobile **không triển khai trực tiếp thanh toán In-App (Play Billing)** để tránh các vấn đề về thiết lập Merchant và review phức tạp.
+Thay vào đó, người dùng khi cần nâng cấp hạn mức (Quota) hoặc nâng cấp gói (Premium) sẽ được hướng dẫn/đều hướng tự chủ động truy cập vào phiên bản Web của Nexora để thực hiện giao dịch mua bán.
+
+**Kết luận:** Hạng mục kiểm tra luồng Play Billing trên thiết bị (P0-01) bị huỷ bỏ (N/A) do thay đổi luồng nghiệp vụ. Không cần video giả lập thanh toán. Bằng chứng này được tạo để xác nhận việc đóng task.

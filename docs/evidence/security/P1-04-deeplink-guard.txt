@@ -1,0 +1,1 @@
+PASS: src/app/(app)/_layout.tsx uses AuthGuard pattern to protect internal routes.

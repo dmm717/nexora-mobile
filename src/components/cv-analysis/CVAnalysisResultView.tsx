@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import { Animated, Easing, View, LayoutAnimation, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -219,3 +220,4 @@ export function CVAnalysisResultView({ analysisId, analysisResult, setAnalysisId
     </Animated.View>
   );
 }
+

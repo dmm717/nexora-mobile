@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { ActivityIndicator, ScrollView, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +19,9 @@ import { ProductFeedbackCard } from '@/components/profile/ProductFeedbackCard';
 import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
 import { AccountPendingDeletionBanner } from '@/components/account/AccountPendingDeletionBanner';
 import { styles } from '@/styles/profile.styles';
+import { apiClient } from '@/api/client';
+import * as Sentry from '@sentry/react-native';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 function useUserProfileData() {
   const { user, logout } = useAuth();
@@ -77,6 +81,19 @@ export default function ProfileScreen() {
     isAdmin,
     avatarUrl,
   } = useUserProfileData();
+
+  const handleTestSentry = async () => {
+    try {
+      await apiClient.post('/test-sentry-scrub', {
+        email: "test_pii@example.com",
+        password: "super_secret_password_123",
+        creditCard: "4111-2222-3333-4444"
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+      toast.success('Đã gửi lỗi giả lập lên Sentry!');
+    }
+  };
 
   return (
     <AmbientBackground>
@@ -189,6 +206,23 @@ export default function ProfileScreen() {
                     </ThemedText>
                   </View>
                 </TouchableScale>
+
+                {/* Sentry Test Button (Dev Only) */}
+                {__DEV__ && (
+                  <>
+                    <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+                    <TouchableScale onPress={handleTestSentry}>
+                      <View style={styles.menuItem}>
+                        <View style={[styles.menuIconBadge, { backgroundColor: '#fef3c7' }]}>
+                          <Ionicons name="bug-outline" size={22} color="#d97706" />
+                        </View>
+                        <ThemedText style={[styles.menuItemText, { color: '#d97706' }]}>
+                          [Dev] Giả lập lỗi Sentry
+                        </ThemedText>
+                      </View>
+                    </TouchableScale>
+                  </>
+                )}
               </GlassCard>
 
               {/* Product Feedback Card */}
@@ -209,3 +243,4 @@ export default function ProfileScreen() {
     </AmbientBackground>
   );
 }
+

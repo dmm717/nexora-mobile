@@ -28,10 +28,10 @@ export function resolveNextBestAction({
       dest = recommendation.resourceId ? `/(app)/scenarios/${recommendation.resourceId}` : '/(app)/scenarios';
       label = 'Luyện kịch bản tình huống';
     } else if (type === 'interview') {
-      dest = '/(app)/interview/preflight';
+      dest = '/(tabs)/interview';
       label = 'Luyện phỏng vấn AI';
     } else if (type === 'resume' || type === 'resume_improvement') {
-      dest = '/(app)/cv-analysis';
+      dest = '/(tabs)/cv-jd';
       label = 'Cải thiện & Phân tích CV';
     }
 
@@ -47,7 +47,7 @@ export function resolveNextBestAction({
     return {
       label: targetRole ? `Phân tích CV theo mục tiêu ${targetRole}` : 'Thiết lập mục tiêu & phân tích CV',
       description: 'Chọn vị trí bạn hướng tới và tải CV lên để hệ thống bắt đầu tích lũy bằng chứng năng lực.',
-      destination: '/(app)/cv-analysis',
+      destination: '/(tabs)/cv-jd',
       estimatedMinutes: undefined,
     };
   }
@@ -64,7 +64,7 @@ export function resolveNextBestAction({
   return {
     label: 'Bắt đầu phỏng vấn AI',
     description: 'Thực hiện bài phỏng vấn đầu tiên để bắt đầu tích lũy bằng chứng năng lực thực tế.',
-    destination: '/(app)/interview/preflight',
+    destination: '/(tabs)/interview',
     estimatedMinutes: undefined,
   };
 }
@@ -85,6 +85,7 @@ export function useHomeState() {
     queryKey: ['next-recommendation'],
     queryFn: growthApi.getNextRecommendation,
     enabled: !!user,
+    retry: false,
   });
 
   // 3. Dashboard Summary (Interviews & Reports)
@@ -99,6 +100,7 @@ export function useHomeState() {
     queryKey: ['progress-dashboard'],
     queryFn: growthApi.getProgressDashboard,
     enabled: !!user,
+    retry: false,
   });
 
   // 5. Learning Path
@@ -106,6 +108,7 @@ export function useHomeState() {
     queryKey: ['learning-path'],
     queryFn: growthApi.getLearningPath,
     enabled: !!user,
+    retry: false,
   });
 
   const {

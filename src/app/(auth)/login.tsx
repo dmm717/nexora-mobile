@@ -16,8 +16,10 @@ import {
   Image,
   StatusBar,
   View,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Animated, { FadeOut } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -205,16 +207,18 @@ export default function LoginScreen() {
       )}
 
       {!isSplash && (
-        <KeyboardAwareScrollView
+        <KeyboardAvoidingView
           style={{ flex: 1 }}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
-          extraScrollHeight={20}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
           {/* Top Topographic Wave Header */}
           <View style={styles.headerWrapper}>
             <TopographicHeader triggerKey={step} />
@@ -263,7 +267,8 @@ export default function LoginScreen() {
             />
             <ForgotDoneSection step={step} setStep={setStep} colors={colors} />
           </View>
-        </KeyboardAwareScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       )}
 
       {/* Legal & Policy Modal */}

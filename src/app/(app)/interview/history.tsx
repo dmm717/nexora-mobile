@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { ScrollView, View, RefreshControl, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -96,7 +97,7 @@ export default function InterviewHistoryScreen() {
             </View>
             <TouchableScale
               style={{ backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4 }}
-              onPress={() => router.push('/(app)/interview/preflight' as any)}
+              onPress={() => router.push('/(tabs)/interview' as any)}
             >
               <Ionicons name="add" size={16} color="#fff" />
               <ThemedText style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>+ Bắt đầu mới</ThemedText>
@@ -119,7 +120,7 @@ export default function InterviewHistoryScreen() {
             error={error}
             paginatedLength={paginatedItems.length}
             colors={colors}
-            onStartNewInterview={() => router.push('/(app)/interview/preflight' as any)}
+            onStartNewInterview={() => router.push('/(tabs)/interview' as any)}
           />
 
           {!isLoading && !error && paginatedItems.length > 0 && (
@@ -150,4 +151,5 @@ export default function InterviewHistoryScreen() {
     </SolidBackground>
   );
 }
+
 

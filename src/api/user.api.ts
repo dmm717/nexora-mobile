@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient, createIdempotencyKey } from './client';
 import { UserDto } from './types/auth.types';
 
 export interface UpdateProfileRequest {
@@ -36,17 +36,15 @@ export const userApi = {
   },
 
   deleteAccount: async (): Promise<any> => {
-    const res = await apiClient.post('/me/deletion-requests');
+    const res = await apiClient.post('/me/deletion-requests', null, {
+      headers: { 'Idempotency-Key': createIdempotencyKey() }
+    });
     return res.data;
   },
 
   getDeletionRequest: async (): Promise<any> => {
     const res = await apiClient.get('/me/deletion-requests/current');
     return 'data' in res.data && res.data.data ? res.data.data : res.data;
-  },
-
-  cancelDeletionRequest: async (): Promise<void> => {
-    await apiClient.delete('/me/deletion-requests/current');
   },
 
   uploadAvatar: async (fileUri: string, mimeType: string, filename: string): Promise<string> => {

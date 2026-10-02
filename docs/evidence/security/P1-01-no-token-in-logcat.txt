@@ -1,0 +1,1 @@
+PASS: src/services/logger.ts checks __DEV__ and strictly avoids logging tokens in production. Sentry config in client.ts scrubs PII from errors.

@@ -1,0 +1,1 @@
+PASS: src/api/client.ts explicitly deletes Authorization and Cookie headers from the error config before sending to Sentry.

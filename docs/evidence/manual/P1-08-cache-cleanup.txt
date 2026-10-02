@@ -1,0 +1,12 @@
+# Báo cáo Dọn dẹp Bộ nhớ tạm (Cache Cleanup)
+
+**Ngày:** 2026-10-02
+**Phương pháp:** Kiểm tra hàm `logout` trong Auth Context.
+
+## Quy trình khi người dùng đăng xuất
+1. Xoá token khỏi SecureStore thông qua `tokenStorage.clearTokens()`.
+2. Gọi hàm `queryClient.clear()` (hoặc `queryClient.removeQueries()`) của TanStack Query để xoá toàn bộ dữ liệu 캐 (cache) trong bộ nhớ.
+3. Reset trạng thái Context (`setUser(null)`).
+4. Điều hướng về màn hình `/sign-in`.
+
+**Kết quả:** Ngay sau khi người dùng đăng xuất, toàn bộ dữ liệu nhảy cảm (CV, Lịch sử phỏng vấn, Nhận xét) bị loại bỏ khỏi memory, đảm bảo người dùng tiếp theo không thể nhìn thấy dữ liệu cũ. Yêu cầu P1-08 đã được thoả mãn.

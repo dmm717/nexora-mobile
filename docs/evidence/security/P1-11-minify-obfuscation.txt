@@ -1,0 +1,1 @@
+PASS: app.json enforces enableMinifyInReleaseBuilds: true and enableShrinkResourcesInReleaseBuilds: true.

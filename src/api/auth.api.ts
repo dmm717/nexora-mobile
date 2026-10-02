@@ -1,4 +1,5 @@
 import { logger } from '@/services/logger';
+import { tokenStorage } from '@/services/storage';
 import { apiClient } from './client';
 import {
   AuthResponse,
@@ -13,7 +14,7 @@ import {
 
 export const authApi = {
   async login(payload: LoginRequest): Promise<AuthResponse> {
-    const res = await apiClient.post<{ data?: AuthResponse } | AuthResponse>('/auth/login', payload);
+    const res = await apiClient.post<{ data?: AuthResponse } | AuthResponse>('/auth/mobile/login', payload);
     const result = 'data' in res.data && res.data.data ? res.data.data : (res.data as AuthResponse);
     return result;
   },
@@ -40,7 +41,8 @@ export const authApi = {
 
   async logout(): Promise<void> {
     try {
-      await apiClient.post('/auth/logout');
+      const refreshToken = await tokenStorage.getRefreshToken();
+      await apiClient.post('/auth/mobile/logout', { refreshToken: refreshToken || '' });
     } catch (err: any) {
       // Ignore logout API failures gracefully, but log for visibility
       logger.warn('Logout API failed:', { error: err?.message || err });

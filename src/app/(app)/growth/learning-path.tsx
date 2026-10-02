@@ -177,7 +177,7 @@ function executeActivityAction(type: string, resourceId: string | null | undefin
       }
       break;
     case 'interview':
-      router.push('/(app)/interview/preflight' as any);
+      router.push('/(tabs)/interview' as any);
       break;
     case 'resume_improvement':
       router.push('/(app)/profile' as any);

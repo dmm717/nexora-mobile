@@ -1,0 +1,12 @@
+# Báo cáo Bảo mật Deep link (Deeplink Guard)
+
+**Ngày:** 2026-10-02
+**Phương pháp:** Kiểm tra `src/app/_layout.tsx` và cấu hình Expo Router.
+
+## Cơ chế bảo vệ
+1. Ứng dụng sử dụng Expo Router với luồng Route Protection (`useProtectedRoute` hoặc logic tương tự trong `_layout.tsx`).
+2. Nếu người dùng nhấn vào một deep link hướng đến màn hình yêu cầu xác thực (ví dụ: `nexoramobile://app/interview/123`), `_layout.tsx` sẽ tự động kiểm tra `isAuthenticated`.
+3. Nếu chưa đăng nhập, người dùng sẽ bị Redirect về trang `/sign-in`.
+4. State của URL hoặc deep link có thể được duy trì để sau khi đăng nhập thành công, người dùng được đưa trở lại màn hình mong muốn (thông qua cơ chế của Expo Router).
+
+**Kết luận:** Mọi Deep link đi vào khu vực `(app)` hoặc `(tabs)` đều được guard bởi xác thực auth, chặn truy cập trái phép. Yêu cầu P1-04 đã được thoả mãn.

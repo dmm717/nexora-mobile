@@ -1,3 +1,4 @@
+/* eslint-disable import/no-named-as-default-member */
 import { tokenStorage } from '@/services/storage';
 import { generateIdempotencyKey } from '../utils/uuid';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
@@ -22,7 +23,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 60000,
 });
 
 
@@ -88,6 +89,10 @@ apiClient.interceptors.response.use(
     const errorCode = errorEnvelope?.code || 'UNKNOWN_ERROR';
     const requestId = errorEnvelope?.requestId;
     const extractedMessage = extractErrorMessage(rawData, error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+    
+    if (error.response?.status === 400) {
+      logger.warn("RAW BACKEND ERROR:", { rawData });
+    }
 
     const normalizedError = new AppError(errorCode, extractedMessage, requestId, error);
 
@@ -101,8 +106,16 @@ apiClient.interceptors.response.use(
       
     const isRecoverableAuthError = error.response?.status === 401 && originalRequest && !originalRequest._retry;
 
-    // Observability Logging (skip expected transient polling status 409, expected 404s, and recoverable 401s)
-    if (!isReportProcessing && !isRecoverableAuthError && !isLearningPathNotFound) {
+    const isCareerGoalRequired = 
+      error.response?.status === 400 && 
+      errorCode === 'ACTIVE_CAREER_GOAL_REQUIRED';
+
+    const isFeatureNotAvailable =
+      error.response?.status === 403 &&
+      errorCode === 'FEATURE_NOT_AVAILABLE';
+
+    // Observability Logging (skip expected transient polling status 409, expected 404s, expected 400/403s, and recoverable 401s)
+    if (!isReportProcessing && !isRecoverableAuthError && !isLearningPathNotFound && !isCareerGoalRequired && !isFeatureNotAvailable) {
       // SECURITY (Phase 4.1): Scrub PII from error object before sending to Sentry
       // Must preserve instanceof Error for proper Sentry exception capturing
       const safeError = new Error(error.message);
@@ -145,8 +158,8 @@ apiClient.interceptors.response.use(
     const reqIdSuffix = requestId ? ` (ReqID: ${requestId.substring(0, 8)})` : '';
     
     // Auto-trigger Toast for API failures (displaying ONLY Vietnamese message, NO raw error codes)
-    // Skip toast for transient polling status (409 INTERVIEW_REPORT_PROCESSING) and expected 404s
-    if (isReportProcessing || isLearningPathNotFound) {
+    // Skip toast for transient polling status (409 INTERVIEW_REPORT_PROCESSING) and expected empty states (404/400/403)
+    if (isReportProcessing || error.response?.status === 404 || isCareerGoalRequired || isFeatureNotAvailable) {
       // Do not trigger toast error for expected polling state or missing initial state
     } else if (!error.response) {
       toast.error(`Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.${reqIdSuffix}`);
@@ -157,6 +170,7 @@ apiClient.interceptors.response.use(
     } else if (error.response.status >= 500) {
       toast.error(`Máy chủ gặp sự cố tạm thời. Vui lòng thử lại sau.${reqIdSuffix}`);
     } else if (extractedMessage) {
+      logger.warn(`[UNHANDLED TOAST ERROR] Status: ${error.response?.status}, Code: ${errorCode}, Message: ${extractedMessage}`);
       toast.error(`${extractedMessage}${reqIdSuffix}`);
     }
 
@@ -165,7 +179,7 @@ apiClient.interceptors.response.use(
       const requestUrl = originalRequest.url || '';
 
       // Không refresh nếu chính API login hoặc refresh bị 401
-      if (requestUrl.includes('/auth/login') || requestUrl.includes('/auth/refresh')) {
+      if (requestUrl.includes('/login') || requestUrl.includes('/refresh')) {
         toast.error(extractedMessage);
         return Promise.reject(normalizedError);
       }
@@ -192,13 +206,13 @@ apiClient.interceptors.response.use(
       try {
         const rt = await tokenStorage.getRefreshToken();
         const payload = rt ? { refreshToken: rt } : {};
-        // Call backend /auth/refresh with credentials (cookie nexora_refresh_token or body)
+        // Call backend /auth/mobile/refresh with credentials in body
         const refreshResponse = await axios.post<{
           data?: { accessToken: string; refreshToken?: string };
           accessToken?: string;
           refreshToken?: string;
         }>(
-          `${API_BASE_URL}/auth/refresh`,
+          `${API_BASE_URL}/auth/mobile/refresh`,
           payload,
           {
             withCredentials: true,
@@ -240,3 +254,4 @@ apiClient.interceptors.response.use(
     return Promise.reject(normalizedError);
   }
 );
+

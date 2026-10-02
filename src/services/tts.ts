@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /**
  * tts.ts — Native TTS via Azure Speech SDK WebSocket + expo-audio playback.
  */
@@ -82,11 +83,13 @@ async function synthesizeToFile(
 }
 export interface UseNativeTtsReturn {
   isSpeaking: boolean;
+  isLoading: boolean;
   speak: (text: string) => Promise<void>;
   stop: () => void;
 }
 export function useNativeTts(interviewId: string | undefined): UseNativeTtsReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const currentFileRef = useRef<ExpoFile | null>(null);
   const shouldPlayRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -118,6 +121,7 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
       } catch (err: any) {
         logger.warn('Failed to auto-play TTS:', { error: err?.message || err });
         setIsSpeaking(false);
+        setIsLoading(false);
         cleanup();
       }
     }
@@ -125,6 +129,7 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
   useEffect(() => {
     if (playerStatus.playing) {
       isWaitingForNewFileRef.current = false;
+      setIsLoading(false);
     }
   }, [playerStatus.playing]);
   useEffect(() => {
@@ -149,9 +154,11 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
     }
     cleanupFile();
     setIsSpeaking(false);
+    setIsLoading(false);
     if (!text.trim() || !interviewId) return;
     try {
       setIsSpeaking(true);
+      setIsLoading(true);
       const t0 = Date.now();
       const auth = await getInterviewSpeechAuthorization(interviewId);
       const t1 = Date.now();
@@ -169,6 +176,7 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
       logger.warn('Native TTS SDK failed:', { error: errMsg });
       shouldPlayRef.current = false;
       setIsSpeaking(false);
+      setIsLoading(false);
       cleanup();
     }
   }, [interviewId, player, cleanup]);
@@ -181,6 +189,7 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
       logger.warn('Failed to pause player during stop:', { error: err?.message || err });
     }
     setIsSpeaking(false);
+    setIsLoading(false);
     cleanup();
   }, [player, cleanup]);
   useEffect(() => {
@@ -194,5 +203,5 @@ export function useNativeTts(interviewId: string | undefined): UseNativeTtsRetur
       cleanup();
     };
   }, [cleanup, player]);
-  return { isSpeaking, speak, stop };
+  return { isSpeaking, isLoading, speak, stop };
 }

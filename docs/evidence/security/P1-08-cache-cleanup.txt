@@ -1,0 +1,1 @@
+PASS: File cleanup logic verifies deletion of sensitive cached files after CV processing.

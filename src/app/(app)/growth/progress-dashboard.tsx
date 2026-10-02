@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { ScrollView, View, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -410,3 +411,4 @@ export default function ProgressDashboardScreen() {
     </ThemedView>
   );
 }
+

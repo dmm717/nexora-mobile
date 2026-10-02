@@ -1,9 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { ActivityIndicator, ScrollView } from 'react-native';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
 import { scenariosApi } from '@/api/scenarios.api';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -15,8 +17,10 @@ import { ScenarioBriefingCard } from '@/components/scenarios/ScenarioBriefingCar
 import { ActiveAttemptWorkbench } from '@/components/scenarios/ActiveAttemptWorkbench';
 import { ScenarioHistorySection } from '@/components/scenarios/ScenarioHistorySection';
 import { toast } from '@/components/ui/toast/ToastProvider';
+import { exportScenarioPdf } from '@/utils/exportOtherPdfs';
 export default function ScenarioDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>(); // slug or id
+  const router = useRouter();
   const queryClient = useQueryClient();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
@@ -26,7 +30,7 @@ export default function ScenarioDetailScreen() {
   const [answer, setAnswer] = useState('');
   const [expandedAttemptId, setExpandedAttemptId] = useState<string | null>(null);
   // Fetch scenario details
-  const { data: scenario, isLoading: isScenarioLoading } = useQuery({
+  const { data: scenario, isLoading: isScenarioLoading, isError: isScenarioError } = useQuery({
     queryKey: ['scenario-detail', id],
     queryFn: () => scenariosApi.get(id!),
     enabled: !!id,
@@ -67,7 +71,7 @@ export default function ScenarioDetailScreen() {
     if (activeAttempt?.status === 'draft' && activeAttempt.answer) {
       setAnswer(activeAttempt.answer);
     }
-  }, [activeAttempt?.id, activeAttempt?.status]);
+  }, [activeAttempt?.id, activeAttempt?.status, activeAttempt?.answer]);
   // Start new attempt mutation
   const startAttemptMutation = useMutation({
     mutationFn: async () => {
@@ -147,6 +151,39 @@ export default function ScenarioDetailScreen() {
       toast.error(err.message || 'Không thể tạo lượt luyện tập mới.');
     },
   });
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPdf = useCallback(async () => {
+    if (!activeAttempt || activeAttempt.status !== 'completed' || !scenario || isExporting) return;
+    setIsExporting(true);
+    try {
+      await exportScenarioPdf(scenario, activeAttempt);
+    } catch {
+      toast.error('Không thể xuất báo cáo PDF. Vui lòng thử lại.');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [activeAttempt, scenario, isExporting]);
+
+  if (isScenarioError) {
+    return (
+      <ThemedView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 }}>
+         <Ionicons name="warning-outline" size={48} color={colors.error || '#ef4444'} style={{ marginBottom: 12 }} />
+         <ThemedText style={{ fontSize: 18, fontWeight: 'bold' }}>Không tìm thấy tình huống</ThemedText>
+         <ThemedText style={{ color: colors.textSecondary, marginTop: 8, textAlign: 'center', marginHorizontal: 16 }}>
+            Tình huống này không tồn tại hoặc bạn không có quyền truy cập.
+         </ThemedText>
+         <TouchableOpacity
+           style={{ marginTop: 20, backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 }}
+           onPress={() => router.replace('/(tabs)/practice')}
+         >
+           <ThemedText style={{ color: 'white', fontWeight: 'bold' }}>Quay lại</ThemedText>
+         </TouchableOpacity>
+      </ThemedView>
+    );
+  }
+
+
   if (isScenarioLoading || !scenario) {
     return (
       <ThemedView style={styles.centerContainer}>
@@ -162,12 +199,17 @@ export default function ScenarioDetailScreen() {
           fallbackRoute="/(app)/scenarios" 
           rightElement={
             activeAttempt ? (
-              <ReportContentButton 
-                contentType="scenario_result"
-                contentId={activeAttempt.id || id}
-                iconSize={20}
-                color={colors.primary}
-              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <ReportContentButton 
+                  contentType="scenario_result"
+                  contentId={activeAttempt.id || id}
+                  iconSize={20}
+                  color={colors.primary}
+                />
+                <TouchableOpacity onPress={handleExportPdf} disabled={isExporting} style={{ padding: 6, opacity: isExporting ? 0.5 : 1 }}>
+                  <Ionicons name="download-outline" size={20} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
             ) : undefined
           }
         />

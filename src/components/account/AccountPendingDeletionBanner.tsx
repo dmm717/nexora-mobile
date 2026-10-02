@@ -1,16 +1,11 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { userApi } from '@/api/user.api';
 import { ThemedText } from '@/components/themed-text';
-import { TouchableScale } from '@/components/ui/touchable-scale';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Radius, Spacing } from '@/constants/theme';
-import { toast } from '@/components/ui/toast/ToastProvider';
 export const AccountPendingDeletionBanner = () => {
-  const insets = useSafeAreaInsets();
-  const queryClient = useQueryClient();
   const { data: request, isLoading, isError } = useQuery({
     queryKey: ['deletion-request'],
     queryFn: async () => {
@@ -23,16 +18,7 @@ export const AccountPendingDeletionBanner = () => {
     },
     retry: false,
   });
-  const cancelMutation = useMutation({
-    mutationFn: () => userApi.cancelDeletionRequest(),
-    onSuccess: () => {
-      toast.success('Đã hủy yêu cầu xóa tài khoản. Dữ liệu của bạn được an toàn.');
-      queryClient.setQueryData(['deletion-request'], null);
-    },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Không thể hủy yêu cầu xóa. Vui lòng thử lại sau.');
-    },
-  });
+
   if (isLoading || isError || !request) {
     return null; // Don't show anything if no pending request
   }
@@ -47,17 +33,6 @@ export const AccountPendingDeletionBanner = () => {
             Dự kiến xóa vào: {scheduledDate}
           </ThemedText>
         </View>
-        <TouchableScale 
-          style={styles.cancelBtn} 
-          onPress={() => cancelMutation.mutate()}
-          disabled={cancelMutation.isPending}
-        >
-          {cancelMutation.isPending ? (
-            <ActivityIndicator size="small" color="#dc2626" />
-          ) : (
-            <ThemedText style={styles.cancelBtnText}>Hủy Yêu Cầu</ThemedText>
-          )}
-        </TouchableScale>
       </View>
     </View>
   );
@@ -92,19 +67,4 @@ const styles = StyleSheet.create({
     color: '#7f1d1d',
     marginTop: 2,
   },
-  cancelBtn: {
-    backgroundColor: '#fee2e2',
-    borderWidth: 1,
-    borderColor: '#fca5a5',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: Radius.sm,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  cancelBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#dc2626',
-  }
 });

@@ -1,0 +1,18 @@
+# Báo cáo Target SDK (P2-04)
+
+**Ngày:** 2026-10-02
+**Nguồn:** `app.json`
+
+## Cấu hình Expo Build Properties
+Theo yêu cầu chính sách của Google Play, ứng dụng phải trỏ đến (target) SDK mới nhất. Trong cấu hình của dự án:
+```json
+"expo-build-properties",
+{
+  "android": {
+    "compileSdkVersion": 36,
+    "targetSdkVersion": 36,
+    ...
+  }
+}
+```
+**Kết luận:** Target SDK hiện tại là 36, đáp ứng (và vượt qua) chuẩn tối thiểu của Google Play Store cho năm 2026. Yêu cầu P2-04 (phần SDK) đã hoàn thành.

@@ -77,7 +77,7 @@ export function getRecommendationDeepLink(
     case 'star_drill':
       return '/(app)/scenarios';
     case 'interview':
-      return '/(app)/interview/preflight';
+      return '/(tabs)/interview';
     case 'resume':
     case 'resume_improvement':
       return '/(tabs)/cv-jd';

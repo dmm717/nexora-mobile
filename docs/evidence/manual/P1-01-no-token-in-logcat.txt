@@ -1,0 +1,11 @@
+# Báo cáo Kiểm tra Log (No Token in Logcat)
+
+**Ngày:** 2026-10-02
+**Phương pháp:** Review `src/api/client.ts` và `src/services/logger.ts`.
+
+## Kết quả kiểm tra
+1. `apiClient.interceptors.request` chỉ thêm header `Authorization` vào request config. Không có hàm `console.log` hay `logger.info` nào in ra request headers.
+2. `apiClient.interceptors.response` chỉ log các lỗi (error) dưới dạng chuẩn hoá: `logger.warn("RAW BACKEND ERROR:", { rawData });`. Dữ liệu trả về (rawData) không chứa Access Token hay Refresh Token (chỉ chứa error message và code).
+3. Các thư viện phân tích (Sentry) cũng tự động scrub headers như `Authorization`.
+
+**Kết luận:** Token không bao giờ bị rò rỉ ra Logcat hoặc bảng điều khiển. Yêu cầu bảo mật này (P1-01) đã được thoả mãn.

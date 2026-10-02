@@ -16,11 +16,29 @@ import {
   PlusJakartaSans_700Bold, 
   PlusJakartaSans_800ExtraBold 
 } from '@expo-google-fonts/plus-jakarta-sans';
+import Constants from 'expo-constants';
+
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN || '';
+const isExpoGo = Constants.appOwnership === 'expo';
 
 Sentry.init({
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
+  dsn: sentryDsn,
   tracesSampleRate: 0.1,
   sendDefaultPii: false,
+  enabled: !!sentryDsn,
+  debug: __DEV__,
+  // In Expo Go the native SDK is unavailable, so we must disable it
+  // and provide a JS fetch transport. In dev/prod builds native works fine.
+  enableNative: !isExpoGo,
+  integrations(integrations) {
+    // Remove integrations that spam logs in Expo Go
+    if (isExpoGo) {
+      return integrations.filter(
+        (i) => i.name !== 'TouchEventBoundary' && i.name !== 'UserInteraction',
+      );
+    }
+    return integrations;
+  },
   beforeSend(event) {
     if (event.request?.headers) {
       delete event.request.headers['Authorization'];

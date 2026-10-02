@@ -37,10 +37,9 @@ async function hydrateSessionAsync(
         accessToken?: string;
         refreshToken?: string;
       }>(
-        `${API_BASE_URL}/auth/refresh`,
+        `${API_BASE_URL}/auth/mobile/refresh`,
         payload,
         {
-          withCredentials: true,
           headers: { 'Content-Type': 'application/json' },
         }
       );
