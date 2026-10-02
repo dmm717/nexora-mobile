@@ -33,6 +33,8 @@ jest.mock('@/services/storage', () => ({
     getRefreshToken: jest.fn().mockResolvedValue(null),
     setRefreshToken: jest.fn().mockResolvedValue(undefined),
     clearTokens: jest.fn().mockResolvedValue(undefined),
+    getHasSeenWelcome: jest.fn().mockResolvedValue('false'),
+    setHasSeenWelcome: jest.fn().mockResolvedValue(undefined),
   }
 }));
 

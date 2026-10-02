@@ -6,9 +6,17 @@ import { CenterExpandView, StaggeredTitle } from '@/components/ui/animated-auth-
 import { TouchableScale } from '@/components/ui/touchable-scale';
 import { styles } from '@/styles/login.styles';
 import { BaseAuthSectionProps } from './types';
+import { useAuth } from '@/context/auth-context';
 
 export const WelcomeSection = ({ step, setStep }: BaseAuthSectionProps) => {
+  const { markWelcomeSeen } = useAuth();
+  
   if (step !== 'welcome') return null;
+
+  const handleContinue = async () => {
+    await markWelcomeSeen();
+    setStep('signin');
+  };
 
   return (
     <View style={styles.welcomeSection}>
@@ -22,12 +30,12 @@ export const WelcomeSection = ({ step, setStep }: BaseAuthSectionProps) => {
       </View>
 
       <CenterExpandView delay={240} triggerKey={step} style={styles.welcomeActionRow}>
-        <Pressable onPress={() => setStep('signin')} hitSlop={12}>
+        <Pressable onPress={handleContinue} hitSlop={12}>
           <ThemedText style={styles.continueText}>Tiếp tục</ThemedText>
         </Pressable>
         <TouchableScale
           style={styles.continueCircle}
-          onPress={() => setStep('signin')}
+          onPress={handleContinue}
           scaleTo={0.92}
         >
           <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />

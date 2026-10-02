@@ -5,6 +5,7 @@ import { logger } from './logger';
 const ACCESS_TOKEN_KEY = 'nexora_access_token';
 const REFRESH_TOKEN_KEY = 'nexora_refresh_token';
 const HIDE_POPUP_KEY = 'nexora_hide_latest_analysis_popup';
+const HAS_SEEN_WELCOME_KEY = 'nexora_has_seen_welcome';
 
 // In-memory fallback for web environment when localStorage is unavailable
 const memoryStorage = new Map<string, string>();
@@ -67,11 +68,15 @@ export const tokenStorage = {
   setRefreshToken: (token: string) => setValue(REFRESH_TOKEN_KEY, token),
   getHidePopup: () => getValue(HIDE_POPUP_KEY),
   setHidePopup: (val: string) => setValue(HIDE_POPUP_KEY, val),
+  getHasSeenWelcome: () => getValue(HAS_SEEN_WELCOME_KEY),
+  setHasSeenWelcome: (val: string) => setValue(HAS_SEEN_WELCOME_KEY, val),
   clearTokens: async () => {
     await Promise.all([
       deleteValue(ACCESS_TOKEN_KEY), 
       deleteValue(REFRESH_TOKEN_KEY),
       deleteValue(HIDE_POPUP_KEY)
+      // Note: intentionally NOT deleting HAS_SEEN_WELCOME_KEY here,
+      // because we don't want to reset it on logout.
     ]);
   },
 };

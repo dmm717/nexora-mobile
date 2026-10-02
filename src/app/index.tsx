@@ -3,7 +3,7 @@ import { useAuth } from '@/context/auth-context';
 import { View, Image, StyleSheet } from 'react-native';
 
 export default function RootRedirect() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, hasSeenWelcome } = useAuth();
 
   if (isLoading) {
     return (
@@ -15,6 +15,10 @@ export default function RootRedirect() {
 
   if (isAuthenticated) {
     return <Redirect href={"/(tabs)/home" as any} />;
+  }
+
+  if (hasSeenWelcome) {
+    return <Redirect href="/(auth)/login?skipSplash=true&step=signin" />;
   }
 
   return <Redirect href="/(auth)/login" />;

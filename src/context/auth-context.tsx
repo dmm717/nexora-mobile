@@ -12,6 +12,8 @@ interface AuthContextType {
   user: UserDto | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  hasSeenWelcome: boolean;
+  markWelcomeSeen: () => Promise<void>;
   login: (payload: LoginRequest) => Promise<void>;
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
@@ -26,7 +28,12 @@ async function hydrateSessionAsync(
   signal: { mounted: boolean },
   setUser: (u: UserDto | null) => void,
   setIsLoading: (v: boolean) => void,
+  setHasSeenWelcome: (v: boolean) => void,
 ) {
+  const seenWelcome = await tokenStorage.getHasSeenWelcome();
+  if (signal.mounted && seenWelcome === 'true') {
+    setHasSeenWelcome(true);
+  }
   let token = await tokenStorage.getAccessToken();
   if (!token) {
     try {
@@ -86,10 +93,11 @@ async function hydrateSessionWithFallback(
   signal: { mounted: boolean },
   setUser: (u: UserDto | null) => void,
   setIsLoading: (v: boolean) => void,
+  setHasSeenWelcome: (v: boolean) => void,
   queryClient: QueryClient,
 ) {
   try {
-    await hydrateSessionAsync(signal, setUser, setIsLoading);
+    await hydrateSessionAsync(signal, setUser, setIsLoading, setHasSeenWelcome);
   } catch (err: any) {
     logger.warn('Hydration fallback catch triggered', { error: err?.message || err });
     if (signal.mounted) {
@@ -152,11 +160,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<UserDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasSeenWelcome, setHasSeenWelcome] = useState(false);
 
   useEffect(() => {
     const signal = { mounted: true };
 
-    hydrateSessionWithFallback(signal, setUser, setIsLoading, queryClient);
+    hydrateSessionWithFallback(signal, setUser, setIsLoading, setHasSeenWelcome, queryClient);
 
     const unsubscribe = onAuthError(() => {
       if (signal.mounted) {
@@ -205,12 +214,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient]);
 
+  const markWelcomeSeen = useCallback(async () => {
+    setHasSeenWelcome(true);
+    await tokenStorage.setHasSeenWelcome('true');
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isLoading,
         isAuthenticated: !!user,
+        hasSeenWelcome,
+        markWelcomeSeen,
         login,
         register,
         logout,
