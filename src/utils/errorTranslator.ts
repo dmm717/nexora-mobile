@@ -72,7 +72,7 @@ export function extractErrorMessage(data: any, fallbackMessage: string): string 
   if (data.errors && typeof data.errors === 'object') {
     const firstKey = Object.keys(data.errors)[0];
     if (firstKey && Array.isArray(data.errors[firstKey]) && data.errors[firstKey].length > 0) {
-      return data.errors[firstKey][0];
+      return translateErrorMessage(data.errors[firstKey][0]);
     }
   }
 

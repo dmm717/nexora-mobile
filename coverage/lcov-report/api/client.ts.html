@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">57.14% </span>
+                <span class="strong">57.27% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>60/105</span>
+                <span class='fraction'>63/110</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">46.73% </span>
+                <span class="strong">47.05% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>43/92</span>
+                <span class='fraction'>48/102</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">57.28% </span>
+                <span class="strong">57.4% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>59/103</span>
+                <span class='fraction'>62/108</span>
             </div>
         
             
@@ -305,7 +305,23 @@
 <a name='L240'></a><a href='#L240'>240</a>
 <a name='L241'></a><a href='#L241'>241</a>
 <a name='L242'></a><a href='#L242'>242</a>
-<a name='L243'></a><a href='#L243'>243</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -397,6 +413,20 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
@@ -406,8 +436,6 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -459,6 +487,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -547,7 +576,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { tokenStorage } from '@/services/storage';
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/* eslint-disable import/no-named-as-default-member */
+import { tokenStorage } from '@/services/storage';
 import { generateIdempotencyKey } from '../utils/uuid';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiErrorResponse, AppError } from './types';
@@ -571,7 +602,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 60000,
 });
 &nbsp;
 &nbsp;
@@ -637,6 +668,10 @@ apiClient.interceptors.response.use(
     const errorCode = errorEnvelope?.code || 'UNKNOWN_ERROR';
     const requestId = errorEnvelope?.requestId;
     const extractedMessage = extractErrorMessage(rawData, error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+    
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (error.response?.status === 400) {
+<span class="cstat-no" title="statement not covered" >      logger.warn("RAW BACKEND ERROR:", { rawData });</span>
+    }
 &nbsp;
     const normalizedError = new AppError(errorCode, extractedMessage, requestId, error);
 &nbsp;
@@ -650,8 +685,16 @@ apiClient.interceptors.response.use(
       
     const isRecoverableAuthError = error.response?.status === 401 &amp;&amp; originalRequest &amp;&amp; !originalRequest._retry;
 &nbsp;
-    // Observability Logging (skip expected transient polling status 409, expected 404s, and recoverable 401s)
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (!isReportProcessing &amp;&amp; !isRecoverableAuthError &amp;&amp; <span class="branch-2 cbranch-no" title="branch not covered" >!isLearningPathNotFound)</span> {
+    const isCareerGoalRequired = 
+      error.response?.status === 400 &amp;&amp; 
+<span class="branch-1 cbranch-no" title="branch not covered" >      errorCode === 'ACTIVE_CAREER_GOAL_REQUIRED';</span>
+&nbsp;
+    const isFeatureNotAvailable =
+      error.response?.status === 403 &amp;&amp;
+<span class="branch-1 cbranch-no" title="branch not covered" >      errorCode === 'FEATURE_NOT_AVAILABLE';</span>
+&nbsp;
+    // Observability Logging (skip expected transient polling status 409, expected 404s, expected 400/403s, and recoverable 401s)
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!isReportProcessing &amp;&amp; !isRecoverableAuthError &amp;&amp; <span class="branch-2 cbranch-no" title="branch not covered" >!isLearningPathNotFound </span>&amp;&amp; <span class="branch-3 cbranch-no" title="branch not covered" >!isCareerGoalRequired </span>&amp;&amp; <span class="branch-4 cbranch-no" title="branch not covered" >!isFeatureNotAvailable)</span> {
       // SECURITY (Phase 4.1): Scrub PII from error object before sending to Sentry
       // Must preserve instanceof Error for proper Sentry exception capturing
       const safeError = <span class="cstat-no" title="statement not covered" >new Error(error.message);</span>
@@ -694,8 +737,8 @@ apiClient.interceptors.response.use(
     const reqIdSuffix = requestId ? <span class="branch-0 cbranch-no" title="branch not covered" >` (ReqID: ${requestId.substring(0, 8)})` </span>: '';
     
     // Auto-trigger Toast for API failures (displaying ONLY Vietnamese message, NO raw error codes)
-    // Skip toast for transient polling status (409 INTERVIEW_REPORT_PROCESSING) and expected 404s
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (isReportProcessing || isLearningPathNotFound) {
+    // Skip toast for transient polling status (409 INTERVIEW_REPORT_PROCESSING) and expected empty states (404/400/403)
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (isReportProcessing || error.response?.status === 404 || isCareerGoalRequired || isFeatureNotAvailable) {
       // Do not trigger toast error for expected polling state or missing initial state
     } else <span class="missing-if-branch" title="if path not taken" >I</span>if (!error.response) {
 <span class="cstat-no" title="statement not covered" >      toast.error(`Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.${reqIdSuffix}`);</span>
@@ -706,6 +749,7 @@ apiClient.interceptors.response.use(
     } else <span class="cstat-no" title="statement not covered" >if (error.response.status &gt;= 500) {</span>
 <span class="cstat-no" title="statement not covered" >      toast.error(`Máy chủ gặp sự cố tạm thời. Vui lòng thử lại sau.${reqIdSuffix}`);</span>
     } else <span class="cstat-no" title="statement not covered" >if (extractedMessage) {</span>
+<span class="cstat-no" title="statement not covered" >      logger.warn(`[UNHANDLED TOAST ERROR] Status: ${error.response?.status}, Code: ${errorCode}, Message: ${extractedMessage}`);</span>
 <span class="cstat-no" title="statement not covered" >      toast.error(`${extractedMessage}${reqIdSuffix}`);</span>
     }
 &nbsp;
@@ -714,7 +758,7 @@ apiClient.interceptors.response.use(
       const requestUrl = originalRequest.url || <span class="branch-1 cbranch-no" title="branch not covered" >'';</span>
 &nbsp;
       // Không refresh nếu chính API login hoặc refresh bị 401
-      if (requestUrl.includes('/auth/login') || requestUrl.includes('/auth/refresh')) {
+      if (requestUrl.includes('/login') || requestUrl.includes('/refresh')) {
         toast.error(extractedMessage);
         return Promise.reject(normalizedError);
       }
@@ -741,13 +785,13 @@ apiClient.interceptors.response.use(
       try {
         const rt = await tokenStorage.getRefreshToken();
         const payload = rt ? { refreshToken: rt } : <span class="branch-1 cbranch-no" title="branch not covered" >{};</span>
-        // Call backend /auth/refresh with credentials (cookie nexora_refresh_token or body)
+        // Call backend /auth/mobile/refresh with credentials in body
         const refreshResponse = await axios.post&lt;{
           data?: { accessToken: string; refreshToken?: string };
           accessToken?: string;
           refreshToken?: string;
         }&gt;(
-          `${API_BASE_URL}/auth/refresh`,
+          `${API_BASE_URL}/auth/mobile/refresh`,
           payload,
           {
             withCredentials: true,
@@ -789,6 +833,7 @@ apiClient.interceptors.response.use(
 <span class="cstat-no" title="statement not covered" >    return Promise.reject(normalizedError);</span>
   }
 );
+&nbsp;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -796,7 +841,7 @@ apiClient.interceptors.response.use(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-30T22:29:34.964Z
+                at 2026-10-02T07:04:27.442Z
             </div>
         <script src="../prettify.js"></script>
         <script>

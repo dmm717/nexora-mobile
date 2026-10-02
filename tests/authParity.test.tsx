@@ -26,6 +26,16 @@ jest.mock('../src/api/auth.api', () => ({
   }
 }));
 
+jest.mock('@/services/storage', () => ({
+  tokenStorage: {
+    getAccessToken: jest.fn().mockResolvedValue(null),
+    setAccessToken: jest.fn().mockResolvedValue(undefined),
+    getRefreshToken: jest.fn().mockResolvedValue(null),
+    setRefreshToken: jest.fn().mockResolvedValue(undefined),
+    clearTokens: jest.fn().mockResolvedValue(undefined),
+  }
+}));
+
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => <>{children}</>,
 }));
@@ -115,6 +125,11 @@ describe('Auth Parity & Validation Tests', () => {
   describe('LoginScreen UI', () => {
     it('shows error message when submitting weak password in register mode', async () => {
       await renderWithProviders(<LoginScreen />);
+      
+      // Wait for any initial hydration / useEffects to settle
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
       
       // Switch to register mode
       await act(async () => {

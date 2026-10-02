@@ -95,3 +95,22 @@ jest.mock('lucide-react-native', () => {
     ArrowRight: mockIcon
   };
 });
+
+
+
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  setTag: jest.fn(),
+  setExtra: jest.fn(),
+  setUser: jest.fn(),
+}));
+
+const originalConsoleError = console.error;
+console.error = (...args) => {
+  if (typeof args[0] === 'string' && args[0].includes('overlapping act()')) return;
+  originalConsoleError(...args);
+};
+
