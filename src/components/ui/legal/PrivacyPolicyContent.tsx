@@ -1,69 +1,62 @@
 import React from 'react';
 import { View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
+import { ACCOUNT_DELETION_URL, PRIVACY_URL, SUPPORT_EMAIL, WEBSITE_URL } from '@/constants/legal';
 import { renderBullet, renderSectionHeader } from './LegalContentHelpers';
+import { PublicDeletionLink } from './PublicDeletionLink';
 
 export const PrivacyPolicyContent = ({ colors, styles }: { colors: any, styles: any }) => (
   <View style={styles.docSection}>
-    <ThemedText style={[styles.docMeta, { color: colors.textMuted }]}>Cập nhật lần cuối: 02 tháng 10, 2026</ThemedText>
-
+    <ThemedText style={[styles.docMeta, { color: colors.textMuted }]}>Cập nhật lần cuối: 04 tháng 10, 2026</ThemedText>
     <View style={styles.contentBlock}>
-      {renderSectionHeader('1', 'Thu thập dữ liệu', colors, styles)}
-      <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Nexora AI cam kết bảo vệ thông tin riêng tư của ứng viên. Chúng tôi thu thập các dữ liệu cần thiết để phục vụ trải nghiệm luyện phỏng vấn:
-      </ThemedText>
+      {renderSectionHeader('1', 'Dữ liệu dùng để cung cấp dịch vụ', colors, styles)}
       <View style={styles.bulletList}>
-        {renderBullet('Thông tin tài khoản: Email, tên hiển thị, mật khẩu được mã hóa qua ASP.NET Core Identity.', colors, styles)}
-        {renderBullet('Hồ sơ nghề nghiệp: Nội dung CV, Mô tả công việc (JD), lịch sử các buổi phỏng vấn mô phỏng.', colors, styles)}
-        {renderBullet('Giọng nói: Khi bạn chọn phỏng vấn bằng giọng nói, âm thanh được ghi và gửi tới Microsoft Azure Speech Services để chuyển đổi thành văn bản. File ghi âm được xóa khỏi thiết bị ngay sau khi xử lý. Dữ liệu âm thanh không được sử dụng để huấn luyện mô hình AI của bất kỳ bên nào.', colors, styles)}
+        {renderBullet('Tài khoản: Email, tên hiển thị, mã người dùng và thông tin xác thực được gửi tới máy chủ để đăng ký, đăng nhập và quản lý tài khoản. Mật khẩu được băm tại máy chủ.', colors, styles)}
+        {renderBullet('Nghề nghiệp: CV tải lên, mô tả công việc, mục tiêu và hồ sơ nghề nghiệp, câu trả lời phỏng vấn, báo cáo AI, đánh giá kỹ năng và tiến độ học tập được xử lý để cung cấp các tính năng bạn sử dụng.', colors, styles)}
+        {renderBullet('Ảnh đại diện: Ảnh bạn chọn tải lên được gửi tới máy chủ và hệ thống lưu trữ để hiển thị hồ sơ.', colors, styles)}
+        {renderBullet('Giọng nói tùy chọn: Khi bạn bật chức năng giọng nói và cấp quyền microphone, âm thanh được ghi vào tệp tạm rồi gửi tới Azure Speech để chuyển thành văn bản. Văn bản trả lời được gửi tới máy chủ khi bạn nộp câu trả lời. Nội dung cần đọc được gửi tới Azure Speech để tổng hợp giọng nói. Ứng dụng cố gắng xóa tệp âm thanh tạm sau xử lý; điều này không xác định thời hạn lưu trữ ở nhà cung cấp.', colors, styles)}
+        {renderBullet('Giao dịch: Ứng dụng nhận quyền lợi tài khoản, hạn mức và lịch sử đơn hàng từ máy chủ. Ứng dụng Android không trực tiếp thu thập thông tin thẻ thanh toán.', colors, styles)}
+        {renderBullet('Phản hồi và báo cáo nội dung: Nội dung bạn gửi được chuyển tới máy chủ để tiếp nhận phản hồi và xem xét nội dung AI.', colors, styles)}
       </View>
     </View>
-
     <View style={styles.contentBlock}>
-      {renderSectionHeader('2', 'Bên thứ ba nhận dữ liệu', colors, styles)}
-      <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Để cung cấp dịch vụ, chúng tôi chia sẻ một phần dữ liệu với các nhà cung cấp sau. Dữ liệu KHÔNG được bán hoặc chia sẻ vì mục đích quảng cáo:
-      </ThemedText>
+      {renderSectionHeader('2', 'Đơn vị xử lý & chẩn đoán', colors, styles)}
       <View style={styles.bulletList}>
-        {renderBullet('Microsoft Azure Speech Services: Nhận dữ liệu âm thanh ghi âm để chuyển đổi giọng nói thành văn bản (STT) và tổng hợp giọng nói (TTS).', colors, styles)}
-        {renderBullet('Nhà cung cấp mô hình AI (Google Gemini / Azure OpenAI): Nhận nội dung câu trả lời và CV để phân tích, đánh giá và tạo phản hồi AI.', colors, styles)}
-        {renderBullet('Sentry: Nhận dữ liệu crash report (đã loại bỏ thông tin cá nhân nhạy cảm) để theo dõi lỗi ứng dụng.', colors, styles)}
-        {renderBullet('Nhà cung cấp hạ tầng máy chủ: Dữ liệu được lưu trữ trên các dịch vụ đám mây có tiêu chuẩn bảo mật quốc tế.', colors, styles)}
+        {renderBullet('Máy chủ Nexora và nhà cung cấp hạ tầng/lưu trữ xử lý thông tin tài khoản, hồ sơ, tệp tải lên và dữ liệu tính năng. Nội dung cần phân tích được xử lý bởi dịch vụ AI do máy chủ cấu hình.', colors, styles)}
+        {renderBullet('Microsoft Azure Speech nhận âm thanh cho chuyển giọng nói thành văn bản và nội dung văn bản cho tổng hợp giọng nói.', colors, styles)}
+        {renderBullet('Sentry, khi được cấu hình, nhận sự kiện lỗi và dữ liệu chẩn đoán/hiệu năng. Ứng dụng tắt gửi thông tin cá nhân mặc định và lọc một số nội dung yêu cầu; bộ lọc không bảo đảm mọi sự kiện đều không chứa dữ liệu cá nhân.', colors, styles)}
+        {renderBullet('Thông tin về lưu trữ, xử lý và sử dụng dữ liệu ở nhà cung cấp cần được xác nhận theo cấu hình và điều khoản dịch vụ áp dụng. Không thể suy ra rằng dữ liệu không được lưu hoặc không dùng cho huấn luyện chỉ từ việc dọn tệp tạm trên thiết bị.', colors, styles)}
       </View>
     </View>
-
     <View style={styles.contentBlock}>
-      {renderSectionHeader('3', 'Quyền truy cập thiết bị', colors, styles)}
+      {renderSectionHeader('3', 'Quyền truy cập & lựa chọn', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Ứng dụng chỉ yêu cầu quyền truy cập Microphone khi bạn chủ động chọn phỏng vấn bằng giọng nói. Quyền này có thể được thu hồi bất kỳ lúc nào trong cài đặt hệ thống. Nếu từ chối quyền mic, ứng dụng tự động chuyển sang chế độ phỏng vấn bằng văn bản. Ứng dụng tuyệt đối không ghi âm dưới nền hoặc khi ở chế độ nền.
+        Microphone là tùy chọn và chỉ được yêu cầu khi bạn chọn sử dụng giọng nói. Bạn có thể từ chối hoặc thu hồi quyền trong cài đặt hệ thống và dùng chế độ văn bản. Bạn chọn tệp CV và ảnh đại diện khi muốn tải lên.
       </ThemedText>
     </View>
-
     <View style={styles.contentBlock}>
-      {renderSectionHeader('4', 'Quyền của bạn', colors, styles)}
+      {renderSectionHeader('4', 'Truy cập, xuất & xóa dữ liệu', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Bạn có các quyền sau đối với dữ liệu cá nhân:
+        Bạn có thể xem và chỉnh sửa hồ sơ, xuất dữ liệu trong Cài đặt tài khoản, và gửi yêu cầu xóa trực tiếp tại Khu vực nguy hiểm khi đăng nhập. Bạn cũng có thể yêu cầu tại {ACCOUNT_DELETION_URL} mà không cần đăng nhập: nhập email gắn với tài khoản, mở liên kết xác minh rồi chủ động xác nhận. Liên kết chỉ dùng một lần, hết hạn sau 30 phút; gửi email hoặc mở trang chưa gửi yêu cầu xóa. Xem mục Xóa dữ liệu trong ứng dụng để biết phạm vi xử lý và dữ liệu giữ lại.
       </ThemedText>
-      <View style={styles.bulletList}>
-        {renderBullet('Quyền truy cập: Xem toàn bộ dữ liệu cá nhân trong ứng dụng.', colors, styles)}
-        {renderBullet('Quyền xuất dữ liệu: Tải bản sao dữ liệu cá nhân dạng JSON (Cài đặt → Xuất dữ liệu).', colors, styles)}
-        {renderBullet('Quyền chỉnh sửa: Cập nhật thông tin cá nhân, CV, mục tiêu nghề nghiệp bất kỳ lúc nào.', colors, styles)}
-        {renderBullet('Quyền xóa: Yêu cầu xóa toàn bộ tài khoản và dữ liệu (Cài đặt → Khu vực nguy hiểm, hoặc qua trang web https://nexora.vn/xoa-tai-khoan).', colors, styles)}
-        {renderBullet('Quyền phản đối: Báo cáo nội dung AI không phù hợp bằng nút "🚩 Báo cáo" ngay tại nơi nội dung hiển thị.', colors, styles)}
-      </View>
+      <PublicDeletionLink colors={colors} />
     </View>
-
     <View style={styles.contentBlock}>
       {renderSectionHeader('5', 'Lưu trữ & bảo mật', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Tất cả dữ liệu được truyền qua kết nối mã hóa TLS/HTTPS. Dữ liệu cá nhân chỉ được lưu trữ trong thời gian tài khoản hoạt động. Sau khi yêu cầu xóa, tài khoản bị vô hiệu hóa ngay lập tức và dữ liệu được xóa cứng hoàn toàn trong tối đa 30 ngày.
+        Kết nối API trong bản phát hành yêu cầu HTTPS; dịch vụ giọng nói sử dụng HTTPS. Máy chủ lưu dữ liệu phục vụ tài khoản và các tính năng. Yêu cầu xóa được xử lý theo hàng đợi; tài khoản bị chặn truy cập sau khi yêu cầu được chấp nhận. Một số bản ghi giao dịch, sử dụng và yêu cầu xóa được giữ lại, thông tin định danh được ẩn danh hóa. Thời hạn lưu trữ bản sao lưu và dữ liệu tại nhà cung cấp cần được Nexora xác nhận. Không có cam kết mọi dữ liệu bị xóa ngay hoặc hoàn tất sau đúng 30 ngày.
       </ThemedText>
     </View>
-
     <View style={styles.contentBlock}>
-      {renderSectionHeader('6', 'Giới hạn độ tuổi', colors, styles)}
+      {renderSectionHeader('6', 'Website & thông tin liên hệ', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Nexora AI là dịch vụ hỗ trợ sự nghiệp và ứng tuyển dành riêng cho người dùng từ 18 tuổi trở lên. Chúng tôi không chủ động thu thập thông tin cá nhân của bất kỳ ai dưới 18 tuổi. Nếu phát hiện vi phạm, tài khoản sẽ bị vô hiệu hóa ngay lập tức.
+        Website chính thức: {WEBSITE_URL}. Chính sách công khai: {PRIVACY_URL}. Email liên hệ chính thức: {SUPPORT_EMAIL}.
+      </ThemedText>
+    </View>
+    <View style={styles.contentBlock}>
+      {renderSectionHeader('7', 'Giới hạn độ tuổi', colors, styles)}
+      <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
+        Nexora AI là dịch vụ hỗ trợ sự nghiệp và ứng tuyển dành cho người dùng từ 18 tuổi trở lên.
       </ThemedText>
     </View>
   </View>

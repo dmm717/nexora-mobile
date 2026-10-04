@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { View, Modal, ActivityIndicator, StyleSheet, TextInput } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Modal, ActivityIndicator, StyleSheet, TextInput, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation } from '@tanstack/react-query';
+import { createIdempotencyKey } from '@/api/client';
+import { DELETION_ACCEPTED_MESSAGE, isDeletionConfirmed } from '@/utils/deletion-presentation';
 import { userApi } from '@/api/user.api';
 import { ThemedText } from '@/components/themed-text';
 import { TouchableScale } from '@/components/ui/touchable-scale';
@@ -10,64 +12,61 @@ import { toast } from '@/components/ui/toast/ToastProvider';
 interface AccountDeletionModalProps {
   visible: boolean;
   onClose: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   colors: any;
   userEmail: string;
 }
 export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEmail }: AccountDeletionModalProps) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [confirmText, setConfirmText] = useState('');
-  const [deleteScheduledAt, setDeleteScheduledAt] = useState<string | null>(null);
+  const [accepted, setAccepted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const submitting = useRef(false);
+  // Reuse after ambiguous network errors. Never automatically retry deletion.
+  const idempotencyKey = useRef<string | null>(null);
   const deleteAccountMutation = useMutation({
-    mutationFn: () => userApi.deleteAccount(),
-    onSuccess: (data: any) => {
-      // Backend should return scheduledHardDeleteAt
-      const scheduledAt = data?.scheduledHardDeleteAt || data?.data?.scheduledHardDeleteAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-      setDeleteScheduledAt(scheduledAt);
+    mutationFn: () => userApi.deleteAccount(idempotencyKey.current!),
+    retry: false,
+    onSuccess: async () => {
+      setAccepted(true);
+      setErrorMessage(null);
+      toast.success(DELETION_ACCEPTED_MESSAGE);
+      await logout();
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Không thể gửi yêu cầu xóa tài khoản. Vui lòng thử lại sau.');
-      onClose();
+    onError: () => {
+      setErrorMessage('Chưa nhận được xác nhận từ máy chủ. Yêu cầu có thể chưa được gửi hoặc phản hồi bị gián đoạn. Kiểm tra trạng thái trước khi thử lại.');
     },
+    onSettled: () => { submitting.current = false; },
   });
-  const handleNext = () => {
-    setStep(2);
-  };
-  const handleConfirm = () => {
-    if (confirmText !== 'XÓA' && confirmText !== userEmail) {
-      toast.error('Vui lòng nhập chính xác từ "XÓA" hoặc email của bạn để xác nhận.');
-      return;
+  useEffect(() => {
+    if (!visible) {
+      setStep(1);
+      setConfirmText('');
+      setErrorMessage(null);
     }
-    deleteAccountMutation.mutate();
+  }, [visible]);
+  const handleClose = () => {
+    if (!submitting.current && !accepted) onClose();
   };
-  const handleFinalOk = () => {
-    logout();
+  const handleNext = () => { setStep(2); };
+  const handleConfirm = () => {
+    if (submitting.current || accepted || !isDeletionConfirmed(confirmText, userEmail)) return;
+    submitting.current = true;
+    idempotencyKey.current ??= createIdempotencyKey();
+    setErrorMessage(null);
+    deleteAccountMutation.mutate();
   };
   if (!visible) return null;
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View style={styles.overlay}>
         <View style={[styles.modalContent, { backgroundColor: colors.background, borderColor: colors.cardBorder }]}>
-          
-          {deleteScheduledAt ? (
-            <View style={{ alignItems: 'center', padding: Spacing.four }}>
-              <Ionicons name="checkmark-circle" size={64} color={colors.accent} style={{ marginBottom: Spacing.three }} />
-              <ThemedText style={styles.title}>Yêu Cầu Đã Ghi Nhận</ThemedText>
-              <ThemedText style={[styles.textCenter, { marginTop: Spacing.two }]}>
-                Tài khoản của bạn đã được vô hiệu hóa và đang trong hàng đợi xóa vĩnh viễn.
-              </ThemedText>
-              <View style={[styles.dateBox, { backgroundColor: colors.card }]}>
-                <ThemedText style={[styles.dateBoxTitle, { color: colors.warning }]}>Ngày xóa vĩnh viễn dự kiến:</ThemedText>
-                <ThemedText style={[styles.dateBoxText, { color: colors.text }]}>
-                  {new Date(deleteScheduledAt).toLocaleDateString('vi-VN')}
-                </ThemedText>
-              </View>
-              <ThemedText style={[styles.textCenter, { marginTop: Spacing.three, fontSize: 13, color: colors.textSecondary }]}>
-                Nếu bạn đổi ý, vui lòng đăng nhập lại trước thời hạn trên để hủy yêu cầu.
-              </ThemedText>
-              <TouchableScale style={[styles.primaryButton, { backgroundColor: colors.primary, marginTop: Spacing.four, width: '100%' }]} onPress={handleFinalOk}>
-                <ThemedText style={styles.primaryButtonText}>Đóng & Đăng Xuất</ThemedText>
-              </TouchableScale>
+          <ScrollView keyboardShouldPersistTaps="handled">
+          {accepted ? (
+            <View>
+              <ThemedText style={styles.title}>Yêu cầu đã ghi nhận</ThemedText>
+              <ThemedText style={styles.subTitle}>{DELETION_ACCEPTED_MESSAGE}</ThemedText>
+              <ActivityIndicator accessibilityLabel="Đang kết thúc phiên đăng nhập" />
             </View>
           ) : step === 1 ? (
             <View>
@@ -75,22 +74,22 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
                 <Ionicons name="warning" size={24} color="#dc2626" />
                 <ThemedText style={[styles.title, { color: '#dc2626' }]}>Xóa Tài Khoản (Bước 1/2)</ThemedText>
               </View>
-              
+
               <ThemedText style={[styles.subTitle, { color: colors.text }]}>
                 Vui lòng đọc kỹ các thông tin sau trước khi tiếp tục:
               </ThemedText>
               <View style={[styles.listContainer, { backgroundColor: colors.backgroundElement }]}>
-                <ThemedText style={[styles.listHeader, { color: colors.text }]}>Dữ liệu sẽ bị xóa hoàn toàn:</ThemedText>
+                <ThemedText style={[styles.listHeader, { color: colors.text }]}>Phạm vi yêu cầu xóa:</ThemedText>
                 <ThemedText style={styles.listItem}>• Hồ sơ CV và Mục tiêu nghề nghiệp</ThemedText>
                 <ThemedText style={styles.listItem}>• Lịch sử phỏng vấn và các báo cáo AI</ThemedText>
                 <ThemedText style={styles.listItem}>• Điểm năng lực và lộ trình học tập</ThemedText>
-                <ThemedText style={styles.listItem}>• Gói PRO (nếu có, không hoàn tiền)</ThemedText>
-                <ThemedText style={[styles.listHeader, { color: colors.text, marginTop: Spacing.three }]}>Dữ liệu được giữ lại (để tuân thủ pháp luật):</ThemedText>
-                <ThemedText style={styles.listItem}>• Hóa đơn thanh toán (giữ theo luật kế toán)</ThemedText>
-                <ThemedText style={styles.listItem}>• Lịch sử vi phạm nội dung AI (giữ 90 ngày để audit)</ThemedText>
+                <ThemedText style={styles.listItem}>• Ảnh đại diện và hồ sơ tài khoản</ThemedText>
+                <ThemedText style={[styles.listHeader, { color: colors.text, marginTop: Spacing.three }]}>Bản ghi máy chủ giữ lại:</ThemedText>
+                <ThemedText style={styles.listItem}>• Giao dịch, quyền lợi và lịch sử sử dụng</ThemedText>
+                <ThemedText style={styles.listItem}>• Yêu cầu xóa và tài khoản đã ẩn danh hóa; thời hạn lưu trữ cần được xác nhận</ThemedText>
               </View>
               <View style={styles.buttonRow}>
-                <TouchableScale style={[styles.cancelButton, { borderColor: colors.cardBorder }]} onPress={onClose}>
+                <TouchableScale style={[styles.cancelButton, { borderColor: colors.cardBorder }]} onPress={handleClose}>
                   <ThemedText style={{ color: colors.text }}>Hủy Bỏ</ThemedText>
                 </TouchableScale>
                 <TouchableScale style={[styles.dangerButton, { backgroundColor: '#dc2626' }]} onPress={handleNext}>
@@ -104,9 +103,9 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
                 <Ionicons name="alert-circle" size={24} color="#dc2626" />
                 <ThemedText style={[styles.title, { color: '#dc2626' }]}>Xác Nhận (Bước 2/2)</ThemedText>
               </View>
-              
+
               <ThemedText style={[styles.subTitle, { color: colors.text }]}>
-                Hành động này sẽ gửi yêu cầu xóa tài khoản. Hệ thống sẽ có một khoảng thời gian ân hạn (grace period) trước khi xóa cứng dữ liệu.
+                Hành động này gửi yêu cầu xóa tài khoản. Khi máy chủ chấp nhận, bạn sẽ được đăng xuất. Ứng dụng không cung cấp chức năng hủy yêu cầu.
               </ThemedText>
               <View style={{ marginVertical: Spacing.four }}>
                 <ThemedText style={{ fontSize: 13, marginBottom: Spacing.one, color: colors.textSecondary }}>
@@ -121,14 +120,15 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
                   autoCapitalize="none"
                 />
               </View>
+              {errorMessage && <ThemedText accessibilityRole="alert" style={styles.subTitle}>{errorMessage}</ThemedText>}
               <View style={styles.buttonRow}>
                 <TouchableScale style={[styles.cancelButton, { borderColor: colors.cardBorder }]} onPress={() => setStep(1)} disabled={deleteAccountMutation.isPending}>
                   <ThemedText style={{ color: colors.text }}>Quay Lại</ThemedText>
                 </TouchableScale>
-                <TouchableScale 
-                  style={[styles.dangerButton, { backgroundColor: '#dc2626', opacity: (confirmText === 'XÓA' || confirmText === userEmail) ? 1 : 0.5 }]} 
+                <TouchableScale
+                  style={[styles.dangerButton, { backgroundColor: '#dc2626', opacity: isDeletionConfirmed(confirmText, userEmail) ? 1 : 0.5 }]}
                   onPress={handleConfirm}
-                  disabled={deleteAccountMutation.isPending}
+                  disabled={deleteAccountMutation.isPending || !isDeletionConfirmed(confirmText, userEmail)}
                 >
                   {deleteAccountMutation.isPending ? <ActivityIndicator size="small" color="#fff" /> : null}
                   <ThemedText style={{ color: '#ffffff', fontWeight: '700' }}>Xác Nhận Xóa</ThemedText>
@@ -136,6 +136,7 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
               </View>
             </View>
           )}
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -152,6 +153,7 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxWidth: 400,
+    maxHeight: '90%',
     borderRadius: Radius.lg,
     padding: Spacing.four,
     borderWidth: 1,
@@ -218,22 +220,6 @@ const styles = StyleSheet.create({
   textCenter: {
     textAlign: 'center',
     lineHeight: 22,
-  },
-  dateBox: {
-    marginTop: Spacing.four,
-    padding: Spacing.three,
-    borderRadius: Radius.md,
-    width: '100%',
-    alignItems: 'center',
-  },
-  dateBoxTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  dateBoxText: {
-    fontSize: 18,
-    fontWeight: '700',
   },
   primaryButton: {
     paddingVertical: 14,

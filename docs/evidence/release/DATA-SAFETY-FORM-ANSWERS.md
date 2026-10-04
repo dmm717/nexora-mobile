@@ -1,65 +1,97 @@
-# Hướng Dẫn Khai Báo Data Safety & Play Console
+# Data Safety review matrix — current mobile release, 2026-10-04
 
-Tài liệu này cung cấp đáp án CHÍNH XÁC để bạn copy/paste vào form "Data Safety" và "App Content" trên Google Play Console, đảm bảo khớp 100% với code thực tế của Nexora AI và chính sách bảo mật đã cập nhật.
+This replaces the earlier Google Play Billing answer sheet. It is a review draft, not a submitted Console form or compliance certification. Use with [release handoff](../../release/GOOGLE-PLAY-HANDOFF.md). All distributed versions and active SDK/backend configurations must be considered by the Console owner.
 
----
+## Definitions and evidence boundaries
 
-## 1. Data Safety (Bảo mật dữ liệu)
+[Google Play Data Safety definitions](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en): collection includes off-device transmission by the app or its SDKs. Service-provider processing on the developer's behalf may be excluded from “sharing”; establish instructions/contracts rather than labeling every processor shared. Pseudonymous IDs are still in scope. Ephemeral means memory-only processing for the real-time request; deleting a local audio file does not establish this. Ephemeral off-device processing still belongs in the form.
 
-### Tổng quan (Overview)
-- **App có thu thập hoặc chia sẻ dữ liệu không?** CÓ
-- **Toàn bộ dữ liệu có được mã hóa khi truyền không?** CÓ (mã hóa qua HTTPS/TLS).
-- **App có cung cấp cách để user xóa dữ liệu không?** CÓ (Xóa tài khoản trong Cài đặt).
-- **App có tuân theo Families policy không?** KHÔNG (Target audience là 18+).
+[Payments guidance](https://support.google.com/googleplay/android-developer/answer/10281818?hl=en): consumption-only is supported. This PR conservatively limits pricing to account/current-plan information without advertised offer prices or purchase links; it does not rely on a regional exception.
 
-### Thu thập và Chia sẻ dữ liệu (Data types)
+Confidence: V = verified source path, C = needs backend/provider confirmation, O = Console owner decision. “Candidate no sharing” is conditional, not a final No. Required/optional describes ability to use the app without supplying the data; owner must validate across all versions/regions. Feature-required content is marked separately. All rows use deletion rule D and transport rule T below unless stated otherwise.
 
-Bạn tick chọn các loại dữ liệu sau, và trả lời chi tiết cho TỪNG LOẠI như sau:
+### Evidence references
 
-| Loại dữ liệu | Thu thập? | Chia sẻ? | Xử lý tạm thời? (Ephemeral) | Mục đích | Bắt buộc? |
-|---|---|---|---|---|---|
-| **Email address** | ✅ Có | ❌ Không | ❌ Không | App functionality, Account management | Có |
-| **Name (Tên hiển thị)** | ✅ Có | ❌ Không | ❌ Không | App functionality, Account management | Có |
-| **User IDs** | ✅ Có | ❌ Không | ❌ Không | App functionality, Account management | Có |
-| **Purchase history** | ✅ Có | ❌ Không | ❌ Không | Account management | Có |
-| **Files and docs (CV upload)** | ✅ Có | ✅ Có (Chia sẻ cho LLM Provider, AWS) | ❌ Không | App functionality | Có |
-| **Voice or sound recordings** | ✅ Có | ✅ Có (Chia sẻ cho Microsoft Azure) | ✅ Có (Ephemeral - Xóa ngay sau STT) | App functionality | Không (Tùy chọn) |
-| **Crash logs** | ✅ Có | ✅ Có (Chia sẻ cho Sentry) | ❌ Không | Analytics | Không (Tùy chọn) |
+- M1: `src/api/auth.api.ts`, `src/context/auth-context.tsx`, `src/api/user.api.ts`, `src/api/types/auth.types.ts`: identity/password/profile/avatar/account deletion.
+- M2: `src/api/resumes.api.ts` (`presign`, raw PUT, finalize), `src/api/job-descriptions.api.ts`, `src/api/career-goals.api.ts`, `src/api/profile.api.ts`, `src/api/resume-analyses.api.ts`: files, career context and assessments.
+- M3: `src/api/interview.api.ts`, `src/api/scenarios.api.ts`, `src/api/star.api.ts`, `src/api/growth.api.ts`, `src/api/report.api.ts`: answers, generated reports, practice/progress.
+- M4: `src/services/speech.ts`, `src/services/speech.web.ts`, `src/services/tts.ts`, `src/services/tts.web.ts`, `src/services/speechApi.ts`, `src/services/speechTokenManager.ts`: native temp recording → Azure HTTPS upload, text → Azure TTS, token issuance/cache. Native is Android scope; web speech uses a browser-dependent provider and must not be conflated with native.
+- M5: `src/app/_layout.tsx` Sentry DSN gate, native SDK, tracesSampleRate 0.1, sendDefaultPii:false, partial beforeSend filtering; `src/services/logger.ts` production captureException/captureMessage; `src/api/client.ts` error normalization/filtering. No audit of a real production event payload.
+- M6: `src/services/analytics.ts`: consent-gated bounded in-memory queue, no export/transport; errors go through logger. `src/services/storage.ts`: native tokens in SecureStore, web in-memory auth; `src/utils/cache.ts`: best-effort old-file cleanup, not a retention guarantee.
+- M7: `src/app/(app)/pricing/index.tsx`, `src/components/account/PlanUsageCard.tsx`, `src/api/pricing.api.ts`, `src/api/types/billing.types.ts`: server entitlement/order reads, no active native purchase APIs or billing SDK in package.json.
+- M8: `src/api/feedback.api.ts`, `src/components/feedback/ProductFeedbackModal.tsx`, `src/api/report.api.ts`: submitted feedback/content reports. `src/components/account/PrivacyDataCard.tsx`: user-initiated export/share.
+- B: read-only [backend main 8c5b34628a6a7220c329a88198c5c0a32307f2c8](https://github.com/qbao0111/nexora-backend/tree/8c5b34628a6a7220c329a88198c5c0a32307f2c8). All backend paths below are relative to that SHA, not claims about deployed configuration.
+- B1: `src/Nexora.Api/Controllers/MeController.cs`, `src/Nexora.Api/Contracts/PrivacyContracts.cs`, `src/Nexora.Business/Privacy/PrivacyContracts.cs`, `src/Nexora.Data/Privacy/PrivacyService.cs`: authenticated request, nullable status response, queue worker, storage removal, personal-content deletion, anonymized identity and retained records.
+- B2: `src/Nexora.Data/Privacy/ExternalAccountDeletionService.cs`: email token 30 minutes, single-use confirm; no deletion grace/cancel route. `src/Nexora.Data/Auth/IdentityAuthService.cs`, `src/Nexora.Api/Program.cs`: deletion flag/security-stamp auth enforcement.
+- B3: `src/Nexora.Integrations/DependencyInjection.cs`, `src/Nexora.Integrations/Storage/R2StorageProvider.cs`, `LocalStorageProvider.cs`, `src/Nexora.Data/Auth/AvatarService.cs`, `src/Nexora.Data/Persistence/NexoraDbContext.cs`: local or Cloudflare R2 file storage and PostgreSQL data.
+- B4: `src/Nexora.Integrations/Ai/GeminiAiProvider.cs`, `DeepSeekAiProvider.cs`, `GeminiDocumentOcrProvider.cs`, `src/Nexora.Integrations/DependencyInjection.cs`: configurable Gemini/DeepSeek text AI; Gemini OCR can send full document bytes via inlineData. Azure OpenAI is not established by this source.
+- B5: `src/Nexora.Integrations/Email/ResendEmailSender.cs`, `NoOpEmailSender.cs`, `src/Nexora.Api/appsettings.json`: configurable email and processor defaults. Defaults are not production proof; feature flags and credentials are supplied externally.
 
-> ⚠️ **Quan trọng về "Chia sẻ" (Sharing):** 
-> Vì ứng dụng Nexora gửi CV, câu trả lời, và giọng nói cho các dịch vụ AI bên thứ 3 (Gemini/OpenAI, Microsoft Azure), bạn BẮT BUỘC phải chọn **CÓ CHIA SẺ** đối với "Files and docs" và "Voice recordings" theo luật mới của Play Store về tích hợp AI.
+T (transport): API production initialization rejects non-HTTPS; native speech/TTS URLs are HTTPS. Raw CV PUT trusts server-provided URL; R2 config validates HTTPS. Sentry DSN, final upload destinations, deployed reverse proxy and all backend-to-provider routes require production verification before a universal “encrypted in transit” Yes. This is TLS, not end-to-end encryption. C/O.
 
----
+D (deletion): authenticated POST `/api/v1/me/deletion-requests`, GET current status, deliberate confirmation and local cleanup exist. Worker deletes content/files/avatar and anonymizes identity; billing/usage/privacy records remain. Worker retries/fails and may defer until signed upload intents expire. Backups, infrastructure logs, provider copies and retained-record schedules need confirmation. FE PR #60 is merged; public request/confirmation routes now return 200 on www, with apex 308 redirects and validated HTTPS. The owner reports successful real email confirmation and DB deletion; this audit did not repeat destructive tests. Exact emailed origin/PublicUrl and retained-data handling remain unverified. See [rollout evidence](PUBLIC-DELETION-ROLLOUT.md). V for source/route availability, C/O for full production lifecycle.
 
-## 2. AI-Generated Content (Nội dung do AI tạo)
+## Answer matrix
 
-Khi form Play Console hỏi về tính năng AI (AI-generated content):
-- **App có chứa nội dung do AI tạo không?** CÓ.
-- **Biện pháp chống sinh nội dung vi phạm:** Hệ thống sử dụng prompt guardrails kết hợp với content filter API của LLM provider.
-- **Cơ chế report:** "Ứng dụng có tích hợp nút Report/Cờ Báo Cáo tại mọi vị trí hiển thị kết quả AI sinh ra, cho phép người dùng báo cáo mà không cần thoát app." (Đã code ở Bước 3.1).
+| Play type / actual data | Collected | Sharing answer for review | Required / optional | Purpose | Ephemeral | Transport/deletion | Source & confidence / unresolved |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Personal info: email | Yes | Candidate No if backend/hosting/email are service providers; verify | Required for account | Account management, app functionality, security | No: persisted account | T / D | M1, B1/B2/B5; V collection; C contracts/retention |
+| Personal info: name | Yes when provided | Candidate No for contracted processors | Optional profile field; owner validate registration requirement | Account management, app functionality | No | T / D | M1, B1; V flow, C requiredness across registration versions |
+| Personal info: user IDs | Yes | Candidate No for backend; Sentry identification needs inspection | Required for authenticated features | Account management, functionality, security | No | T / D (pseudonymous retained identifiers remain) | M1/M3/M5, B1; V, C telemetry/retention |
+| Personal info: other info (experience, career goals/profile) | Yes when supplied | Conditional on hosting and AI provider terms | Optional supply; some career features require context | App functionality, personalization | No | T / D | M1/M2/M3, B1/B4; V flow, C mapping/provider terms |
+| Files and docs: CV files/text, uploaded JD documents | Yes | Unresolved for AI/OCR; candidate No for contracted storage | Optional upload; analysis features require input | App functionality, personalization | No: files/results persisted | T / D | M2; B3/B4 sends document bytes for OCR. C active AI tier/data use |
+| Other user-generated content: JD text, interview/STAR/scenario answers, feedback/reports | Yes | Unresolved AI provider use; candidate No for backend processing | Optional participation; required within chosen feature | App functionality, personalization; report abuse handling | No | T / D | M2/M3/M8, B1/B4; V; O final category mapping. A JD from a file may overlap files/docs |
+| App activity / other content: AI reports, skill assessments, learning progress | Yes: server associates/persists results from submitted data; progress sent | Conditional on AI/hosting instructions | Required when chosen features run | App functionality, personalization | No | T / D | M3, B1/B4; V persistence, O classify generated/derived content without double counting |
+| Audio: microphone recordings | Yes: native Azure upload | Candidate No only if Azure service-provider conditions apply | Optional; text mode available | App functionality (speech recognition) | Unconfirmed; do not answer Yes merely from cleanup | HTTPS Azure / D provider retention unconfirmed | M4, B2; V transmission. C actual real-time endpoint terms/resource settings; no blanket no-training claim |
+| Other user content: STT transcript / TTS text | Yes: TTS off-device; transcript submitted as answer | Conditional on Azure and AI contracts | Optional voice; submitted answers part of chosen interview | App functionality | No for submitted answers; TTS retention unconfirmed | T / D | M3/M4, B4; V; C provider lifecycle |
+| Photos: avatar | Yes when uploaded | Candidate No for backend/storage service providers | Optional | Account management, app functionality | No | T / D | M1, B3, AvatarService; V. Avatar GET is public by ID: owner review disclosure/export implications |
+| App info/performance: crash logs | Yes when Sentry DSN enabled and errors occur | Candidate No if Sentry acts only as service provider | Required diagnostic capture in enabled build; no diagnostic opt-out UI found | Analytics (diagnostics), app functionality | Unconfirmed; verify SDK/provider persistence before final answer | T / D provider copies unconfirmed | M5; V configuration path, C production DSN/payload/retention |
+| App info/performance: diagnostics and performance traces | Conditional: configured SDK/tracing | Conditional on Sentry contract | Required in enabled build when emitted | Analytics, app functionality | Unconfirmed; do not select Yes/No without evidence | T / D | M5; C sampled payload and native integrations; scrubbing is partial |
+| Device or other identifiers: SDK installation/device IDs, IP/network metadata | Requires SDK/production inspection, do not answer No | Conditional on SDK processing contract | Required if SDK automatically emits; owner confirm | Diagnostics/security as actually configured | Unconfirmed | T / D | M5, package.json; no advertising-ID SDK discovered, but that does not establish absence of SDK identifiers |
+| App activity: custom analytics queue | No off-device transport found in this custom service | Not applicable to local queue; do not extend this to Sentry | Consent-gated in production; dev logging differs | Local analytics/debugging | Not an off-device ephemeral claim | Local only | M6; V. If transport is later added, revise form |
+| Financial info: purchase history/order metadata | Account receives existing order IDs/amounts/status/plan; no new purchase payload native | Candidate No for backend-owned history; verify downstream billing processing | Required when account has history; owner confirm treatment of server-to-device history versus off-device activity | Account management, app functionality | No: backend retains | T / D (retained records, duration unknown) | M7, B1/BillingSummary; V display. O final purchase-history declaration across backend/account ecosystem |
+| Financial info: card/bank/payment details | No direct collection path in mobile found | N/A for removed native checkout; web processing requires separate contract review | N/A mobile | N/A | N/A | Not certified for web | M7/package.json; V native absence, C existing web/backend payment contract |
+| Sensitive information incidentally in CV/answers (address, phone, health etc.) | May be included in user-supplied content; not structurally requested | Conditional on storage/AI terms | Optional content, owner validate | Requested app functionality only | No | T / D | M2/M3/B4; O map actual requested/processed content; do not invent an exhaustive No for other Play categories |
+| Location/contacts/advertising IDs | No explicit collection API/SDK found | No explicit flow found | N/A | N/A | N/A | Final binary/SDK inventory still needed | app.json blocked permissions/package.json; O final manifest; IP-derived SDK location requires review |
 
----
+User-directed export uses expo-sharing/print APIs. Review selected destinations and Play's user-initiated transfer exception; export is not automatic ad sharing. Files outside the app sandbox created by users may remain after account deletion.
 
-## 3. Quyền (Permissions)
-Nếu được yêu cầu giải trình về các quyền truy cập:
-- **`RECORD_AUDIO`**: Sử dụng để thu âm giọng nói người dùng nhằm thực hiện tính năng phỏng vấn mô phỏng qua giọng nói (chuyển đổi Speech-to-Text). Không chạy ngầm.
+## External recipients and provider checks
 
----
+| Recipient | Source-grounded transfer | Verification required |
+| --- | --- | --- |
+| Nexora backend + PostgreSQL/hosting | Account, all feature content/results, orders, feedback | Actual hosting processor, access controls, logs/backups/retained ledger policy, deployed worker, TLS |
+| Local storage or Cloudflare R2 | CV documents and avatar; selected by backend config | Active storage provider, presigned HTTPS URLs, lifecycle/deletion, region/DPA; storage failure/recreated uploads |
+| Gemini and/or DeepSeek; Gemini document OCR | Prompt/context/answers and possibly whole CV bytes | Production selection, paid/free account, retention/training/data-use contract, service-provider exception. [Gemini terms](https://ai.google.dev/gemini-api/terms) distinguish service tiers; source default does not determine production tier. DeepSeek contract/policy needs team verification before declaring sharing No. |
+| Microsoft Azure Speech | Native audio and synthesis text | [Speech data/privacy documentation](https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/speech-service/speech-to-text/data-privacy-security), actual endpoint/resource/logging settings and applicable agreement. Do not generalize real-time guidance to all speech products or backend copies. |
+| Sentry React Native and backend Sentry if enabled | Crash/diagnostic events, sampled performance; backend config also includes Sentry | Production SDK payload/data collection guidance, DPA, retention, identifiers/IP handling, server-side scrubbing and transactions/breadcrumbs. sendDefaultPii:false is insufficient to promise zero PII. |
+| Resend or configured email sender | Verification/recovery/deletion email and recipient | Active email provider and domain, delivery configuration, logging/retention/DPA. A noop source default does not establish production configuration or delivery. |
+| Existing web payment processors (config supports fake/PayOS/SePay) | Backend billing records consumed by mobile; native sends no card/purchase requests | Team confirms actual web contract/refund terms and downstream transfers. Do not assert Google Play as processor. |
 
-## 4. Content Rating & Target Audience
-- **Target Age:** Từ 18 tuổi trở lên (18+). (Tuyệt đối không chọn 13-17 để tránh dính Families Policy cực kỳ phức tạp).
-- **Chứa nội dung người dùng tạo (UGC):** CÓ (Do có phần nhập câu trả lời phỏng vấn và upload CV).
-- **Moderation:** Có cơ chế report nội dung xấu.
+## Decision separation
 
----
+| Evidence tier | Established in this review | Limits |
+| --- | --- | --- |
+| Source verified | M1–M8/B1–B5 flows, configurable recipients, nullable deletion status, immediate queueing, 30-minute single-use email token, no native purchase flow, no custom analytics transport. FE PR #60 source and explicit request/confirm actions. | Source defaults do not prove active deployment or contracts. |
+| Production config verified | Read-only public HTTPS routes: www deletion/confirmation/privacy/home 200; apex 308 to www; no login required on deletion pages. | No secret configuration inspected. Owner-reported real email/DB success is separately attributed, not an independently repeated test. Exact email origin/PublicUrl remains unverified. |
+| Provider contract verified | No project-specific production agreements or account tiers were supplied. Linked provider documentation explains possible behavior only. | No final sharing, training, retention or ephemeral answer follows from generic documentation. |
+| Console owner confirmed | No final Data Safety answer or submission signoff supplied. Product owner selected official support `nexorainterview.vn@gmail.com`. | Contact choice is not Console signoff. Public homepage/privacy still use a superseded contact and need external synchronization. |
 
-## 5. Chính sách hoàn tiền (Payments)
-- Mọi giao dịch được xử lý 100% qua Google Play Billing. Chính sách hoàn tiền tuân thủ hoàn toàn quy định chuẩn của Google Play.
+## OPEN DATA SAFETY DECISIONS — OWNER INPUT REQUIRED
 
----
+Every decision below is unresolved. Candidate answers in the matrix are conditional; do not convert unknowns into Yes/No. “Blocks” refers to truthful final form submission, not completion of this corrective source PR.
 
-💡 **Hành động của bạn:**
-1. Mở Play Console -> App Content.
-2. Mở từng mục Data Safety, Target Audience, AI-generated content.
-3. Bê nguyên xi các câu trả lời trên vào form.
-4. Nhấn Save & Submit.
+| Exact question | Source evidence establishes | Missing information | Who confirms | Blocks truthful submission? | Affected Play field |
+| --- | --- | --- | --- | --- | --- |
+| Which hosting, database and file-storage processors actually handle production data, and is every upload/provider hop encrypted? | M2/B3 support PostgreSQL, local or R2 storage; raw PUT uses supplied URL. T describes source HTTPS safeguards. | Active providers/regions, actual presigned destinations, proxy/provider TLS and processing agreements. | Backend/infrastructure owner | Yes, for relevant collection/sharing and universal encryption answer. | Data collection/sharing; encrypted in transit |
+| Which AI/OCR providers and account tiers are active, and do they use inputs for independent purposes or training? | B4 supports Gemini/DeepSeek and whole-document Gemini OCR. | Production selection, paid/free tier, project-specific contracts, retention/training settings and service-provider conditions. | Backend + AI procurement/legal owner | Yes. | Files/docs, personal info, user content; sharing, purposes, ephemeral processing |
+| What happens to Azure recordings and TTS text after real-time processing? | M4 uploads audio/text over HTTPS; temporary local cleanup is attempted. | Actual endpoint/resource, logging and retention settings, applicable agreement and independent data use. | Speech resource + legal owner | Yes. | Audio/text collection, sharing, ephemeral processing, purposes |
+| Does production Sentry collect identifiers, IP-derived data, breadcrumbs, diagnostics or traces, and can users opt out? | M5 gates on DSN, configures sampled traces and partial filtering; no payload inspected. | Enabled DSNs/SDK integrations, sanitized representative events, identifiers/IP/location handling, retention/DPA and requiredness. | Mobile/backend telemetry owner | Yes. | Crash logs, diagnostics, identifiers, possible location; sharing, required/optional, purposes |
+| Which records and copies remain after deletion, for how long, and does every worker/storage path complete? | B1 deletes content/files, anonymizes identity and retains billing/usage/privacy records; retries and upload-intent delays exist. | Production worker/failure evidence, ledger justification/durations, backup/log/provider lifecycle and deletion coverage. | Backend/data controller + infrastructure owner | Yes, for accurate deletion/retention representations. | Deletion mechanism/practices and linked privacy policy |
+| Which email processor handles recipients, and what are its contractual use/retention conditions? | B2/B5 have 30-minute single-use verification and configurable Resend/noop sender. Public routes are available; owner reports successful delivery/confirmation. | Actual production processor, retention/DPA. Separately verify actual received-link hostname and PublicUrl; sender identity is not support contact. | Backend/email + legal owner | Yes for recipient sharing/retention; exact link-origin check is an operational follow-up, not evidence that the public route is unavailable. | Email/personal info sharing, account management; deletion URL |
+| How should existing order history and downstream web billing be declared for all distributed versions? | M7 displays server-owned history; no native card collection or active purchase API. | Active web processors/contracts, account ecosystem transfers and final purchase-history scope. | Billing/backend + Console owner | Yes for affected financial categories. | Purchase history, payment info, sharing, purposes |
+| What is optional/required and which categories cover derived reports and incidental sensitive content across versions? | M1–M4/M8 identify optional feature inputs and generated results; CV/answers can contain incidental information. | All active versions/tracks/regions, actual requested content, registration requirements and final category mapping. | Product/mobile + Console owner | Yes. | Data types; required/optional, purposes, collection |
+| Do actual export destinations qualify for user-initiated transfer exceptions? | M8 exposes deliberate export/share through platform APIs. | Actual destinations, SDK behavior and owner interpretation of exception; outside-sandbox copies remain user-controlled. | Mobile/privacy + Console owner | Yes if used to justify a sharing exclusion. | Sharing and user-initiated transfer exception |
+| Does the published policy accurately identify the controller/contact and match all final answers? | Mobile uses owner-selected official support; public privacy/home still display a superseded contact. Matrix documents source limits. | External contact synchronization, controller/legal approval, approved retention wording and final Console signoff. | FE/content + legal/data controller + Console owner | Yes. | Privacy policy URL/content, developer contact, final Data Safety declarations |
+
+No Console submission performed. Resolve these decisions with attributed evidence, then have the Console owner approve final answers. AAB generation/signing, final manifest inspection and 16 KB runtime testing are excluded from this policy PR; source checks do not certify release binaries.

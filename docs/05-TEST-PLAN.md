@@ -1,3 +1,5 @@
+> HISTORICAL / SUPERSEDED — 2026-10-04: Original audit/plan/evidence retained below. Billing implementation, checkout steering, retention/recovery, universal policy PASS and binary-certification claims are not current release evidence. See [current handoff](release/GOOGLE-PLAY-HANDOFF.md) and [Data Safety matrix](evidence/release/DATA-SAFETY-FORM-ANSWERS.md). Prior screenshots/test results have not been repeated for this release.
+
 # 05 — Kế hoạch kiểm thử xác nhận (verification test plan)
 
 > Chạy **toàn bộ** tài liệu này sau khi hoàn thành Phase 1–5 của [`03-REMEDIATION-PLAN.md`](./03-REMEDIATION-PLAN.md), trên **bản build release + minify** (không phải debug).

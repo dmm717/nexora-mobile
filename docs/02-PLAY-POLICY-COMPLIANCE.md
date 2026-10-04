@@ -1,3 +1,5 @@
+> HISTORICAL / SUPERSEDED — 2026-10-04: Original audit/plan/evidence retained below. Billing implementation, checkout steering, retention/recovery, universal policy PASS and binary-certification claims are not current release evidence. See [current handoff](release/GOOGLE-PLAY-HANDOFF.md) and [Data Safety matrix](evidence/release/DATA-SAFETY-FORM-ANSWERS.md). Prior screenshots/test results have not been repeated for this release.
+
 # 02 — Đối chiếu chính sách Google Play
 
 Tài liệu này đối chiếu từng chính sách Google Play liên quan với trạng thái thực tế của Nexora Mobile tại commit `c59e138`, kèm **trích dẫn nguyên văn** điều khoản để team có thể tự kiểm chứng và dùng khi cần appeal.

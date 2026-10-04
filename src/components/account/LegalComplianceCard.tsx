@@ -58,7 +58,7 @@ export const LegalComplianceCard = ({ openLegalModal, colors }: { openLegalModal
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ionicons name="trash-bin-outline" size={18} color={colors.primary} />
-            <ThemedText style={[styles.btnText, { color: colors.text }]}>Quy trình xóa dữ liệu (Google Play)</ThemedText>
+            <ThemedText style={[styles.btnText, { color: colors.text }]}>Quy trình xóa tài khoản & dữ liệu</ThemedText>
           </View>
           <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
         </TouchableScale>

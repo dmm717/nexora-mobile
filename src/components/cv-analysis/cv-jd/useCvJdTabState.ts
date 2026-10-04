@@ -91,7 +91,7 @@ export function useCvJdTabState() {
     initialPageParam: 1,
     refetchInterval: (query) => {
       if (!query.state.data) return false;
-      const hasPending = query.state.data.pages.some(page => 
+      const hasPending = query.state.data.pages.some(page =>
         page.items.some((r: any) => r.status === 'pending' || r.status === 'processing' || r.status === 'queued')
       );
       return hasPending ? 3000 : false;
@@ -222,7 +222,7 @@ export function useCvJdTabState() {
     },
     onError: (err: any) => {
       if (err?.code === 'FEATURE_QUOTA_EXCEEDED' || err?.code === 'FEATURE_NOT_AVAILABLE') {
-        toast.error(err.message || 'Bạn đã sử dụng hết lượt phân tích CV trong gói hiện tại. Vui lòng nâng cấp gói để tiếp tục.');
+        toast.error(err.message || 'Bạn đã sử dụng hết lượt phân tích CV trong gói hiện tại.');
       } else if (err?.code === 'RESUME_NOT_READY') {
         toast.error(err.message || 'CV của bạn đang được hệ thống xử lý (trích xuất văn bản). Vui lòng đợi vài giây và thử lại.');
       } else if (err?.code === 'RESUME_ANALYSIS_CONTEXT_INVALID') {

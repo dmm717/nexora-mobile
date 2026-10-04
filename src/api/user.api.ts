@@ -11,6 +11,26 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+/** MeController / PrivacyContracts at backend main 8c5b346. No scheduled date. */
+export interface DeletionRequest {
+  id: string;
+  status: string;
+  requestedAt: string;
+  completedAt: string | null;
+  attempts?: number;
+}
+
+function unwrapDeletionRequest(body: unknown): DeletionRequest | null {
+  const value = body && typeof body === 'object' && 'data' in body ? body.data : body;
+  if (value === null) return null;
+  if (!value || typeof value !== 'object' || !('id' in value) || typeof value.id !== 'string' ||
+      !('status' in value) || typeof value.status !== 'string' ||
+      !('requestedAt' in value) || typeof value.requestedAt !== 'string') {
+    throw new Error('Không thể xác minh trạng thái yêu cầu xóa. Vui lòng kiểm tra lại trước khi gửi tiếp.');
+  }
+  return value as DeletionRequest;
+}
+
 export const userApi = {
   getCurrentUser: async (): Promise<UserDto> => {
     const res = await apiClient.get<{ data?: UserDto } | UserDto>('/me');
@@ -35,16 +55,18 @@ export const userApi = {
     return res.data;
   },
 
-  deleteAccount: async (): Promise<any> => {
+  deleteAccount: async (idempotencyKey = createIdempotencyKey()): Promise<DeletionRequest> => {
     const res = await apiClient.post('/me/deletion-requests', null, {
-      headers: { 'Idempotency-Key': createIdempotencyKey() }
+      headers: { 'Idempotency-Key': idempotencyKey, 'X-No-Auth-Retry': 'true' }
     });
-    return res.data;
+    const request = unwrapDeletionRequest(res.data);
+    if (!request) throw new Error('Máy chủ chưa xác nhận yêu cầu xóa tài khoản.');
+    return request;
   },
 
-  getDeletionRequest: async (): Promise<any> => {
+  getDeletionRequest: async (): Promise<DeletionRequest | null> => {
     const res = await apiClient.get('/me/deletion-requests/current');
-    return 'data' in res.data && res.data.data ? res.data.data : res.data;
+    return unwrapDeletionRequest(res.data);
   },
 
   uploadAvatar: async (fileUri: string, mimeType: string, filename: string): Promise<string> => {

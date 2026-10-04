@@ -1,3 +1,5 @@
+> HISTORICAL / SUPERSEDED — 2026-10-04: Original audit/plan/evidence retained below. Billing implementation, checkout steering, retention/recovery, universal policy PASS and binary-certification claims are not current release evidence. See [current handoff](release/GOOGLE-PLAY-HANDOFF.md) and [Data Safety matrix](evidence/release/DATA-SAFETY-FORM-ANSWERS.md). Prior screenshots/test results have not been repeated for this release.
+
 # Hướng Dẫn Kiểm Thử Chính Sách (POL-01 -> POL-05)
 
 Tài liệu này ghi chú lại những việc cần làm để hoàn tất BƯỚC 3 (Test Chính sách) trong lộ trình `06-EXECUTION-ORDER.md`.

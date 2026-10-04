@@ -17,6 +17,7 @@ interface AuthContextType {
   login: (payload: LoginRequest) => Promise<void>;
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
+  clearSession: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -54,7 +55,7 @@ async function hydrateSessionAsync(
         refreshResponse.data?.data?.accessToken || refreshResponse.data?.accessToken;
       const newRefreshToken =
         refreshResponse.data?.data?.refreshToken || refreshResponse.data?.refreshToken;
-        
+
       if (newAccessToken) {
         await tokenStorage.setAccessToken(newAccessToken);
         token = newAccessToken;
@@ -141,12 +142,14 @@ async function logoutAsync(
   setUser: (u: UserDto | null) => void,
   setIsLoading: (v: boolean) => void,
   queryClient: QueryClient,
+  notifyServer = true,
 ): Promise<void> {
   setIsLoading(true);
   try {
-    await authApi.logout();
+    if (notifyServer) await authApi.logout();
   } finally {
     await tokenStorage.clearTokens();
+    await queryClient.cancelQueries();
     queryClient.clear(); // Flush all cached React Query data on logout
     clearInterviewSpeechAuthorizationCache(); // Phase 4.9: Clear Azure Speech token
     setUser(null);
@@ -196,6 +199,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [queryClient],
   );
 
+  // Deletion already revokes server tokens; clear locally without another API call.
+  const clearSession = useCallback(
+    () => logoutAsync(setUser, setIsLoading, queryClient, false),
+    [queryClient],
+  );
+
   const refreshUser = useCallback(async () => {
     const token = await tokenStorage.getAccessToken();
     if (!token) {
@@ -230,6 +239,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         register,
         logout,
+        clearSession,
         refreshUser,
       }}
     >

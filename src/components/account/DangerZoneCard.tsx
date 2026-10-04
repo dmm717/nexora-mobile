@@ -7,13 +7,13 @@ import { styles } from '@/styles/account.styles';
 import { AccountDeletionModal } from './AccountDeletionModal';
 import { useAuth } from '@/context/auth-context';
 
-export const DangerZoneCard = ({ logout, colors }: { logout: () => void, colors: any }) => {
+export const DangerZoneCard = ({ colors }: { colors: any }) => {
   const [isModalVisible, setModalVisible] = React.useState(false);
-  const { user } = useAuth();
-  const userEmail = user?.email || user?.id || '';
+  const { user, clearSession } = useAuth();
+  const userEmail = user?.email || '';
 
   const handleDeleteAccount = () => {
-    setModalVisible(true);
+    if (user) setModalVisible(true);
   };
 
   return (
@@ -31,7 +31,7 @@ export const DangerZoneCard = ({ logout, colors }: { logout: () => void, colors:
           Xóa tài khoản người dùng
         </ThemedText>
         <ThemedText style={[styles.dangerSub, { color: '#7f1d1d' }]}>
-          Vô hiệu hóa tài khoản của bạn ngay lập tức. Bạn có 30 ngày ân hạn để khôi phục trước khi dữ liệu bị xóa vĩnh viễn.
+          Gửi yêu cầu xóa tài khoản và dữ liệu cá nhân. Khi máy chủ chấp nhận, bạn sẽ được đăng xuất. Không có chức năng hủy yêu cầu trong ứng dụng.
         </ThemedText>
       </View>
 
@@ -40,14 +40,14 @@ export const DangerZoneCard = ({ logout, colors }: { logout: () => void, colors:
         onPress={handleDeleteAccount}
       >
         <ThemedText style={{ color: '#ffffff', fontWeight: '700', fontSize: 12 }}>
-          Xóa tài khoản vĩnh viễn
+          Yêu cầu xóa tài khoản
         </ThemedText>
       </TouchableScale>
 
-      <AccountDeletionModal 
-        visible={isModalVisible} 
-        onClose={() => setModalVisible(false)} 
-        logout={logout} 
+      <AccountDeletionModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        logout={clearSession}
         colors={colors}
         userEmail={userEmail}
       />
