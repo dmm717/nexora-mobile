@@ -35,8 +35,24 @@ export interface AnswerView {
   questionId: string;
   content: string;
   durationSeconds?: number | null;
-  evaluation?: any | null;
+  evaluation?: AnswerEvaluation | null;
+  evaluationState?: 'queued' | 'processing' | 'ready' | 'failed';
   createdAt: string;
+}
+
+export interface AnswerEvaluation {
+  scores: (RubricScore & { maxScore?: number })[];
+  feedback: string;
+  star?: StarEvaluation | null;
+  strengths?: string[] | null;
+  improvements?: string[] | null;
+}
+
+// Resource identity belongs to the persisted answer, never to evaluation JSON.
+export interface QuickCoachingState {
+  answerId?: string | null;
+  evaluationState: AnswerView['evaluationState'];
+  evaluation: AnswerEvaluation;
 }
 
 export interface InterviewContinuationView {

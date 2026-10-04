@@ -118,7 +118,7 @@ export default function StarBuilderScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <ReportContentButton 
                   contentType="star_suggestion"
-                  contentId={activeAttempt.id || 'star-builder'}
+                  contentId={activeAttempt.status === 'completed' && evaluation ? activeAttempt.id : undefined}
                   iconSize={20}
                   color={colors.primary}
                 />

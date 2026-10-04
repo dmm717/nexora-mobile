@@ -11,10 +11,11 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { AIGeneratedLabel } from '@/components/moderation/AIGeneratedLabel';
 import { ReportContentButton } from '@/components/moderation/ReportContentButton';
+import { QuickCoachingState } from '@/api/types/interview.types';
 
 export interface QuickCoachingModalProps {
   visible: boolean;
-  coaching: any;
+  coaching: QuickCoachingState | null;
   candidateAnswer?: string | null;
   questionSequence: number;
   onContinue: () => void;
@@ -30,11 +31,13 @@ export function QuickCoachingModal({
   onClose,
   colors,
 }: QuickCoachingModalProps) {
-  if (!coaching) return null;
+  // Queued/failed/withheld evaluations are not AI content the user can report.
+  if (!coaching || coaching.evaluationState !== 'ready') return null;
+  const evaluation = coaching.evaluation;
 
-  const scores = Array.isArray(coaching.scores) ? coaching.scores : [];
-  const strengths = Array.isArray(coaching.strengths) ? coaching.strengths : [];
-  const improvements = Array.isArray(coaching.improvements) ? coaching.improvements : [];
+  const scores = Array.isArray(evaluation.scores) ? evaluation.scores : [];
+  const strengths = Array.isArray(evaluation.strengths) ? evaluation.strengths : [];
+  const improvements = Array.isArray(evaluation.improvements) ? evaluation.improvements : [];
 
   let nextSequenceLabel = `Tiếp tục Câu ${questionSequence + 1}`;
   if (questionSequence >= 3) {
@@ -76,7 +79,7 @@ export function QuickCoachingModal({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.one }}>
               <ReportContentButton 
                 contentType="coaching_note"
-                contentId={coaching.id || `coaching-${questionSequence}`}
+                contentId={coaching.answerId}
               />
               <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
                 <Ionicons name="close" size={22} color={colors.text} />
@@ -87,9 +90,9 @@ export function QuickCoachingModal({
           {/* Body Scroll */}
           <ScrollView contentContainerStyle={styles.bodyScroll} showsVerticalScrollIndicator={false}>
             {/* Overall Feedback */}
-            {coaching.feedback && (
+            {evaluation.feedback && (
               <View style={[styles.feedbackBox, { backgroundColor: colors.background, borderColor: colors.cardBorder }]}>
-                <ThemedText style={styles.feedbackText}>{coaching.feedback}</ThemedText>
+                <ThemedText style={styles.feedbackText}>{evaluation.feedback}</ThemedText>
               </View>
             )}
 
