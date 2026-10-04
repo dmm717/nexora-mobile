@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing } from '@/constants/theme';
 import { logger } from '@/services/logger';
 import { useRouter } from 'expo-router';
+import { SUPPORT_EMAIL } from '@/constants/legal';
 import { toast } from '@/components/ui/toast/ToastProvider';
 export class GlobalErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -31,9 +32,13 @@ export class GlobalErrorBoundary extends React.Component<
 }
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   const router = useRouter();
-  const handleReport = () => {
-    logger.error('App Crashed (User Reported)', error);
-    toast.success('Cảm ơn bạn đã thông báo sự cố cho chúng tôi.');
+  const handleReport = async () => {
+    try {
+      // No automatic submission: the user reviews and sends their own email.
+      await Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Nexora%20Mobile`);
+    } catch {
+      toast.error(`Vui lòng liên hệ ${SUPPORT_EMAIL} để báo sự cố.`);
+    }
   };
   const handleGoHome = () => {
     retry();
@@ -49,7 +54,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
         <Text style={styles.title}>Đã xảy ra sự cố không mong muốn</Text>
         
         <Text style={styles.description}>
-          Xin lỗi, ứng dụng Nexora vừa gặp lỗi và không thể tiếp tục. Chúng tôi đã ghi nhận sự cố này.
+          Xin lỗi, ứng dụng Nexora vừa gặp lỗi và không thể tiếp tục. Bạn có thể thử lại hoặc mở email để liên hệ hỗ trợ; ứng dụng không tự động gửi báo cáo lỗi.
         </Text>
         {__DEV__ && (
           <View style={styles.devErrorBox}>
@@ -66,7 +71,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
           </TouchableOpacity>
           
           <TouchableOpacity style={[styles.button, styles.textButton]} onPress={handleReport}>
-            <Text style={styles.textButtonText}>Báo cáo sự cố</Text>
+            <Text style={styles.textButtonText}>Liên hệ hỗ trợ qua email</Text>
           </TouchableOpacity>
         </View>
       </View>

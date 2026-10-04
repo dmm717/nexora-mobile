@@ -249,7 +249,7 @@ export function AudioSpeechDock({
               ? 'Đang gửi bản ghi âm lên hệ thống...'
               : isRecording
                 ? `Đang nhận diện giọng nói ${formatTimer(durationSeconds)}...`
-                : 'Nhấn micro để trả lời (không tự động nộp)'}
+                : 'Nhấn micro để ghi âm và gửi tới Azure Speech chuyển thành văn bản (không tự động nộp). Bạn có thể dùng Bàn phím.'}
           </ThemedText>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

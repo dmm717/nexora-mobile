@@ -86,7 +86,7 @@ export const AccountDeletionModal = ({ visible, onClose, logout, colors, userEma
                 <ThemedText style={styles.listItem}>• Ảnh đại diện và hồ sơ tài khoản</ThemedText>
                 <ThemedText style={[styles.listHeader, { color: colors.text, marginTop: Spacing.three }]}>Bản ghi máy chủ giữ lại:</ThemedText>
                 <ThemedText style={styles.listItem}>• Giao dịch, quyền lợi và lịch sử sử dụng</ThemedText>
-                <ThemedText style={styles.listItem}>• Yêu cầu xóa và tài khoản đã ẩn danh hóa; thời hạn lưu trữ cần được xác nhận</ThemedText>
+                <ThemedText style={styles.listItem}>• Yêu cầu xóa và mã tài khoản giả danh để đối soát, bảo mật và tuân thủ pháp luật; không đồng nghĩa xóa ngay mọi bản ghi</ThemedText>
               </View>
               <View style={styles.buttonRow}>
                 <TouchableScale style={[styles.cancelButton, { borderColor: colors.cardBorder }]} onPress={handleClose}>

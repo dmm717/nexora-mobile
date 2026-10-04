@@ -83,6 +83,8 @@ export function ReportContentButton({
     <>
       <TouchableOpacity
         style={styles.flagButton}
+        accessibilityRole="button"
+        accessibilityLabel="Báo cáo nội dung AI"
         onPress={() => setModalVisible(true)}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >

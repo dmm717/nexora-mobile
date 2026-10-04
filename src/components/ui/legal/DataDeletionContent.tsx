@@ -24,8 +24,9 @@ export const DataDeletionContent = ({ colors, styles }: { colors: any, styles: a
     <View style={styles.contentBlock}>
       {renderSectionHeader('3', 'Phạm vi xử lý dữ liệu', colors, styles)}
       <View style={styles.bulletList}>
-        {renderBullet('Quy trình máy chủ xóa hồ sơ nghề nghiệp, CV và ảnh đại diện đã lưu, mô tả công việc, câu trả lời phỏng vấn, báo cáo AI, lộ trình học tập và báo cáo nội dung gắn với tài khoản.', colors, styles)}
-        {renderBullet('Thông tin định danh tài khoản được ẩn danh hóa. Một số bản ghi giao dịch, quyền lợi, sử dụng và yêu cầu xóa được giữ lại trên máy chủ; thời hạn lưu trữ cần được Nexora xác nhận theo chính sách áp dụng.', colors, styles)}
+        {renderBullet('Khi xử lý hoàn tất, máy chủ xóa hồ sơ nghề nghiệp, CV và ảnh đại diện thuộc tài khoản trên Cloudflare R2, mô tả công việc, câu trả lời phỏng vấn, báo cáo AI, lộ trình học tập và báo cáo nội dung gắn với tài khoản. Lỗi lưu trữ hoặc lượt tải lên còn hiệu lực có thể làm việc hoàn tất chậm hơn.', colors, styles)}
+        {renderBullet('Tài khoản bị vô hiệu hóa và các trường nhận diện được thay thế hoặc loại bỏ. Mã tài khoản giả danh vẫn có thể liên kết với giao dịch, quyền lợi, lịch sử sử dụng và audit được giữ lại để đối soát, bảo mật, tranh chấp và nghĩa vụ pháp luật. Không phải mọi bản ghi trở thành ẩn danh không thể liên kết.', colors, styles)}
+        {renderBullet('Thông tin xác minh hết hạn và thông tin yêu cầu xóa đã hoàn tất đủ 12 tháng có thể thuộc diện dọn định kỳ, trừ trường hợp lưu giữ hợp pháp; việc dọn tự động chưa được áp dụng cho mọi dữ liệu. Mục tiêu 90 ngày cho lịch sử sử dụng không phục vụ kế toán và 30 ngày cho nhật ký chưa phải thời hạn xóa được bảo đảm; bản ghi tài chính không áp dụng mục tiêu 90 ngày.', colors, styles)}
         {renderBullet('Việc xử lý bản sao lưu và dữ liệu tại nhà cung cấp phụ thuộc quy trình lưu trữ của các bên đó; việc gửi yêu cầu không có nghĩa mọi bản sao bị xóa ngay.', colors, styles)}
       </View>
     </View>
