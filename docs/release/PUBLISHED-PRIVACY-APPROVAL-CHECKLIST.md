@@ -5,7 +5,11 @@ Public pages are FE shells; legal Markdown is owned by BE Site Content. Mobile c
 Current public Privacy and Terms contact already matches nexorainterview.vn@gmail.com; do not overwrite it with an old address.
 Read-only public privacy published timestamp: 2026-10-04T13:52:52.835691+00:00. Re-read before editing; this is not an optimistic-lock token.
 
-## Exact approved draft replacements
+## Proposed drafts — NOT yet approved or published
+
+The paired Backend PR includes complete docs/release/site-content/privacy-proposed.vi.md, terms-proposed.vi.md, exact public snapshots/diffs and PUBLICATION-CHECKLIST.md. Those files supersede these paragraph examples. Reconcile fresh public/admin drafts; obtain current tokens from authenticated admin GET, never public timestamps. No new effective date selected.
+
+## Proposed draft replacements
 
 Preserve all unaffected paragraphs/title. These drafts describe the owner-confirmed architecture and Render deployed OCR-removal commit; owner must confirm actual AI configuration and controller identity before publishing.
 
@@ -64,7 +68,7 @@ Preserve legitimate WEBSITE payment paths; this is not removal of web monetizati
 
 > Ứng dụng Android chỉ sử dụng quyền lợi hiện có của tài khoản, không xử lý mua hàng hoặc hướng người dùng tới thanh toán ngoài ứng dụng. Các kết quả AI là hỗ trợ luyện tập, có thể sai, không dự đoán tuyển dụng hoặc xác minh kinh nghiệm. Một số điểm được máy chủ tính từ tiêu chí đánh giá.
 
-No unsupported every-report-accepted promise. Learning Path/Skill Profile reporting gap must be fixed/excluded before release; legal wording alone does not fix policy functionality.
+No unsupported every-report-accepted promise. Reporting code is corrected by the paired patches; coordinated migration/deployment and device moderation remain required. Legal wording is not proof of rollout.
 
 ## Admin sequence (do not execute without owner publication approval)
 

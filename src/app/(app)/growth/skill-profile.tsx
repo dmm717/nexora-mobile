@@ -38,7 +38,7 @@ export default function SkillProfileScreen() {
             profile ? (
               <ReportContentButton 
                 contentType="skill_profile"
-                contentId={(profile as any)?.id || 'skill-profile'}
+                contentId={profile.reportingId}
                 iconSize={20}
                 color={colors.primary}
               />

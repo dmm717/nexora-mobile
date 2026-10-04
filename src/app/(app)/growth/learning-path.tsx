@@ -299,7 +299,7 @@ export default function LearningPathScreen() {
             path ? (
               <ReportContentButton 
                 contentType="learning_path"
-                contentId={path.id || 'learning-path'}
+                contentId={path.id}
                 iconSize={20}
                 color={colors.primary}
               />

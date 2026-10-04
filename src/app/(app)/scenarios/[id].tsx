@@ -202,7 +202,7 @@ export default function ScenarioDetailScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <ReportContentButton 
                   contentType="scenario_result"
-                  contentId={activeAttempt.id || id}
+                  contentId={activeAttempt.status === 'completed' && activeAttempt.evaluation ? activeAttempt.id : undefined}
                   iconSize={20}
                   color={colors.primary}
                 />

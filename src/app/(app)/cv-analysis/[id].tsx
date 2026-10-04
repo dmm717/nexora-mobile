@@ -84,7 +84,7 @@ export default function CVAnalysisDetailScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <ReportContentButton 
                 contentType="cv_analysis"
-                contentId={analysisId || 'unknown'}
+                contentId={analysisResult?.status === 'completed' && analysisResult.result ? analysisResult.id : undefined}
                 iconSize={20}
                 color={colors.primary}
               />

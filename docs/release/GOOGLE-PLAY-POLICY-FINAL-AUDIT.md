@@ -1,7 +1,7 @@
 # Google Play final policy audit
 
 Date: 2026-10-04. Proposed Mobile correction, **no deployment, AAB, Console submission or merge**.
-Base `1d1b4e3f9df856310fad27fea3b192453029d83c`. [Data Safety worksheet](PLAY-CONSOLE-DATA-SAFETY-FINAL.md) is authoritative for this proposed release; preliminary evidence remains historical.
+Base `1582998b0a3109f059c7065abb9f60a1b09795cc` (Mobile #3 merged). [Data Safety worksheet](PLAY-CONSOLE-DATA-SAFETY-FINAL.md) is authoritative; preliminary evidence remains historical.
 
 ## Evidence and implementation
 
@@ -23,14 +23,14 @@ Mobile fixes: remove Sentry package/lockfile/native plugin/Metro/init/logger tra
 | Policy | Verdict | Evidence / remaining requirement |
 | --- | --- | --- |
 | User Data disclosure | CONDITIONAL PASS | In-app legal screens describe actual account/content/voice/infra flows; support email correct. Public Site Content needs approved edits below; controller identity must match Play publisher. |
-| Data Safety accuracy | **BLOCKER** | Collected/purpose/optional selections resolved in worksheet. DeepSeek Shared=No not substantiated; owner must approve conservative Yes or produce applicable restrictive processor evidence. Other provider SP scope must match account agreements; explicit fallback supplied. |
+| Data Safety accuracy | DECLARATION STRATEGY READY; release confirmation pending | Adopted DeepSeek Shared=Yes for actual transfers; qualifying infrastructure/email/Speech Shared=No under standard service-provider terms. Custom DPA absence is not a blanket blocker. Audio Ephemeral=No conservative; actual account/configuration/binary still require owner verification. |
 | Privacy Policy access | PASS accessibility; CONDITIONAL content | Public HTTPS 200, in-app links/settings available, no login required. Availability is not approval of current generic published body. |
 | Account deletion | PASS source + owner runtime evidence | Two-step explicit confirmation, no automatic destructive retry/replay, stable idempotency, accepted vs completed distinct; session cleared/revoked. External page available. Financial/audit/backup exceptions disclosed; no grace/recovery guarantee. |
 | Retention representation | PASS corrected source; CONDITIONAL published content | Retention foundation default disabled/report-only; only two eligible metadata categories. 12 calendar months eligibility, 90-day usage/30-day logs targets not deployed enforcement. Stable UUID remains linked; no irreversible-anonymization claim. |
 | Payments / consumption-only | PASS source | No Play Billing/card/receipt collection, native checkout/deep-link purchase steering or upgrade CTA. Read-only entitlement/orders remain. No unverified refund/renewal promises. |
 | Microphone and sensitive permissions | CONDITIONAL PASS | Optional user-started speech, visible Azure notice/text alternative, local preflight recording only. Device permission/denial paths and final merged manifest require owner release checks; no binary inspection performed. |
 | SDK collection | PASS proposed Sentry removal; CONDITIONAL binary/config | No Sentry initialization/plugin/dependency remains. Local analytics has no network flush. Native Azure uses REST; secure storage/local modules not analytics. Backend telemetry separate. Final distributed SDK/manifest and remote EAS config not certified. |
-| AI-generated content reporting | **BLOCKER** | ReportContentButton maps six supported BE types; learning_path/skill_profile reject locally and never submit. Cannot satisfy in-app flagging for those AI outputs by email or fake success. Requires separately authorized BE endpoints/ownership/moderation support, or owner-approved exclusion of those features from release. |
+| AI-generated content reporting | CODE/TESTS READY; rollout not verified | Eight typed mappings, real path IDs, server owner/version reportingId, immutable snapshots, existing admin moderation. Invalid IDs blocked; success requires valid 202 receipt. Deploy BE migration/code first; actual device/report moderation not performed. |
 | AI prohibited-content safeguards | CONDITIONAL PASS | Terms prohibit harmful/illegal inputs, provider structured validation and report moderation exist. Code review does not establish effectiveness against harmful outputs; owner must exercise actual AI/report moderation and prevention controls. |
 | User-generated content | CONDITIONAL PASS | Private practice/answers are not a social feed. Public website testimonials require explicit opt-in and moderation; no public mobile feed/chat found. New-feedback opt-in now false. Moderator operations/removal must be verified; no blanket UGC-policy exemption for future public surfaces. |
 | Target audience / children | CONDITIONAL PASS | In-app policy says 18+. Owner must select intended **18 and over** audience and truthful rating/content questionnaire; this copy is not an age-verification mechanism. No Families declaration presumed. |
@@ -42,12 +42,12 @@ Mobile fixes: remove Sentry package/lockfile/native plugin/Metro/init/logger tra
 
 ## Blocker resolution, not blanket uncertainty
 
-1. DeepSeek declaration: owner/legal chooses Shared=Yes conservative documented option or provides applicable API processor restrictions. Consumer-chat policy is not automatically the developer API/end-user contract. Do not promise no retention/training.
-2. AI-reporting gap: BE owner must authorize/implement supported Learning Path and Skill Profile report types (not this Mobile-only patch), or owner excludes affected features. Current error is truthful, but still policy-blocking.
+1. DeepSeek Shared=Yes strategy adopted; no training/retention guarantee. Qualifying SP Shared=No is supported by standard terms; actual applicability is a targeted account check, not a missing-custom-DPA blocker.
+2. Reporting gap corrected in paired BE/Mobile patches; deploy BE migration/code first. Code tests do not prove live rollout or real-device moderation.
 3. Public legal approval: admin checklist supplies exact new paragraphs. Owner/controller identity and processor sharing choice must be approved; do not publish blindly.
 4. Release gates: actual DeepSeek selection, applicable SP agreements, standard Azure endpoint/no logging, final mobile build/permissions, audience/rating and reviewer access. These are targeted checks, not unresolved data collection facts.
 
-**Overall policy readiness: BLOCKED.** Mobile corrections and worksheet ready for independent review, not permission to submit.
+**Code ready for review; declaration strategy ready; owner release confirmation required; public publication pending; overall NOT POLICY READY for submission.** See [provider review](PROVIDER-AGREEMENT-REVIEW.md). No merge/deploy/AAB/Console action performed.
 
 ## Official sources (checked 2026-10-04)
 

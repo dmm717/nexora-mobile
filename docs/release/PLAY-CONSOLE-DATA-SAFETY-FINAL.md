@@ -1,12 +1,13 @@
 # Google Play Data Safety — final source-backed worksheet
 
-Reviewed 2026-10-04. Verdict: **BLOCKED for submission**, not “everything unresolved”.
+Reviewed 2026-10-05. **Declaration strategy ready; release/submission not yet approved.**
+See [provider scope review](PROVIDER-AGREEMENT-REVIEW.md).
 Use with [final audit](GOOGLE-PLAY-POLICY-FINAL-AUDIT.md) and [published-content checklist](PUBLISHED-PRIVACY-APPROVAL-CHECKLIST.md).
 This supersedes preliminary docs/evidence/release/DATA-SAFETY-FORM-ANSWERS.md for the proposed release. It does not certify older distributed builds.
 
 ## Scope and deployment evidence
 
-- Mobile main / merged #2: `1d1b4e3f9df856310fad27fea3b192453029d83c`; this PR removes Mobile Sentry SDK, native plugin and initialization, not merely its DSN.
+- Mobile base / merged #3: `1582998b0a3109f059c7065abb9f60a1b09795cc`; Mobile Sentry removal already exists on this base. This follow-up completes AI reporting and explicitly binds EAS environment=production. Android applicationId remains com.nexora.app. Remote EAS values and final binary were not inspected.
 - BE #123/#124 merged; current main `8150fc215b377a78cb61cc30b7c3e9e40b343c9d`.
 - Render read-only evidence: nexora-staging deployment `dep-db17cnvf3r2c73bn3v6g` is **live** at that exact BE commit. Dockerfile publishes API and Worker; render-entrypoint starts and monitors both in the same image. HTTPS health/live and api/v1/health returned 200. Thus deployed image includes OCR removal for both, not just an API-only update. No real CV job/provider call or destructive deletion repeated.
 - FE #61 merged at `69dbfbacc84f2fb9488d233d59cb6ccac57000ca`. Public privacy, terms and deletion routes return 200. Preview deployment success is not production revision proof; published legal content was separately read via public API.
@@ -40,7 +41,7 @@ For every collected row: transit encryption **Yes**; account deletion **Yes, req
 For uncollected rows: required/purposes/ephemeral/encryption/deletion are **N/A**. “No” below does not certify unknown older releases.
 
 Sharing choices:
-- **Yes†** is the conservative entry for DeepSeek-transmitted data; paid API is not proof of the service-provider exception. Owner must approve this choice or supply applicable restrictive processor terms before submitting.
+- **Yes†** is the adopted owner-approved proposed strategy for DeepSeek-transmitted types; paid API is not proof of the service-provider exception. It does not establish training or zero retention. Registration email, feedback/report descriptions are not automatically AI inputs; only actual AI-bound content is covered.
 - **No‡** relies on the documented infrastructure/Speech/email service-provider roles below, or a user-initiated public feedback sharing exception. Confirm applicable account agreements; provider customer-account analytics are distinct from end-user payloads. If an agreement excludes this scope, use the explicit fallback below rather than silently retaining No.
 - Optional incidental contact fields embedded in CV/free text are conservatively included. This is not a claim that every sensitive category possibly typed into free text is solicited.
 
@@ -48,7 +49,7 @@ Sharing choices:
 
 | Google category / type | Collected | Shared | Required / Optional | Purposes | Ephemeral | Evidence / confidence / remaining condition |
 | --- | --- | --- | --- | --- | --- | --- |
-| Personal info / Email address | Yes | Yes† | Required (account); optional inside content | AM, AF, DC, FS | No | Register/login, user.api, Resend verification; email may also occur in arbitrary AI-bound text. High collection confidence; DeepSeek sharing choice approval. |
+| Personal info / Email address | Yes | Yes† | Required (account); optional inside content | AM, AF, DC, FS | No | Register/login, user.api, Resend verification; email may also occur in arbitrary AI-bound text. High collection confidence; adopted DeepSeek sharing strategy for incidental AI-bound email, not registration data by itself. |
 | Personal info / Name | Yes | Yes† | Required display name; optional CV identity | AM, AF, P | No | Registration, profile, CV narrative. Backend contact scrubbing is not a guarantee all names disappear. |
 | Personal info / User IDs | Yes | No‡ | Required | AM, AF, FS | No | Auth/session identifiers, resource ownership, immutable usage linked to retained UUID. No mobile advertising identifier. |
 | Personal info / Address | Yes | Yes† | Optional | AF | No | Candidate-supplied CV/free text may include address; stored canonical text. No location sensor. |
@@ -56,7 +57,7 @@ Sharing choices:
 | Personal info / Other info | Yes | Yes† | Optional | AF, P | No | Career goals, experience, education, skills/profile edits and compact ResumeProfile sent for coaching. |
 | Files and docs / Files and docs | Yes | Yes† | Optional | AF, P | No | resume.api/upload intent → private R2 PUT → finalize → local extraction → text/profile DeepSeek. Sharing covers derived document contents, not original PDF upload to DeepSeek. |
 | Photos and videos / Photos | Yes | No‡ | Optional | AF, AM | No | User-selected avatar upload/storage; no facial identification established. Public moderated testimonial only by explicit opt-in. |
-| Audio files / Voice or sound recordings | Yes | No‡ | Optional | AF | **Yes for standard real-time STT audio payload only** | Native services/speech.ts uses short-audio REST conversation endpoint. Microsoft documents memory-only real-time processing. Device cache cleanup is separate; provider/resource must remain this endpoint, not custom/batch/logging. Persisted transcript is Other UGC below, NOT ephemeral. |
+| Audio files / Voice or sound recordings | Yes | No‡ | Optional | AF | **No (conservative release entry)** | Native services/speech.ts uses short-audio REST conversation endpoint, without storeAudio=true. Microsoft documents memory-only real-time audio. Owner previously observed no Azure Monitor diagnostic settings; that is owner-reported resource evidence, not universal logging/retention verification. Change to Yes only after confirming actual distributed release/resource meets Google's ephemeral definition. Device cache cleanup is separate; stored transcripts remain NOT ephemeral. |
 | App activity / Other user-generated content | Yes | Yes† | Optional | AF, P; DC for feedback | No | JD, answers, STAR/scenario, report descriptions, product feedback, goals; Azure TTS resubmits text. Questions/evaluations only downloaded do not count until resubmitted (TTS/context/report snapshot). |
 | App activity / App interactions | Yes | No‡ | Optional feature use | AF, P, FS | No | Practice submissions/completion, learning progress and server usage history. Not a claim local taps/analytics queue are uploaded. |
 | App info and performance / Diagnostics | Yes | No‡ | Required for server request handling | AF, FS | No | Backend request/error/operational metadata. Mobile production logger no-op; no automatic mobile stack upload. Optional server Sentry config must be checked against sanitization. |
@@ -83,12 +84,12 @@ If Console subdivides collection/sharing purposes, use AF/P for DeepSeek sharing
 
 ## Providers — scope, retention and sharing evidence
 
-Sources checked 2026-10-04. These are end-user payload roles, not an assertion that providers never use their own customer/account/security records.
+Sources checked 2026-10-04/05; see the provider scope review for exact clauses and account conditions. These are end-user payload roles, not an assertion that providers never use their own customer/account/security records.
 
 | Provider | Received data / purpose | Applicable scope, independent use and sharing decision | Retention/deletion limits |
 | --- | --- | --- | --- |
-| DeepSeek | Extracted/compact CV, JD, answers/goals; text AI | [Open Platform Terms](https://cdn.deepseek.com/policies/en-US/deepseek-open-platform-terms-of-service.html), effective 2026-04-29, covers developer API. Developer remains responsible for end-user notice/rights; downstream end-user processing is not resolved by consumer-chat privacy policy. No sufficient solely-on-instructions/no-training promise established. **Shared Yes†** conservative, or owner supplies applicable processor restriction. | No established API zero-retention or per-end-user erasure deadline. Do not claim paid usage settles this. |
-| Render | Backend requests, private content while processing, operational metadata | [DPA](https://render.com/dpa), dated 2024-12-19, supplements service agreement; processor role for customer personal data except express contractual exceptions. SP exception supportable for hosting under applicable scope (**No‡**). | Service/account/backup retention differs from account deletion in Nexora. No verified 30-day universal deadline. |
+| DeepSeek | Extracted/compact CV, JD, answers/goals; text AI | [Open Platform Terms](https://cdn.deepseek.com/policies/en-US/deepseek-open-platform-terms-of-service.html), effective 2026-04-29, covers developer API. Developer remains responsible for end-user notice/rights; downstream end-user processing is not resolved by consumer-chat privacy policy. No sufficient solely-on-instructions/no-training promise established. **Shared Yes†** adopted proposed strategy for actual transfers. | No established API zero-retention or per-end-user erasure deadline. Do not claim paid usage settles this. |
+| Render | Backend requests, private content while processing, operational metadata | [DPA](https://render.com/dpa), supplements service agreement (§2.1 processor role, §2.3 instructions; effective-date attribution not established in this follow-up); processor role for customer personal data except express contractual exceptions. SP exception supportable for hosting under applicable scope (**No‡**). | Service/account/backup retention differs from account deletion in Nexora. No verified 30-day universal deadline. |
 | Neon | Account, profile, answers, evaluations, billing/audit records | [current Neon schedule](https://neon.com/platform-terms), 2026-08-05, incorporates Databricks agreement/DPA; [current DPA](https://www.databricks.com/legal/data-protection-addendum). Do not use old Neon PDF as current contract. SP exception supportable for database customer content (**No‡**). | PITR/backups and retained pseudonymous billing data not erased merely because live personal rows are removed; configured duration not verified. |
 | Cloudflare R2 | Private CV/avatar objects, upload/network metadata | [Customer DPA](https://www.cloudflare.com/cloudflare-customer-dpa/) distinguishes customer processing from independent account data. Private storage on Nexora's instructions supports SP exception (**No‡**). | Owner-specific storage deletion, not bucket-age purge. No blanket historical-copy/backup deadline established. |
 | Resend | Email address and verification/recovery/deletion email content | [Terms](https://resend.com/legal/terms-of-service) incorporate [DPA](https://resend.com/legal/dpa); customer personal data processor vs independent company/account data. Email-delivery SP exception supportable (**No‡**). | [Security](https://resend.com/security) account-termination cleanup is not an individual message deletion SLA. Token expiry 30 minutes is unrelated. |
@@ -106,11 +107,19 @@ Owner's real deletion test accepted as evidence; no destructive repeat.
 
 ## Precise remaining submission decisions
 
-1. **DeepSeek Shared fields (†):** current terms insufficient for Shared=No. Safest accurate option is **Shared=Yes** on the affected personal/document/UGC types above (including optional contact text); disclose transfer and no unsupported training/retention guarantee. Owner/legal must approve. To instead choose No, obtain applicable API DPA/order/vendor statement restricting processing to Nexora instructions and document independent uses. Public paid-API status alone is insufficient.
-2. **SP exception scope (‡):** published contracts support infrastructure/email/Speech roles, not Nexora account-specific negotiation. Owner confirm standard applicable agreements and standard Azure real-time resource/no logging. If scope differs or cannot be established before submission, conservative **Shared=Yes** for affected User IDs, Photos, Voice, Interactions, Diagnostics/network IDs rather than claiming an unproved exception; retain exact collected/purpose answers. Ephemeral audio fallback **No** if endpoint/resource retention differs. This is a targeted contract check, not an unresolved collection matrix.
+1. **DeepSeek Shared fields (†):** proposed Shared=Yes is adopted for affected personal/document/UGC types actually transmitted (including incidental contact text). Original PDF/DOCX is NOT sent; Files declaration covers extracted contents. No training purpose or zero-retention guarantee is inferred. Confirm released transfer inventory; changing to No requires new applicable restrictive evidence.
+2. **SP exception scope (‡):** proposed Shared=No for Render, Neon, R2, Resend and standard Azure customer payload processing is supported by reviewed standard terms. Lack of a negotiated/custom DPA is NOT a blanket blocker. Confirm actual account/service coverage and independent-use exceptions; reassess only specific affected scopes if they do not qualify. Provider account/billing/security data is not automatically covered by the customer-content exception. Audio Ephemeral remains No pending release/resource verification; stored transcripts remain No regardless.
 3. **Actual release/backend configuration:** verify configured DeepSeek main AI and optional standard Azure; new mobile build must use this SDK-free commit. Render revision establishes OCR-removal deployment, not AI model configuration or real-job quality.
 4. **Published legal approval:** synchronize public policy to named processors/retained UUID and disclosure scope; checklist provided. App/controller identity must match Play listing and accountable owner. No publication performed.
-5. **AI report coverage:** learning_path/skill_profile currently fail locally before submission; separate backend-supported report fix or removal of those AI features from release is required. A mailto link is NOT a substitute for in-app AI reporting.
+5. **AI report coverage:** paired patches support all eight canonical types, actual path IDs, owner/version Skill Profile reportingId and immutable server snapshots; only valid 202 receipt triggers success. Code/tests ready, deployment/device moderation unverified. Apply BE migration/code BEFORE Mobile distribution. Email is not a substitute.
+
+## Readiness separation
+
+- Reporting code + deterministic tests: ready for review, NOT deployed.
+- Proposed declaration strategy: ready (DeepSeek Yes; qualifying SP exceptions No; audio Ephemeral No pending verification).
+- Owner confirmation: actual EAS production variables/build, API/provider configuration, agreements/resource scope, controller identity and device tests required.
+- Public Privacy/Terms: complete Backend drafts prepared, NOT published.
+- Overall: NOT POLICY READY for submission until publication/release gates are satisfied.
 
 ## Official interpretation sources
 

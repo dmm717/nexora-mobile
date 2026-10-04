@@ -21,6 +21,7 @@ export interface SkillProfileWeaknessSignalResponse {
 }
 
 export interface SkillProfileResponse {
+  reportingId?: string | null;
   competencies: SkillProfileCompetencyResponse[];
   weaknessSignals: SkillProfileWeaknessSignalResponse[];
 }

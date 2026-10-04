@@ -4,13 +4,15 @@ import { useRouter } from 'expo-router';
 import { interviewApi } from '@/api/interview.api';
 import { useInterviewAudio } from '@/hooks/useInterviewAudio';
 import { toast } from '@/components/ui/toast/ToastProvider';
+import { QuickCoachingState } from '@/api/types/interview.types';
 export function useInterviewSession(id: string | undefined) {
   const router = useRouter();
   const [answerText, setAnswerText] = useState('');
   const [durationSeconds, setDurationSeconds] = useState(0);
   const [showQ2BoundaryModal, setShowQ2BoundaryModal] = useState(false);
   const [showQ3BoundaryModal, setShowQ3BoundaryModal] = useState(false);
-  const [lastCoaching, setLastCoaching] = useState<any | null>(null);
+  const [lastCoaching, setLastCoaching] = useState<QuickCoachingState | null>(null);
+  const [pendingCoachingAnswerId, setPendingCoachingAnswerId] = useState<string | null>(null);
   const [showCoachingModal, setShowCoachingModal] = useState(false);
   const attemptedQuestionsRef = useRef<Set<string>>(new Set());
   const timerRef = useRef<any>(null);
@@ -38,13 +40,28 @@ export function useInterviewSession(id: string | undefined) {
         status === 'evaluating' ||
         reportState === 'processing' ||
         questionPrep === 'pending' ||
-        questionPrep === 'processing'
+        questionPrep === 'processing' ||
+        query.state.data?.answers?.some(answer =>
+          answer.evaluationState === 'queued' || answer.evaluationState === 'processing')
       ) {
         return 3000;
       }
       return false;
     }
   });
+  // Hydrate only the submitted answer's authoritative, server-ready evaluation.
+  // Active interviews may deliberately withhold evaluation JSON even when ready.
+  useEffect(() => {
+    if (!pendingCoachingAnswerId) return;
+    const answer = interview?.answers?.find(item => item.id === pendingCoachingAnswerId);
+    if (answer?.evaluationState === 'ready' && answer.evaluation) {
+      setLastCoaching({ answerId: answer.id, evaluationState: answer.evaluationState, evaluation: answer.evaluation });
+      setShowCoachingModal(true);
+      setPendingCoachingAnswerId(null);
+    } else if (answer?.evaluationState === 'failed') {
+      setPendingCoachingAnswerId(null);
+    }
+  }, [interview?.answers, pendingCoachingAnswerId]);
   // Find unanswered current question
   const answeredQuestionIds = new Set(interview?.answers?.map((a) => a.questionId) || []);
   const currentQuestion = interview?.questions?.find((q) => !answeredQuestionIds.has(q.id));
@@ -120,18 +137,22 @@ export function useInterviewSession(id: string | undefined) {
     onSuccess: (data) => {
       setAnswerText('');
       setDurationSeconds(0);
+      setLastCoaching(null);
+      setPendingCoachingAnswerId(null);
+      setShowCoachingModal(false);
       const isMaxReached = data.isComplete === true && !data.nextQuestion && data.continuation?.state === 'max_questions_reached';
       if (isMaxReached) {
         completeMutation.mutate();
         return;
       }
-      const evalData = data.answer?.evaluation || data.answer?.evaluation?.coachingFeedback;
       const isUpgradeRequired = !data.nextQuestion && data.continuation?.state === 'upgrade_required';
       if (isUpgradeRequired) {
         setShowQ3BoundaryModal(true);
-      } else if (evalData) {
-        setLastCoaching(evalData);
+      } else if (data.answer?.evaluationState === 'ready' && data.answer.evaluation) {
+        setLastCoaching({ answerId: data.answer.id, evaluationState: data.answer.evaluationState, evaluation: data.answer.evaluation });
         setShowCoachingModal(true);
+      } else if (data.answer?.id && (data.answer.evaluationState === 'queued' || data.answer.evaluationState === 'processing')) {
+        setPendingCoachingAnswerId(data.answer.id);
       }
       refetch();
     },

@@ -207,7 +207,7 @@ export default function ReportScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <ReportContentButton 
                 contentType="interview_report" 
-                contentId={report.id || id} 
+                contentId={report.id}
               />
               <TouchableOpacity onPress={() => router.replace('/(tabs)/home' as any)} style={{ padding: 6 }}>
                 <Ionicons name="home-outline" size={22} color={colors.primary} />
@@ -238,6 +238,7 @@ export default function ReportScreen() {
                 <QuestionReviewCard
                   key={review.questionId || `q-${review.sequence}-${review.topic}`}
                   review={review}
+                  reportId={report.id}
                   colors={colors}
                   onPracticeAgain={(qId) => {
                     setSelectedQuestionForPractice(qId);

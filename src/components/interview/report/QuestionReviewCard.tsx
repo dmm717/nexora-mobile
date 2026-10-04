@@ -9,10 +9,12 @@ import { ReportContentButton } from '@/components/moderation/ReportContentButton
 
 export const QuestionReviewCard = memo(function QuestionReviewCard({
   review,
+  reportId,
   colors,
   onPracticeAgain,
 }: {
   review: any;
+  reportId?: string | null;
   colors: any;
   onPracticeAgain: (questionId: string) => void;
 }) {
@@ -28,11 +30,13 @@ export const QuestionReviewCard = memo(function QuestionReviewCard({
         </View>
         <AIGeneratedLabel />
       </View>
-      <ReportContentButton 
-        contentType="interview_report" 
-        contentId={review.questionId || `review-${review.sequence}`}
-        contentSnapshot={JSON.stringify(review)}
-      />
+      <View style={{ maxWidth: 150, alignItems: 'flex-end' }}>
+        <ThemedText style={{ fontSize: 11, textAlign: 'right' }}>Phạm vi: toàn bộ báo cáo phỏng vấn</ThemedText>
+        <ReportContentButton
+          contentType="interview_report"
+          contentId={reportId}
+        />
+      </View>
     </View>
 
     <ThemedText style={styles.questionTitle}>Q: {review.question}</ThemedText>

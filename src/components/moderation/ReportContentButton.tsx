@@ -1,15 +1,15 @@
-import { reportApi, ReportContentType, ReportReasonCode } from '@/api/report.api';
+import { isReportableContentId, reportApi, reportContentTypes, ReportContentType, ReportReasonCode } from '@/api/report.api';
+import { AppError } from '@/api/types';
 import { toast } from '@/components/ui/toast/ToastProvider';
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from '../themed-text';
 interface ReportContentButtonProps {
   contentType: ReportContentType;
-  contentId: string;
-  contentSnapshot?: string;
+  contentId?: string | null;
   iconSize?: number;
   color?: string;
 }
@@ -24,7 +24,6 @@ const REASONS: { code: ReportReasonCode; label: string }[] = [
 export function ReportContentButton({
   contentType,
   contentId,
-  contentSnapshot,
   iconSize = 16,
   color
 }: ReportContentButtonProps) {
@@ -33,49 +32,40 @@ export function ReportContentButton({
   const [reasonCode, setReasonCode] = useState<ReportReasonCode | null>(null);
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const inFlight = useRef(false);
+  const validId = isReportableContentId(contentId);
   const handleSubmit = async () => {
+    if (inFlight.current) return;
     if (!reasonCode) {
       toast.error('Vui lòng chọn một lý do báo cáo.');
       return;
     }
-    if (!contentId || contentId === 'unknown') {
-      toast.error('Dữ liệu chưa sẵn sàng. Vui lòng thử lại sau.');
-      return;
-    }
-    const mapContentTypeToBackend = (type: string) => {
-      switch (type) {
-        case 'cv_analysis': return 'resume_analysis';
-        case 'coaching_note': return 'interview_answer_evaluation';
-        case 'scenario_result': return 'scenario_evaluation';
-        case 'star_suggestion': return 'star_evaluation';
-        default: return type;
-      }
-    };
-
-    const backendContentType = mapContentTypeToBackend(contentType);
-    if (backendContentType === 'skill_profile' || backendContentType === 'learning_path') {
-      toast.error('Tính năng báo cáo chưa được hỗ trợ cho nội dung này trên máy chủ.');
+    if (!isReportableContentId(contentId)) {
+      toast.error('Tải lại nội dung để báo cáo.');
       return;
     }
 
     try {
+      inFlight.current = true;
       setIsSubmitting(true);
 
       await reportApi.submitReport({
-        contentType: backendContentType as any,
+        contentType: reportContentTypes[contentType],
         contentId,
         reasonCode,
         description: description.trim() || undefined,
-        contentSnapshot
       });
 
       toast.success('Cảm ơn bạn. Chúng tôi sẽ xem xét nội dung này.');
       setModalVisible(false);
       setReasonCode(null);
       setDescription('');
-    } catch (e: any) {
-      toast.error(e.message || 'Không thể gửi báo cáo lúc này. Vui lòng thử lại sau.');
+    } catch (e: unknown) {
+      toast.error(e instanceof AppError && e.code === 'RESOURCE_NOT_FOUND'
+        ? 'Nội dung đã thay đổi hoặc không còn sẵn sàng. Vui lòng tải lại để báo cáo.'
+        : e instanceof Error ? e.message : 'Không thể gửi báo cáo lúc này. Vui lòng thử lại sau.');
     } finally {
+      inFlight.current = false;
       setIsSubmitting(false);
     }
   };
@@ -85,22 +75,26 @@ export function ReportContentButton({
         style={styles.flagButton}
         accessibilityRole="button"
         accessibilityLabel="Báo cáo nội dung AI"
+        accessibilityHint={validId ? undefined : 'Tải lại nội dung để báo cáo.'}
+        accessibilityState={{ disabled: !validId || isSubmitting }}
+        disabled={!validId || isSubmitting}
         onPress={() => setModalVisible(true)}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <Ionicons name="flag-outline" size={iconSize} color={color || colors.textMuted} />
       </TouchableOpacity>
+      {!validId && <ThemedText>Tải lại nội dung để báo cáo.</ThemedText>}
       <Modal
         visible={modalVisible}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => !inFlight.current && setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
-            onPress={() => !isSubmitting && setModalVisible(false)}
+            onPress={() => !inFlight.current && setModalVisible(false)}
           />
           <View style={[styles.bottomSheet, { backgroundColor: colors.background }]}>
             <View style={styles.handleContainer}>
@@ -108,7 +102,7 @@ export function ReportContentButton({
             </View>
             <View style={styles.header}>
               <ThemedText style={styles.headerTitle}>Báo cáo nội dung AI</ThemedText>
-              <TouchableOpacity onPress={() => setModalVisible(false)} disabled={isSubmitting}>
+              <TouchableOpacity accessibilityLabel="Đóng báo cáo" onPress={() => !inFlight.current && setModalVisible(false)} disabled={isSubmitting}>
                 <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
@@ -120,6 +114,10 @@ export function ReportContentButton({
                 {REASONS.map(reason => (
                   <TouchableOpacity
                     key={reason.code}
+                    accessibilityRole="radio"
+                    accessibilityLabel={reason.label}
+                    accessibilityState={{ checked: reasonCode === reason.code, disabled: isSubmitting }}
+                    disabled={isSubmitting}
                     style={[
                       styles.optionItem,
                       {
@@ -159,6 +157,7 @@ export function ReportContentButton({
                   multiline
                   numberOfLines={4}
                   maxLength={1000}
+                  editable={!isSubmitting}
                   value={description}
                   onChangeText={setDescription}
                   textAlignVertical="top"
@@ -169,7 +168,8 @@ export function ReportContentButton({
                   styles.submitButton,
                   { backgroundColor: reasonCode ? colors.primary : colors.cardBorder }
                 ]}
-                disabled={!reasonCode || isSubmitting}
+                accessibilityLabel="Gửi báo cáo"
+                disabled={!validId || !reasonCode || isSubmitting}
                 onPress={handleSubmit}
               >
                 {isSubmitting ? (
