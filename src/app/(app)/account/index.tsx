@@ -99,7 +99,7 @@ export default function AccountScreen() {
           <ProductFeedbackCard />
           <SessionsCard logout={logout} colors={colors} />
           <LegalComplianceCard openLegalModal={openLegalModal} colors={colors} />
-          <DangerZoneCard logout={logout} colors={colors} />
+          <DangerZoneCard colors={colors} />
 
         </ScrollView>
         <AppBottomNavBar activeTab="profile" />

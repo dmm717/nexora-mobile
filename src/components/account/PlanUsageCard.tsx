@@ -26,7 +26,7 @@ export const PlanUsageCard = ({ currentUserData, colors }: { currentUserData: an
             <ThemedText style={styles.cardTitle}>Gói cước & Sử dụng</ThemedText>
             <View style={[styles.planBadge, { backgroundColor: colors.primaryLight }]}>
               <ThemedText style={[styles.planBadgeText, { color: colors.primary }]}>
-                {entitlement?.planCode || 'FREE'}
+                {entitlement?.planCode || 'Chưa có thông tin'}
               </ThemedText>
             </View>
           </View>
@@ -39,7 +39,7 @@ export const PlanUsageCard = ({ currentUserData, colors }: { currentUserData: an
           style={[styles.btnOutline, { borderColor: colors.cardBorder }]}
           onPress={() => router.push('/(app)/pricing' as any)}
         >
-          <ThemedText style={[styles.btnText, { color: colors.text }]}>Nâng cấp gói</ThemedText>
+          <ThemedText style={[styles.btnText, { color: colors.text }]}>Xem quyền lợi</ThemedText>
         </TouchableScale>
       </View>
 

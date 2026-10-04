@@ -1,3 +1,5 @@
+> Current release: [Google Play handoff](release/GOOGLE-PLAY-HANDOFF.md), [owner checklist](04-PLAY-CONSOLE-CHECKLIST.md), and [Data Safety matrix](evidence/release/DATA-SAFETY-FORM-ANSWERS.md). Earlier numbered audit/remediation reports are historical and may describe superseded billing/deletion behavior.
+
 # Nexora Mobile — Hồ sơ kiểm thử bảo mật & tuân thủ Google Play
 
 > **Phạm vi**: toàn bộ source `nexora-mobile` tại commit `c59e138` (branch `main`), Expo SDK 57 / React Native 0.86.3.

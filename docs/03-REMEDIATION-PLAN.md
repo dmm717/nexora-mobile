@@ -1,3 +1,5 @@
+> HISTORICAL / SUPERSEDED — 2026-10-04: Original audit/plan/evidence retained below. Billing implementation, checkout steering, retention/recovery, universal policy PASS and binary-certification claims are not current release evidence. See [current handoff](release/GOOGLE-PLAY-HANDOFF.md) and [Data Safety matrix](evidence/release/DATA-SAFETY-FORM-ANSWERS.md). Prior screenshots/test results have not been repeated for this release.
+
 # 03 — Kế hoạch sửa lỗi chi tiết (step-by-step)
 
 > **Tài liệu này là kế hoạch thi công.** Mỗi bước có: mục tiêu, file đích, việc phải làm, cạm bẫy, và **acceptance criteria** (điều kiện đóng bước).

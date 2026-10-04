@@ -1,3 +1,5 @@
+> HISTORICAL / SUPERSEDED — 2026-10-04: Original audit/plan/evidence retained below. Billing implementation, checkout steering, retention/recovery, universal policy PASS and binary-certification claims are not current release evidence. See [current handoff](release/GOOGLE-PLAY-HANDOFF.md) and [Data Safety matrix](evidence/release/DATA-SAFETY-FORM-ANSWERS.md). Prior screenshots/test results have not been repeated for this release.
+
 # 01 — Báo cáo kiểm thử bảo mật & rà soát mã nguồn
 
 **Phương pháp**: SAST thủ công toàn bộ `src/` (160 file), rà soát cấu hình build (`app.json`, `eas.json`, `metro.config.js`, `tsconfig.json`), phân tích thành phần phụ thuộc (`npm audit`), rà soát luồng dữ liệu (auth, upload, thanh toán, speech), đối chiếu chính sách Google Play.

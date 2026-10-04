@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
+import { PRIVACY_URL } from '@/constants/legal';
 import React, { useEffect, useRef, useState, memo } from 'react';
 import {
   Animated,
@@ -120,8 +121,8 @@ export const LegalPolicyModal = memo(function LegalPolicyModal({
   };
 
   const hasAllLayouts = tabLayouts.length === TABS.length && tabLayouts.every(l => l !== undefined);
-  const activeWidth = TABS.findIndex(t => t.key === activeTab) !== -1 
-    ? tabLayouts[TABS.findIndex(t => t.key === activeTab)]?.width || 0 
+  const activeWidth = TABS.findIndex(t => t.key === activeTab) !== -1
+    ? tabLayouts[TABS.findIndex(t => t.key === activeTab)]?.width || 0
     : 0;
 
   const indicatorLeft = tabIndexAnim.interpolate({
@@ -219,11 +220,11 @@ export const LegalPolicyModal = memo(function LegalPolicyModal({
                 styles.bottomSheet,
                 {
                   backgroundColor: colors.background,
-                  transform: [{ 
+                  transform: [{
                     translateY: slideAnim.interpolate({
                       inputRange: [-1, 0, 1],
                       outputRange: [0, 0, 1],
-                    }) 
+                    })
                   }]
                 }
               ]}
@@ -239,12 +240,13 @@ export const LegalPolicyModal = memo(function LegalPolicyModal({
                   <ThemedText style={styles.headerTitle}>Pháp lý & điều khoản</ThemedText>
                 </View>
                 <View style={styles.headerActions}>
-                  <TouchableOpacity
-                    onPress={() => openWebUrl('https://nexora.vn/privacy')}
+                  {activeTab === 'privacy' && <TouchableOpacity
+                    accessibilityLabel="Mở chính sách bảo mật trên website Nexora"
+                    onPress={() => openWebUrl(PRIVACY_URL)}
                     style={styles.iconBtn}
                   >
                     <Ionicons name="open-outline" size={22} color={colors.text} />
-                  </TouchableOpacity>
+                  </TouchableOpacity>}
                   <TouchableOpacity onPress={onClose} style={styles.iconBtn}>
                     <Ionicons name="close" size={24} color={colors.text} />
                   </TouchableOpacity>
@@ -277,9 +279,9 @@ export const LegalPolicyModal = memo(function LegalPolicyModal({
                           style={[
                             { fontSize: 16, lineHeight: 24 },
                             styles.tabText,
-                            { 
+                            {
                               color: textColor,
-                              fontFamily: isActive ? Typography.fontFamily.bold : Typography.fontFamily.medium 
+                              fontFamily: isActive ? Typography.fontFamily.bold : Typography.fontFamily.medium
                             },
                           ]}
                         >
@@ -289,15 +291,15 @@ export const LegalPolicyModal = memo(function LegalPolicyModal({
                     );
                   })}
                   {hasAllLayouts && (
-                    <Animated.View 
+                    <Animated.View
                       style={[
-                        styles.activeIndicator, 
-                        { 
+                        styles.activeIndicator,
+                        {
                           backgroundColor: colors.primary,
                           transform: [{ translateX: indicatorLeft }],
                           width: activeWidth,
                         }
-                      ]} 
+                      ]}
                     />
                   )}
                 </ScrollView>
@@ -342,18 +344,18 @@ export const LegalPolicyModal = memo(function LegalPolicyModal({
                         {tab.key === 'terms' && <TermsOfServiceContent colors={colors} styles={styles} />}
                         {tab.key === 'payment' && <PaymentPolicyContent colors={colors} styles={styles} />}
                         {tab.key === 'deletion' && <DataDeletionContent colors={colors} styles={styles} />}
-        
-                        <View style={styles.footerRow}>
+
+                        {tab.key === 'privacy' && <View style={styles.footerRow}>
                           <TouchableOpacity
-                            onPress={() => openWebUrl('https://nexora.vn/privacy')}
+                            onPress={() => openWebUrl(PRIVACY_URL)}
                             style={styles.webLinkTextContainer}
                           >
                             <ThemedText style={[styles.webLinkText, { color: colors.primary }]}>
-                              Đọc bản đầy đủ trên nexora.vn
+                              Chính sách bảo mật trên website Nexora
                             </ThemedText>
                             <Ionicons name="arrow-forward" size={16} color={colors.primary} />
                           </TouchableOpacity>
-                        </View>
+                        </View>}
                       </ScrollView>
                     </View>
                   ))}

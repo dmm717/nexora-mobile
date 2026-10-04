@@ -1,23 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   ActivityIndicator,
-  Alert,
   RefreshControl,
   ScrollView,
   View,
-  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { pricingApi } from '@/api/pricing.api';
 import { authApi } from '@/api/auth.api';
-import { logger } from '@/services/logger';
 import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { GlassCard } from '@/components/ui/glass-card';
@@ -32,21 +27,18 @@ import {
   describePlanFeature,
 } from '@/utils/billing-presentation';
 import { styles } from '@/styles/pricing.styles';
-import { toast } from '@/components/ui/toast/ToastProvider';
 
 export default function PricingScreen() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const colorScheme = useColorScheme();
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
 
-  const [selectedPriceId, setSelectedPriceId] = useState<string | null>(null);
 
   // 1. Fetch Current User (with billing entitlement & orders)
   const {
     data: currentUser,
     isLoading: isUserLoading,
+    isError: isUserError,
     refetch: refetchUser,
   } = useQuery({
     queryKey: ['currentUser'],
@@ -57,6 +49,7 @@ export default function PricingScreen() {
   const {
     data: plans = [],
     isLoading: isPlansLoading,
+    isError: isPlansError,
     refetch: refetchPlans,
     isRefetching,
   } = useQuery({
@@ -98,7 +91,7 @@ export default function PricingScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <AppScreenHeader title="Gói Dịch Vụ & Thanh Toán" fallbackRoute="/(tabs)/profile" />
+        <AppScreenHeader title="Quyền Lợi Tài Khoản" fallbackRoute="/(tabs)/profile" />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -116,9 +109,9 @@ export default function PricingScreen() {
               </ThemedText>
             </View>
 
-            <ThemedText style={styles.mainHeading}>Gói dịch vụ & Lịch sử thanh toán</ThemedText>
+            <ThemedText style={styles.mainHeading}>Quyền lợi & Lịch sử giao dịch</ThemedText>
             <ThemedText style={styles.subHeading}>
-              Theo dõi hạn mức phỏng vấn, thời hạn gói và mở khóa thêm các tính năng phân tích & phỏng vấn AI mạnh mẽ.
+              Theo dõi quyền lợi hiện có, lượt sử dụng và thời hạn do máy chủ Nexora cung cấp. Ứng dụng không xử lý mua hàng.
             </ThemedText>
           </View>
 
@@ -135,7 +128,7 @@ export default function PricingScreen() {
                   </ThemedText>
                   <View style={[styles.activeStatusBadge, { backgroundColor: colors.primaryLight }]}>
                     <ThemedText style={[styles.activeStatusBadgeText, { color: colors.primary }]}>
-                      Đang hoạt động
+                      {isUserLoading ? 'Đang tải' : isUserError ? 'Không thể tải' : entitlement ? 'Đã nhận quyền lợi' : 'Chưa có thông tin'}
                     </ThemedText>
                   </View>
                 </View>
@@ -151,11 +144,13 @@ export default function PricingScreen() {
               <View style={[styles.quotaBox, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
                 <ThemedText style={styles.quotaBoxLabel}>Hạn mức phỏng vấn khả dụng</ThemedText>
                 <ThemedText style={styles.quotaBoxValue}>{interviewQuotaText}</ThemedText>
+                {interviewFeature && <ThemedText>Đã dùng: {interviewFeature.consumed}</ThemedText>}
               </View>
 
               <View style={[styles.quotaBox, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
                 <ThemedText style={styles.quotaBoxLabel}>Phân tích CV & So khớp JD</ThemedText>
                 <ThemedText style={styles.quotaBoxValue}>{cvAnalysisText}</ThemedText>
+                {cvFeature && <ThemedText>Đã dùng: {cvFeature.consumed}</ThemedText>}
               </View>
 
               <View style={[styles.quotaBox, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
@@ -167,9 +162,9 @@ export default function PricingScreen() {
 
           {/* SECTION 2: GÓI DỊCH VỤ */}
           <View style={[styles.sectionHeaderBlock, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.sectionTitle}>Thông tin các gói dịch vụ</ThemedText>
+            <ThemedText style={styles.sectionTitle}>Chi tiết gói hiện tại</ThemedText>
             <ThemedText style={styles.sectionSubtitle}>
-              Dưới đây là thông tin chi tiết về hạn mức và tính năng của các gói dịch vụ.
+              Hạn mức danh nghĩa của gói hiện tại. Quyền lợi thực tế và lượt còn lại được hiển thị ở trên.
             </ThemedText>
           </View>
 
@@ -177,28 +172,27 @@ export default function PricingScreen() {
             <View style={styles.centerContainer}>
               <ActivityIndicator size="large" color={colors.primary} />
             </View>
-          ) : plans.length === 0 ? (
+          ) : isPlansError || !plans.some((plan) => plan.code.toLowerCase() === currentPlanCode) ? (
             <GlassCard style={{ alignItems: 'center', padding: Spacing.four }}>
               <Ionicons name="alert-circle-outline" size={36} color={colors.textMuted} />
               <ThemedText style={{ marginTop: Spacing.one, opacity: 0.8 }}>
-                Hiện chưa có gói dịch vụ khả dụng.
+                {isPlansError ? 'Không thể tải chi tiết gói. Vui lòng thử lại.' : 'Chưa có chi tiết gói hiện tại.'}
               </ThemedText>
             </GlassCard>
           ) : (
             <View style={styles.plansStack}>
-              {plans.map((plan) => {
+              {plans.filter((plan) => plan.code.toLowerCase() === currentPlanCode).map((plan) => {
                 const priceMeta = plan.prices?.[0];
                 if (!priceMeta) return null;
 
                 const sku = plan.code.toLowerCase();
                 const isCurrentPlan = currentPlanCode === sku;
-                const isFree = priceMeta.amountMinor === 0;
-                const isHighlighted = plan.isHighlighted;
+
                 const featureDescriptions = priceMeta.features
                   .map(describePlanFeature)
                   .filter(Boolean) as string[];
-                  
-                const displayPrice = isFree ? 'Miễn phí' : formatCurrency(priceMeta.amountMinor, priceMeta.currency);
+
+
 
                 return (
                   <View
@@ -211,22 +205,10 @@ export default function PricingScreen() {
                           : colors.surface,
                         borderColor: isCurrentPlan
                           ? colors.primary
-                          : isHighlighted
-                          ? colors.primary
                           : colors.cardBorder,
                       },
-                      isHighlighted && styles.highlightedPlanCard,
                     ]}
                   >
-                    {isHighlighted && (
-                      <View style={styles.topBadgeContainer}>
-                        <View style={[styles.topBadge, { backgroundColor: colors.primary }]}>
-                          <Ionicons name="sparkles" size={12} color="#f59e0b" />
-                          <ThemedText style={styles.topBadgeText}>Phổ biến nhất</ThemedText>
-                        </View>
-                      </View>
-                    )}
-
                     <View style={styles.planHeaderRow}>
                       <ThemedText style={styles.planNameText}>{plan.name}</ThemedText>
                       {isCurrentPlan && (
@@ -235,22 +217,6 @@ export default function PricingScreen() {
                             Gói hiện tại
                           </ThemedText>
                         </View>
-                      )}
-                    </View>
-
-                    <ThemedText style={styles.planDescText}>
-                      {plan.description ||
-                        'Gói dịch vụ được thiết kế tối ưu cho nhu cầu rèn luyện phỏng vấn của bạn.'}
-                    </ThemedText>
-
-                    <View style={[styles.priceDisplayRow, { borderBottomColor: colors.cardBorder }]}>
-                      <ThemedText style={styles.priceAmountText}>
-                        {displayPrice}
-                      </ThemedText>
-                      {!isFree && priceMeta.durationDays > 0 && (
-                        <ThemedText style={styles.priceDurationText}>
-                          / {priceMeta.durationDays} ngày
-                        </ThemedText>
                       )}
                     </View>
 

@@ -1,3 +1,5 @@
+> HISTORICAL / SUPERSEDED — 2026-10-04: Original audit/plan/evidence retained below. Billing implementation, checkout steering, retention/recovery, universal policy PASS and binary-certification claims are not current release evidence. See [current handoff](release/GOOGLE-PLAY-HANDOFF.md) and [Data Safety matrix](evidence/release/DATA-SAFETY-FORM-ANSWERS.md). Prior screenshots/test results have not been repeated for this release.
+
 # Lộ Trình Thực Thi Chi Tiết (Detailed Execution Roadmap)
 
 Tài liệu này tổng hợp **chính xác** toàn bộ các việc phải làm, các phase cần thực thi và chúng đang nằm ở phần nào trong các tài liệu gốc. Bạn sử dụng file này làm bản đồ dẫn đường (Checklist) để không bỏ sót bất kỳ hạng mục nào.

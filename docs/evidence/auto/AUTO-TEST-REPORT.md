@@ -1,3 +1,5 @@
+> HISTORICAL / SUPERSEDED — 2026-10-04: Original audit/plan/evidence retained below. Billing implementation, checkout steering, retention/recovery, universal policy PASS and binary-certification claims are not current release evidence. See [current handoff](../../release/GOOGLE-PLAY-HANDOFF.md) and [Data Safety matrix](../release/DATA-SAFETY-FORM-ANSWERS.md). Prior screenshots/test results have not been repeated for this release.
+
 # Báo Cáo Kiểm Thử Tự Động (AUTO-01 -> AUTO-14)
 
 **Trạng thái:** HOÀN THÀNH (PASS 14/14)

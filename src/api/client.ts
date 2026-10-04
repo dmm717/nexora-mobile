@@ -89,25 +89,21 @@ apiClient.interceptors.response.use(
     const errorCode = errorEnvelope?.code || 'UNKNOWN_ERROR';
     const requestId = errorEnvelope?.requestId;
     const extractedMessage = extractErrorMessage(rawData, error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
-    
-    if (error.response?.status === 400) {
-      logger.warn("RAW BACKEND ERROR:", { rawData });
-    }
 
     const normalizedError = new AppError(errorCode, extractedMessage, requestId, error);
 
     const isReportProcessing =
       error.response?.status === 409 ||
       errorCode === 'INTERVIEW_REPORT_PROCESSING';
-      
+
     const isLearningPathNotFound =
       error.response?.status === 404 &&
       errorCode === 'LEARNING_PATH_NOT_FOUND';
-      
+
     const isRecoverableAuthError = error.response?.status === 401 && originalRequest && !originalRequest._retry;
 
-    const isCareerGoalRequired = 
-      error.response?.status === 400 && 
+    const isCareerGoalRequired =
+      error.response?.status === 400 &&
       errorCode === 'ACTIVE_CAREER_GOAL_REQUIRED';
 
     const isFeatureNotAvailable =
@@ -121,21 +117,9 @@ apiClient.interceptors.response.use(
       const safeError = new Error(error.message);
       safeError.name = error.name;
       safeError.stack = error.stack;
-      
-      const safeConfig = error.config ? { ...error.config, data: '[Filtered PII]' } : undefined;
-      if (safeConfig?.headers) {
-        safeConfig.headers = { ...safeConfig.headers } as any;
-        delete safeConfig.headers['Authorization'];
-        delete safeConfig.headers['Cookie'];
-        delete safeConfig.headers['Idempotency-Key'];
-      }
-      
-      const safeResponse = error.response ? { ...error.response, data: '[Filtered PII]' } : undefined;
-      
-      (safeError as any).config = safeConfig;
-      (safeError as any).response = safeResponse;
-      (safeError as any).isAxiosError = error.isAxiosError;
 
+      // Do not attach Axios config/response/request graphs: nested objects retain
+      // authorization, bodies and URLs even when top-level fields are filtered.
       const status = error.response?.status;
       const isNetworkError = !error.response || error.code === 'ECONNABORTED';
 
@@ -156,7 +140,7 @@ apiClient.interceptors.response.use(
     }
 
     const reqIdSuffix = requestId ? ` (ReqID: ${requestId.substring(0, 8)})` : '';
-    
+
     // Auto-trigger Toast for API failures (displaying ONLY Vietnamese message, NO raw error codes)
     // Skip toast for transient polling status (409 INTERVIEW_REPORT_PROCESSING) and expected empty states (404/400/403)
     if (isReportProcessing || error.response?.status === 404 || isCareerGoalRequired || isFeatureNotAvailable) {
@@ -170,12 +154,12 @@ apiClient.interceptors.response.use(
     } else if (error.response.status >= 500) {
       toast.error(`Máy chủ gặp sự cố tạm thời. Vui lòng thử lại sau.${reqIdSuffix}`);
     } else if (extractedMessage) {
-      logger.warn(`[UNHANDLED TOAST ERROR] Status: ${error.response?.status}, Code: ${errorCode}, Message: ${extractedMessage}`);
       toast.error(`${extractedMessage}${reqIdSuffix}`);
     }
 
     // Xử lý 401 Unauthorized
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry &&
+        originalRequest.headers?.['X-No-Auth-Retry'] !== 'true') {
       const requestUrl = originalRequest.url || '';
 
       // Không refresh nếu chính API login hoặc refresh bị 401

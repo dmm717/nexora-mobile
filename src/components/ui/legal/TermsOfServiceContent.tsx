@@ -17,7 +17,7 @@ export const TermsOfServiceContent = ({ colors, styles }: { colors: any, styles:
     <View style={styles.contentBlock}>
       {renderSectionHeader('2', 'Tài khoản & gói sử dụng', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Người dùng có trách nhiệm bảo mật thông tin đăng nhập của mình. Các lượt phỏng vấn và tính năng AI được cấp hạn mức dựa trên gói tài khoản (FREE / PRO). Gói PRO được thanh toán thông qua Google Play Billing và tuân theo chính sách của Google Play.
+        Người dùng có trách nhiệm bảo mật thông tin đăng nhập của mình. Các lượt phỏng vấn và tính năng AI được cấp hạn mức dựa trên gói tài khoản (FREE / PRO). Ứng dụng Android chỉ sử dụng quyền lợi hiện có của tài khoản, không xử lý mua hàng. Hạn mức và thời hạn do máy chủ Nexora cung cấp. Nexora cũng hỗ trợ phân tích CV và phát triển nghề nghiệp.
       </ThemedText>
     </View>
 
@@ -42,7 +42,7 @@ export const TermsOfServiceContent = ({ colors, styles }: { colors: any, styles:
       </ThemedText>
       <View style={styles.bulletList}>
         {renderBullet('Mỗi báo cáo được ghi nhận với mã định danh riêng và gửi tới đội ngũ kiểm duyệt.', colors, styles)}
-        {renderBullet('Đội ngũ sẽ xem xét và phản hồi trong vòng 72 giờ (nội dung vi phạm nghiêm trọng) hoặc 7 ngày (nội dung khác).', colors, styles)}
+        {renderBullet('Báo cáo được gửi để xem xét; ứng dụng không cam kết thời hạn phản hồi cụ thể.', colors, styles)}
         {renderBullet('Dữ liệu báo cáo được sử dụng để cải thiện bộ lọc và chất lượng nội dung AI.', colors, styles)}
       </View>
     </View>
@@ -50,7 +50,7 @@ export const TermsOfServiceContent = ({ colors, styles }: { colors: any, styles:
     <View style={styles.contentBlock}>
       {renderSectionHeader('6', 'Quyền riêng tư & Thu âm', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Nexora AI chỉ sử dụng microphone khi bạn chủ động bắt đầu phỏng vấn bằng giọng nói và đã cấp quyền. Ứng dụng không ghi âm dưới nền, không ghi âm khi ở chế độ nền, và file ghi âm được xóa khỏi thiết bị ngay sau khi xử lý xong.
+        Nexora AI chỉ sử dụng microphone khi bạn chủ động bắt đầu phỏng vấn bằng giọng nói và đã cấp quyền. Bạn có thể sử dụng chế độ văn bản thay cho giọng nói. Âm thanh được gửi tới Azure Speech để chuyển thành văn bản; ứng dụng cố gắng dọn tệp tạm sau xử lý. Quyền riêng tư và quyền yêu cầu xóa được mô tả trong các chính sách tương ứng của ứng dụng.
       </ThemedText>
     </View>
   </View>

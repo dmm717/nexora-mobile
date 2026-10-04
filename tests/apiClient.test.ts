@@ -51,27 +51,36 @@ describe('apiClient Interceptors', () => {
       response: { status: 401 },
       config: { url: '/auth/login' },
     };
-    
+
     await expect(responseInterceptor(error)).rejects.toThrow();
     expect(tokenStorage.getRefreshToken).not.toHaveBeenCalled();
   });
 
+  it('never replays destructive deletion on 401', async () => {
+    await expect(responseInterceptor({
+      response: { status: 401 },
+      config: { url: '/me/deletion-requests', headers: { 'X-No-Auth-Retry': 'true' } },
+    })).rejects.toThrow();
+    expect(axios.post).not.toHaveBeenCalled();
+    expect(apiClient).not.toHaveBeenCalled();
+  });
+
   it('đảm bảo single-flight queue hoạt động cho 401', async () => {
     // Giả lập axios.post (/auth/refresh) mất một chút thời gian
-    (axios.post as jest.Mock).mockImplementationOnce(() => 
+    (axios.post as jest.Mock).mockImplementationOnce(() =>
       new Promise(resolve => setTimeout(() => resolve({
         data: { data: { accessToken: 'new-token' } }
       }), 100))
     );
-    
+
     (tokenStorage.getRefreshToken as jest.Mock).mockResolvedValue('old-rt');
-    
+
     // Tạo 3 request bị 401 đồng thời
     const req1 = responseInterceptor({
       response: { status: 401 },
       config: { url: '/user/profile', headers: {} },
     });
-    
+
     // Các request sau vào queue (isRefreshing = true)
     const req2 = responseInterceptor({
       response: { status: 401 },
@@ -79,9 +88,9 @@ describe('apiClient Interceptors', () => {
     });
 
     // Mock apiClient thực thi lại request sau khi có token
-    
+
     await Promise.all([req1, req2]);
-    
+
     // post /auth/refresh chỉ gọi 1 lần
     expect(axios.post).toHaveBeenCalledTimes(1);
     expect(tokenStorage.setAccessToken).toHaveBeenCalledWith('new-token');
