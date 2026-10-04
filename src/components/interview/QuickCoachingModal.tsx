@@ -77,7 +77,6 @@ export function QuickCoachingModal({
               <ReportContentButton 
                 contentType="coaching_note"
                 contentId={coaching.id || `coaching-${questionSequence}`}
-                contentSnapshot={coaching.feedback}
               />
               <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
                 <Ionicons name="close" size={22} color={colors.text} />

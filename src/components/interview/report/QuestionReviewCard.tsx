@@ -31,7 +31,6 @@ export const QuestionReviewCard = memo(function QuestionReviewCard({
       <ReportContentButton 
         contentType="interview_report" 
         contentId={review.questionId || `review-${review.sequence}`}
-        contentSnapshot={JSON.stringify(review)}
       />
     </View>
 

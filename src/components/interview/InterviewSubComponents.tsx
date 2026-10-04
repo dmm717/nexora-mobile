@@ -159,7 +159,6 @@ export const CurrentQuestionCard = React.memo(({
         <ReportContentButton 
           contentType="interview_question" 
           contentId={currentQuestion.id} 
-          contentSnapshot={currentQuestion.content} 
         />
       </View>
 
