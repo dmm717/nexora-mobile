@@ -120,7 +120,7 @@ async function transcribeWithAzure(
   });
 
   if (response.status !== 200) {
-    throw new Error(`Azure STT returned ${response.status}: ${response.body}`);
+    throw new Error('Không thể chuyển giọng nói thành văn bản. Vui lòng thử lại hoặc dùng bàn phím.');
   }
 
   const json = JSON.parse(response.body);
@@ -132,7 +132,7 @@ async function transcribeWithAzure(
   if (json.RecognitionStatus === 'NoMatch' || json.RecognitionStatus === 'InitialSilenceTimeout') {
     return ''; // No speech detected
   }
-  throw new Error(`Azure STT: ${json.RecognitionStatus || 'Unknown status'}`);
+  throw new Error('Không thể nhận diện giọng nói. Vui lòng thử lại hoặc dùng bàn phím.');
 }
 
 // ---------------------------------------------------------------------------

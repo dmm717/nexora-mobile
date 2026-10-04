@@ -33,17 +33,17 @@ export function ProductFeedbackModal({ visible, onClose, myFeedback }: ProductFe
 
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>('');
-  const [allowPublicDisplay, setAllowPublicDisplay] = useState<boolean>(true);
+  const [allowPublicDisplay, setAllowPublicDisplay] = useState<boolean>(false);
 
   useEffect(() => {
     if (myFeedback) {
       setRating(myFeedback.rating || 5);
       setComment(myFeedback.comment || '');
-      setAllowPublicDisplay(myFeedback.allowPublicDisplay ?? true);
+      setAllowPublicDisplay(myFeedback.allowPublicDisplay ?? false);
     } else {
       setRating(5);
       setComment('');
-      setAllowPublicDisplay(true);
+      setAllowPublicDisplay(false);
     }
   }, [myFeedback, visible]);
 
@@ -156,7 +156,7 @@ export function ProductFeedbackModal({ visible, onClose, myFeedback }: ProductFe
                 color={allowPublicDisplay ? colors.primary : colors.textMuted}
               />
               <ThemedText style={[modalStyles.checkboxText, { color: colors.text }]}>
-                Cho phép hiển thị nhận xét này công khai trên bảng vinh danh Nexora.
+                Cho phép hiển thị nhận xét đã được duyệt trên website Nexora cùng tên hiển thị và ảnh đại diện của tôi. Tôi có thể đổi lựa chọn hoặc xóa đánh giá.
               </ThemedText>
             </TouchableOpacity>
           </ScrollView>

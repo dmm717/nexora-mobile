@@ -31,19 +31,19 @@ export const TermsOfServiceContent = ({ colors, styles }: { colors: any, styles:
     <View style={styles.contentBlock}>
       {renderSectionHeader('4', 'Nội dung do AI tạo & Miễn trừ', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Tất cả nội dung đánh giá, nhận xét, điểm số, gợi ý STAR, lộ trình học tập, và phân tích CV trong Nexora AI đều được tạo tự động bởi mô hình AI. Nội dung này được đánh dấu rõ ràng với nhãn &quot;AI Generated&quot; tại nơi hiển thị. Kết quả AI chỉ mang tính chất tham khảo, không phải đánh giá của chuyên gia tuyển dụng thực tế.
+        Nexora sử dụng AI để tạo câu hỏi, phản hồi, gợi ý STAR, lộ trình học tập và phân tích CV. Một số điểm số được máy chủ tính từ tiêu chí đánh giá. Nội dung AI có thể sai hoặc thiếu chính xác, chỉ hỗ trợ luyện tập, không dự đoán tuyển dụng hay xác minh kinh nghiệm của bạn.
       </ThemedText>
     </View>
 
     <View style={styles.contentBlock}>
       {renderSectionHeader('5', 'Cơ chế báo cáo nội dung AI', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Nếu bạn phát hiện nội dung AI không phù hợp, xúc phạm, thiếu chính xác, phân biệt đối xử, hoặc vi phạm quyền riêng tư, bạn có thể báo cáo trực tiếp bằng cách nhấn nút &quot;🚩 Báo cáo&quot; ngay tại vị trí nội dung đó.
+        Nếu bạn phát hiện nội dung AI không phù hợp, xúc phạm, thiếu chính xác, phân biệt đối xử, hoặc vi phạm quyền riêng tư, hãy dùng nút báo cáo tại nội dung có hỗ trợ chức năng này. Chỉ khi máy chủ chấp nhận, báo cáo mới được ghi nhận; thông báo lỗi không có nghĩa báo cáo đã được gửi.
       </ThemedText>
       <View style={styles.bulletList}>
-        {renderBullet('Mỗi báo cáo được ghi nhận với mã định danh riêng và gửi tới đội ngũ kiểm duyệt.', colors, styles)}
+        {renderBullet('Báo cáo được máy chủ chấp nhận có mã định danh để xem xét.', colors, styles)}
         {renderBullet('Báo cáo được gửi để xem xét; ứng dụng không cam kết thời hạn phản hồi cụ thể.', colors, styles)}
-        {renderBullet('Dữ liệu báo cáo được sử dụng để cải thiện bộ lọc và chất lượng nội dung AI.', colors, styles)}
+        {renderBullet('Không gửi nội dung đe dọa, thù ghét, bóc lột tình dục, vi phạm pháp luật hoặc dữ liệu của người khác khi chưa được phép. Không sử dụng Nexora để tạo nội dung gây hại.', colors, styles)}
       </View>
     </View>
 

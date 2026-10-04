@@ -323,7 +323,7 @@ export const MicCheckCard = memo(({ colors, onModeChange }: { colors: any; onMod
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
           <Ionicons name="checkmark-circle" size={18} color="#059669" style={{ marginTop: 1 }} />
           <ThemedText style={{ flex: 1, fontSize: 12, color: colors.textSecondary, lineHeight: 17 }}>
-            Âm thanh chỉ dùng để chuyển thành văn bản (STT). Bạn luôn được đọc và sửa trước khi nộp.
+            Kiểm tra microphone chỉ thu âm tạm trên thiết bị. Khi bạn chọn ghi câu trả lời trong phiên phỏng vấn, âm thanh được gửi tới Microsoft Azure Speech để chuyển thành văn bản (STT). Bạn luôn được đọc và sửa trước khi nộp; có thể dùng bàn phím thay cho giọng nói.
           </ThemedText>
         </View>
 

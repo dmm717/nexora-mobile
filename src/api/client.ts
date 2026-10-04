@@ -112,8 +112,7 @@ apiClient.interceptors.response.use(
 
     // Observability Logging (skip expected transient polling status 409, expected 404s, expected 400/403s, and recoverable 401s)
     if (!isReportProcessing && !isRecoverableAuthError && !isLearningPathNotFound && !isCareerGoalRequired && !isFeatureNotAvailable) {
-      // SECURITY (Phase 4.1): Scrub PII from error object before sending to Sentry
-      // Must preserve instanceof Error for proper Sentry exception capturing
+      // Keep only a shallow error for development diagnostics, never Axios payload graphs.
       const safeError = new Error(error.message);
       safeError.name = error.name;
       safeError.stack = error.stack;

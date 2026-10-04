@@ -16,16 +16,17 @@ export const PrivacyPolicyContent = ({ colors, styles }: { colors: any, styles: 
         {renderBullet('Ảnh đại diện: Ảnh bạn chọn tải lên được gửi tới máy chủ và hệ thống lưu trữ để hiển thị hồ sơ.', colors, styles)}
         {renderBullet('Giọng nói tùy chọn: Khi bạn bật chức năng giọng nói và cấp quyền microphone, âm thanh được ghi vào tệp tạm rồi gửi tới Azure Speech để chuyển thành văn bản. Văn bản trả lời được gửi tới máy chủ khi bạn nộp câu trả lời. Nội dung cần đọc được gửi tới Azure Speech để tổng hợp giọng nói. Ứng dụng cố gắng xóa tệp âm thanh tạm sau xử lý; điều này không xác định thời hạn lưu trữ ở nhà cung cấp.', colors, styles)}
         {renderBullet('Giao dịch: Ứng dụng nhận quyền lợi tài khoản, hạn mức và lịch sử đơn hàng từ máy chủ. Ứng dụng Android không trực tiếp thu thập thông tin thẻ thanh toán.', colors, styles)}
-        {renderBullet('Phản hồi và báo cáo nội dung: Nội dung bạn gửi được chuyển tới máy chủ để tiếp nhận phản hồi và xem xét nội dung AI.', colors, styles)}
+        {renderBullet('Phản hồi và báo cáo nội dung: Nội dung bạn gửi được chuyển tới máy chủ để tiếp nhận phản hồi và xem xét nội dung AI. Nếu bạn bật cho phép hiển thị công khai, đánh giá đã được duyệt có thể xuất hiện trên website cùng tên hiển thị và ảnh đại diện; bạn có thể thay đổi lựa chọn hoặc xóa đánh giá trong ứng dụng.', colors, styles)}
       </View>
     </View>
     <View style={styles.contentBlock}>
       {renderSectionHeader('2', 'Đơn vị xử lý & chẩn đoán', colors, styles)}
       <View style={styles.bulletList}>
-        {renderBullet('Máy chủ Nexora và nhà cung cấp hạ tầng/lưu trữ xử lý thông tin tài khoản, hồ sơ, tệp tải lên và dữ liệu tính năng. Nội dung cần phân tích được xử lý bởi dịch vụ AI do máy chủ cấu hình.', colors, styles)}
+        {renderBullet('Render vận hành máy chủ Nexora; Neon PostgreSQL lưu dữ liệu tài khoản và tính năng. CV và ảnh đại diện được lưu dưới dạng đối tượng riêng tư trên Cloudflare R2. Resend xử lý email nhận thông báo xác minh và khôi phục tài khoản, bao gồm xác minh yêu cầu xóa.', colors, styles)}
+        {renderBullet('Nexora trích xuất văn bản PDF/DOCX tại máy chủ, không sử dụng dịch vụ OCR bên ngoài. PDF chỉ chứa ảnh hoặc bản scan có thể không đọc được; hãy dùng PDF có văn bản hoặc DOCX. Văn bản CV đã trích xuất, mô tả công việc, mục tiêu nghề nghiệp và câu trả lời liên quan được gửi tới DeepSeek API để cung cấp phân tích, phản hồi và luyện tập AI. Không gửi thông tin nhạy cảm không cần thiết hoặc dữ liệu của người khác khi chưa được phép.', colors, styles)}
         {renderBullet('Microsoft Azure Speech nhận âm thanh cho chuyển giọng nói thành văn bản và nội dung văn bản cho tổng hợp giọng nói.', colors, styles)}
-        {renderBullet('Sentry, khi được cấu hình, nhận sự kiện lỗi và dữ liệu chẩn đoán/hiệu năng. Ứng dụng tắt gửi thông tin cá nhân mặc định và lọc một số nội dung yêu cầu; bộ lọc không bảo đảm mọi sự kiện đều không chứa dữ liệu cá nhân.', colors, styles)}
-        {renderBullet('Thông tin về lưu trữ, xử lý và sử dụng dữ liệu ở nhà cung cấp cần được xác nhận theo cấu hình và điều khoản dịch vụ áp dụng. Không thể suy ra rằng dữ liệu không được lưu hoặc không dùng cho huấn luyện chỉ từ việc dọn tệp tạm trên thiết bị.', colors, styles)}
+        {renderBullet('Ứng dụng Mobile không tích hợp Sentry và không tự động gửi báo cáo lỗi qua SDK phân tích. Máy chủ và hạ tầng có thể xử lý nhật ký kỹ thuật, địa chỉ IP và thông tin yêu cầu để bảo mật, xử lý lỗi và vận hành dịch vụ. Việc này khác với nội dung phản hồi bạn chủ động gửi.', colors, styles)}
+        {renderBullet('Các nhà cung cấp nhận dữ liệu để thực hiện những chức năng nêu trên. Việc lưu giữ và xử lý tại các dịch vụ đó phụ thuộc điều khoản áp dụng và nghĩa vụ pháp luật; Nexora không cam kết không lưu dữ liệu, không huấn luyện mô hình hoặc xóa ngay mọi bản sao. Liên hệ Nexora để yêu cầu thông tin hoặc thực hiện quyền về dữ liệu.', colors, styles)}
       </View>
     </View>
     <View style={styles.contentBlock}>
@@ -44,7 +45,7 @@ export const PrivacyPolicyContent = ({ colors, styles }: { colors: any, styles: 
     <View style={styles.contentBlock}>
       {renderSectionHeader('5', 'Lưu trữ & bảo mật', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Kết nối API trong bản phát hành yêu cầu HTTPS; dịch vụ giọng nói sử dụng HTTPS. Máy chủ lưu dữ liệu phục vụ tài khoản và các tính năng. Yêu cầu xóa được xử lý theo hàng đợi; tài khoản bị chặn truy cập sau khi yêu cầu được chấp nhận. Một số bản ghi giao dịch, sử dụng và yêu cầu xóa được giữ lại, thông tin định danh được ẩn danh hóa. Thời hạn lưu trữ bản sao lưu và dữ liệu tại nhà cung cấp cần được Nexora xác nhận. Không có cam kết mọi dữ liệu bị xóa ngay hoặc hoàn tất sau đúng 30 ngày.
+        Kết nối API trong bản phát hành và dịch vụ giọng nói sử dụng HTTPS. Khi yêu cầu xóa được chấp nhận, tài khoản bị chặn truy cập và yêu cầu được xử lý theo hàng đợi. Khi hoàn tất, dữ liệu nghề nghiệp và tệp thuộc tài khoản được xóa; các trường nhận diện tài khoản được thay thế hoặc loại bỏ. Mã tài khoản giả danh vẫn có thể gắn với giao dịch, quyền lợi, lịch sử sử dụng và nhật ký kiểm tra để đối soát, bảo mật, xử lý tranh chấp và tuân thủ pháp luật; không phải ẩn danh không thể liên kết. Các mục tiêu lưu nhật ký 30 ngày, lịch sử sử dụng không phục vụ kế toán 90 ngày và thông tin yêu cầu xóa tối thiểu 12 tháng không phải cam kết tự động xóa đang áp dụng cho mọi dữ liệu. Trường hợp lưu giữ hợp pháp có thể được miễn xóa. Bản sao lưu và dữ liệu tại nhà cung cấp có vòng đời riêng; không cam kết xóa ngay hoặc hoàn tất sau đúng 30 ngày.
       </ThemedText>
     </View>
     <View style={styles.contentBlock}>

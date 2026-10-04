@@ -49,7 +49,7 @@ export function ProductFeedbackCard() {
           <View style={{ flex: 1 }}>
             <ThemedText style={cardStyles.cardTitle}>Góp ý sản phẩm Nexora</ThemedText>
             <ThemedText style={[cardStyles.cardSub, { color: colors.textSecondary }]}>
-              Nhận xét của bạn giúp AI huấn luyện chính xác hơn
+              Nhận xét của bạn giúp Nexora cải thiện trải nghiệm luyện tập
             </ThemedText>
           </View>
         </View>

@@ -1,5 +1,44 @@
 # Google Play release handoff — 2026-10-04
 
+## CURRENT final-policy follow-up — supersedes the historical handoff below
+
+Proposed release base: `1d1b4e3f9df856310fad27fea3b192453029d83c` (Mobile #2 merged).
+Current verdict: **BLOCKED for policy submission**, Mobile corrective PR ready for independent review only.
+
+- Use [final Console selections](PLAY-CONSOLE-DATA-SAFETY-FINAL.md), [policy audit](GOOGLE-PLAY-POLICY-FINAL-AUDIT.md) and [exact published Privacy edits](PUBLISHED-PRIVACY-APPROVAL-CHECKLIST.md). Earlier “unknown provider/OCR/contact” statements below are historical, not current release instructions.
+- Render read-only check: `dep-db17cnvf3r2c73bn3v6g` live at BE `8150fc215b377a78cb61cc30b7c3e9e40b343c9d`; shared image starts API and Worker and includes #123/#124. Both public health endpoints 200. No real provider/CV/deletion call repeated.
+- Owner confirms DeepSeek main AI, local PDF/DOCX without OCR, private R2, Neon, Render, Resend and optional Azure Speech. Actual provider/resource configuration still needs release-owner confirmation; secret values were not inspected.
+- Mobile Sentry package/plugin/initialization/transport removed; new production build must include this commit. This does not claim older installed versions or backend have no telemetry.
+- Privacy: https://www.nexorainterview.io.vn/privacy; deletion: https://www.nexorainterview.io.vn/account-deletion; official email: nexorainterview.vn@gmail.com. Public routes 200; published contact synchronized. Published body needs the separate owner-approved Site Content edits.
+- Completed account deletion remains pseudonymous for retained billing/usage/audit UUIDs. Retention defaults disabled/report-only; 12-calendar-month metadata eligibility is not universal automatic purge; 90-day usage and 30-day logs remain targets. Provider/backup deadlines not invented.
+- Consumption-only remains: no purchase CTA, checkout deep link, card collection or Play Billing promise.
+
+### Exact owner actions before truthful policy submission
+
+1. Approve conservative **Shared=Yes** for DeepSeek-processed types, or supply applicable API processor restrictions supporting No. Do not infer no-training/zero-retention from paid API. Confirm other processor contracts/resource scope as described in final matrix.
+2. Resolve Learning Path/Skill Profile in-app AI reporting gap through a separately authorized backend fix, or exclude those AI features from release; do not substitute email or fake report success.
+3. Approve/publish Privacy Site Content checklist and provide controller identity matching Play listing. This PR does not publish it.
+4. Confirm actual DeepSeek selection, standard real-time Azure endpoint/no custom logging and released build/environment. Test voice permission refusal/text alternative and actual report moderation on a device with a safe test account.
+5. Play owner: intended audience 18+, accurate content rating, no ads, privately supplied functioning verified reviewer account and gated feature access. Reconcile all active distributed versions, not just this branch.
+6. Expo/Play owner only: AAB, signing, final manifest/native SDK review, 16 KB verification and submission after review/blocker resolution. None performed here.
+
+Validation for this follow-up is recorded in the final PR handoff; historical counts below are from #2, not this branch. No merge/deploy/Console submission is authorized by this document.
+
+### Follow-up local validation
+
+| Command | Actual result |
+| --- | --- |
+| `npm ci --ignore-scripts` | PASS; npm peer metadata recalculated after Sentry removal, no existing package version changed. Existing audit: 62 findings (12 moderate, 50 high); no forced dependency upgrade. |
+| `npx tsc --noEmit` | PASS |
+| `npm run lint` | PASS, no warnings after duplicate import corrected |
+| `npm run test:ci -- --runInBand --coverageDirectory=C:/Users/THISPC~1/AppData/Local/Temp/nexora-play-final-coverage` | PASS: 13 suites, 64 tests; external coverage directory. Includes provider/legal, retention, no-Sentry, speech disclosure/error, consumption-only and existing deletion regressions. |
+| `npx expo-doctor` | PASS: 21/21 |
+| `git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol diff --check` | PASS; ordinary CRLF permitted per repository EOL policy, no EOL-only normalization. |
+
+Existing Jest forceExit and authParity hydration warning remain. Static source guards are not native device/network validation. Hosted CI for this exact new HEAD must be checked separately; prior PR CI is not its result.
+
+## HISTORICAL #2 handoff (preserved)
+
 Review status: mobile corrective PR; no merge, deployment, Play submission or Android release build performed.
 Base: `42bf55cf6e9cb0146065afbaa042f711d611f162` (origin/main; no open mobile PRs at audit start).
 Backend source audited read-only at main `8c5b34628a6a7220c329a88198c5c0a32307f2c8` in qbao0111/nexora-backend. Source compatibility is not proof of deployed backend version.

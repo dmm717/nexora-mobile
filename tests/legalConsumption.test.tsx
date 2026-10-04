@@ -71,6 +71,57 @@ it('publishes only the owner-selected support email', async () => {
   expect(JSON.stringify(await view.toJSON())).toContain(SUPPORT_EMAIL);
 });
 
+it('discloses the active processors and optional voice without obsolete OCR or training promises', async () => {
+  const view = await render(<PrivacyPolicyContent {...props} />);
+  const content = JSON.stringify(await view.toJSON());
+  for (const processor of ['DeepSeek API', 'Cloudflare R2', 'Neon PostgreSQL', 'Render', 'Resend', 'Azure Speech']) {
+    expect(content).toContain(processor);
+  }
+  expect(content).toContain('không sử dụng dịch vụ OCR bên ngoài');
+  expect(content).toContain('Microphone là tùy chọn');
+  expect(content).not.toMatch(/Gemini|không bao giờ.*huấn luyện|xóa ngay mọi dữ liệu/);
+});
+
+it.each([PrivacyPolicyContent, DataDeletionContent])('explains pseudonymous retained records and non-guaranteed retention targets', async Component => {
+  const view = await render(<Component {...props} />);
+  const content = JSON.stringify(await view.toJSON());
+  expect(content).toContain('Mã tài khoản giả danh');
+  expect(content).toContain('12 tháng');
+  expect(content).toContain('30 ngày');
+  expect(content).toContain('90 ngày');
+  expect(content).not.toMatch(/thời gian ân hạn 30 ngày|luôn hoàn tất ngay|ẩn danh hoàn toàn/);
+});
+
+it('has no mobile Sentry initialization, plugin, package or production transport', () => {
+  for (const file of ['package.json', 'app.json', 'metro.config.js', 'src/app/_layout.tsx', 'src/services/logger.ts', '.env.example']) {
+    expect(fs.readFileSync(path.join(__dirname, '..', file), 'utf8')).not.toMatch(/@sentry|EXPO_PUBLIC_SENTRY_DSN|Sentry\.init|captureException|captureMessage/);
+  }
+});
+
+it('requires a separate public-feedback opt-in for a new review', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../src/components/feedback/ProductFeedbackModal.tsx'), 'utf8');
+  expect(source).toContain('useState<boolean>(false)');
+  expect(source).not.toContain('allowPublicDisplay ?? true');
+});
+
+it('does not claim crash reports were automatically submitted', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../src/components/ErrorBoundary.tsx'), 'utf8');
+  expect(source).toContain('mailto:${SUPPORT_EMAIL}');
+  expect(source).toContain('không tự động gửi báo cáo lỗi');
+  expect(source).not.toContain('đã ghi nhận sự cố');
+});
+
+it('shows Azure transmission and text alternative next to the interview mic', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../src/components/interview/AudioSpeechDock.tsx'), 'utf8');
+  expect(source).toContain('gửi tới Azure Speech');
+  expect(source).toContain('Bạn có thể dùng Bàn phím');
+});
+
+it('does not include raw speech-provider payloads in user-facing errors', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../src/services/speech.ts'), 'utf8');
+  expect(source).not.toMatch(/throw new Error\([^\n]*response\.body/);
+});
+
 it('guards active native source against checkout APIs, purchase SDKs and checkout links', () => {
   const walk = (folder: string): string[] => fs.readdirSync(folder, { withFileTypes: true }).flatMap(entry => {
     const full = path.join(folder, entry.name);
