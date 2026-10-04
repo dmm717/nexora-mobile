@@ -1,8 +1,9 @@
 import React from 'react';
 import { View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
-import { ACCOUNT_DELETION_URL, PRIVACY_URL, WEBSITE_URL } from '@/constants/legal';
+import { ACCOUNT_DELETION_URL, PRIVACY_URL, SUPPORT_EMAIL, WEBSITE_URL } from '@/constants/legal';
 import { renderBullet, renderSectionHeader } from './LegalContentHelpers';
+import { PublicDeletionLink } from './PublicDeletionLink';
 
 export const PrivacyPolicyContent = ({ colors, styles }: { colors: any, styles: any }) => (
   <View style={styles.docSection}>
@@ -36,8 +37,9 @@ export const PrivacyPolicyContent = ({ colors, styles }: { colors: any, styles: 
     <View style={styles.contentBlock}>
       {renderSectionHeader('4', 'Truy cập, xuất & xóa dữ liệu', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Bạn có thể xem và chỉnh sửa hồ sơ, xuất dữ liệu trong Cài đặt tài khoản, và gửi yêu cầu xóa tại Khu vực nguy hiểm khi đăng nhập. Kênh xóa qua xác minh email cho người không thể đăng nhập đang được triển khai tại {ACCOUNT_DELETION_URL}; chưa được xác minh sẵn sàng. Khi triển khai, liên kết xác minh hết hạn sau 30 phút. Xem mục Xóa dữ liệu trong ứng dụng để biết phạm vi xử lý và dữ liệu giữ lại.
+        Bạn có thể xem và chỉnh sửa hồ sơ, xuất dữ liệu trong Cài đặt tài khoản, và gửi yêu cầu xóa trực tiếp tại Khu vực nguy hiểm khi đăng nhập. Bạn cũng có thể yêu cầu tại {ACCOUNT_DELETION_URL} mà không cần đăng nhập: nhập email gắn với tài khoản, mở liên kết xác minh rồi chủ động xác nhận. Liên kết chỉ dùng một lần, hết hạn sau 30 phút; gửi email hoặc mở trang chưa gửi yêu cầu xóa. Xem mục Xóa dữ liệu trong ứng dụng để biết phạm vi xử lý và dữ liệu giữ lại.
       </ThemedText>
+      <PublicDeletionLink colors={colors} />
     </View>
     <View style={styles.contentBlock}>
       {renderSectionHeader('5', 'Lưu trữ & bảo mật', colors, styles)}
@@ -48,7 +50,7 @@ export const PrivacyPolicyContent = ({ colors, styles }: { colors: any, styles: 
     <View style={styles.contentBlock}>
       {renderSectionHeader('6', 'Website & thông tin liên hệ', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Website chính thức: {WEBSITE_URL}. Chính sách công khai: {PRIVACY_URL}. Email liên hệ chính thức: nexorainterview.vn@gmail.com.
+        Website chính thức: {WEBSITE_URL}. Chính sách công khai: {PRIVACY_URL}. Email liên hệ chính thức: {SUPPORT_EMAIL}.
       </ThemedText>
     </View>
     <View style={styles.contentBlock}>

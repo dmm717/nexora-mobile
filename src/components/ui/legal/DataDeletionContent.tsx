@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ACCOUNT_DELETION_URL } from '@/constants/legal';
 import { renderBullet, renderSectionHeader } from './LegalContentHelpers';
+import { PublicDeletionLink } from './PublicDeletionLink';
 
 export const DataDeletionContent = ({ colors, styles }: { colors: any, styles: any }) => (
   <View style={styles.docSection}>
@@ -16,8 +17,9 @@ export const DataDeletionContent = ({ colors, styles }: { colors: any, styles: a
     <View style={styles.contentBlock}>
       {renderSectionHeader('2', 'Yêu cầu qua website', colors, styles)}
       <ThemedText style={[styles.paragraph, { color: colors.textSecondary }]}>
-        Kênh dành cho người không thể đăng nhập đang được triển khai tại {ACCOUNT_DELETION_URL}. Trang này chưa được xác minh sẵn sàng. Khi được triển khai, bạn có thể yêu cầu qua website bằng xác minh email; liên kết xác minh hết hạn sau 30 phút. Đây là thời hạn xác minh email, không phải thời gian ân hạn xóa tài khoản. Chức năng xóa trong ứng dụng hoạt động độc lập với website.
+        Bạn có thể yêu cầu xóa tại {ACCOUNT_DELETION_URL} mà không cần đăng nhập, kể cả khi không còn sử dụng ứng dụng. Nhập email gắn với tài khoản, mở liên kết xác minh trong email rồi chủ động xác nhận. Liên kết chỉ dùng một lần và hết hạn sau 30 phút. Việc gửi email hoặc chỉ mở trang xác nhận chưa gửi yêu cầu xóa. Đây là thời hạn xác minh email, không phải thời gian ân hạn xóa tài khoản. Chức năng xóa trực tiếp trong ứng dụng hoạt động độc lập với website.
       </ThemedText>
+      <PublicDeletionLink colors={colors} />
     </View>
     <View style={styles.contentBlock}>
       {renderSectionHeader('3', 'Phạm vi xử lý dữ liệu', colors, styles)}

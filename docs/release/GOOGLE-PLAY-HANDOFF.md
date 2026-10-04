@@ -11,27 +11,31 @@ Backend source audited read-only at main `8c5b34628a6a7220c329a88198c5c0a32307f2
 | Consumption-only legal policies | DONE | PaymentPolicyContent removes Play payment/refund/renewal claims and subscription button; Terms describes existing server-owned entitlements, optional voice, AI limits and reporting without an unverified moderation deadline. |
 | Account status UX | DONE | Pricing shows existing entitlement, remaining/consumed quota, expiry, current-plan features and order history. Offer prices, promoted plans and upgrade copy removed. PlanUsageCard uses “Xem quyền lợi”; CV quota fallback stops recommending upgrades. |
 | Remove unused purchase methods | DONE | No consumers found by dependency search; pricing.api retains listPlans, removes checkout/status/refresh/Play verification functions; shared billing types preserved. |
-| Privacy/deletion corrections | DONE | Canonical URL constants; verified support email; avatar, CV, speech, AI, diagnostics, billing and retention disclosures. Removed absolute no-training, total-erasure and immediate-cleanup guarantees. |
+| Privacy/deletion corrections | DONE | Canonical URL constants; owner-confirmed support email; avatar, CV, speech, AI, diagnostics, billing and retention disclosures. Removed absolute no-training, total-erasure and immediate-cleanup guarantees. |
 | In-app deletion | DONE | Existing two-step UI kept; exact XÓA/nonempty email required. Synchronous submission guard, retry:false, stable Idempotency-Key on manual retry, no 401 replay. Correct nullable envelope parsing; no fabricated scheduled date or recovery/cancellation promise. Server acceptance triggers local token/query/speech/user cleanup without an extra logout request. Errors never show success. |
 | Pending request UI | DONE | queued/processing/completed/failed and unknown status distinguished; valid server requested/completed timestamps only. Null, loading and retrieval failure distinguished. |
 | Sensitive API logging | DONE | Removed raw validation response and extracted-message logs; removed nested Axios config/response graphs from captured exceptions. This is not a certification of all SDK telemetry. |
-| Automated checks | DONE | npm ci, TypeScript, lint, test:ci (13 suites / 53 tests) and Expo Doctor 21/21 passed. Destructive calls mocked; no production deletion. |
+| Automated checks | DONE | Corrective update: TypeScript, lint, test:ci (13 suites / 56 tests), focused legal/deletion (4 suites / 32 tests), Expo Doctor 21/21 passed. Prior npm ci passed with unchanged lockfile. Destructive calls mocked; no production deletion. |
 | Real-device interview/CV and legal layout | NOT VERIFIED | Existing flows retained; source/runtime tests do not replace Android device checks. |
 
 ## External dependencies
 
 | Task | Status | Evidence / next action |
 | --- | --- | --- |
-| FE public account-deletion PR merged/deployed | BLOCKED | `https://www.nexorainterview.io.vn/account-deletion` returned HTTP 404 on 2026-10-04. This PR adds plain informational text, no actionable deletion link. FE must deploy request and `/account-deletion/confirm?token=...`, then independently verify with test accounts. |
+| FE public account-deletion PR merged/deployed | DONE: source and public routes | FE PR #60 merged at `053673a46fe23df05fc096cf7206e1ef8a6c4df1`. Both hosts resolve publicly over validated HTTPS: apex 308 to www, www request/confirmation pages 200. Mobile exposes an accessible browser link and retains independent in-app deletion. See [rollout evidence](../evidence/release/PUBLIC-DELETION-ROLLOUT.md). |
 | Public website/privacy availability | DONE | Direct HTTPS GET returned 200 for website and `/privacy` on 2026-10-04. HTTP availability alone does not establish legal-content correctness or continued uptime. |
 | Mobile support contact | DONE | Project owner explicitly confirmed `nexorainterview.vn@gmail.com` during this task; mobile uses this address. |
-| Public support contact synchronization | BLOCKED | Homepage and backend default still publish `nexorainterview@gmail.com`. FE/content owner must align them with the confirmed official address; those repositories were not modified. |
+| Public support contact synchronization | BLOCKED | Public homepage/privacy and backend source default still use a superseded address. FE/content owner must align them with the confirmed official address; those repositories were not modified. |
 | Backend deletion contract | DONE | Authorize MeController POST/GET; POST returns id/status/attempts/requestedAt/completedAt; GET nullable status record; no scheduledHardDeleteAt or cancellation endpoint. PrivacyService revokes refresh tokens/security stamp, queues immediately, removes personal data/files and anonymizes identity. ExternalAccountDeletionService verification lifetime is 30 minutes, unrelated to deletion grace. |
-| Deployed backend and worker | NOT VERIFIED | Team must verify deployed revision, enabled worker, successful cleanup including storage upload-intent delays, failure handling and production email PublicUrl. |
+| Deployed backend and worker | OWNER-REPORTED functional success; configuration NOT VERIFIED | Owner reports real email confirmation and DB deletion checks succeeded. We did not repeat destructive production tests. Exact received email hostname and production PublicUrl, deployed revision, cleanup delays/failure handling and retained data still need backend owner evidence. See rollout evidence. |
 | Retained data and provider contracts | BLOCKED | Confirm retained billing/usage/privacy records, backup/log retention, provider deletion, AI paid/free account and data use, active storage/hosting/email processors and Sentry payloads. See [answer matrix](../evidence/release/DATA-SAFETY-FORM-ANSWERS.md). |
 | Legal approval | OWNER ACTION | Approve mobile/public policy consistency, contractual refund wording, retention schedule, data controller identity and published contact. No blanket compliance guarantee. |
 
+Policy review remains awaiting independent review and the [OPEN DATA SAFETY DECISIONS — OWNER INPUT REQUIRED](../evidence/release/DATA-SAFETY-FORM-ANSWERS.md#open-data-safety-decisions--owner-input-required). Public-route availability resolves the earlier 404 finding; it does not settle provider contracts or final form answers.
+
 ## Owner-only tasks
+
+AAB generation, signing, manifest/native-library inspection and 16 KB runtime validation are explicitly excluded from this corrective policy PR. They are separate release work, not checks performed or required to complete this source review.
 
 | Task | Status | Required evidence |
 | --- | --- | --- |
@@ -41,7 +45,7 @@ Backend source audited read-only at main `8c5b34628a6a7220c329a88198c5c0a32307f2
 | 16 KB native library/alignment verification | OWNER ACTION | Actual production AAB/APK and relevant Android emulator/device evidence. SDK/Doctor/Jest results do not certify binaries. |
 | Final merged permissions manifest | OWNER ACTION | Inspect release manifest from produced binary; app.json is not the final manifest. |
 | Google Play Data Safety form | OWNER ACTION | Resolve matrix unknowns, review all distributed versions and SDKs, enter accurate answers. Do not copy draft blindly. |
-| Account deletion URL configuration | BLOCKED | Deploy and verify canonical deletion page before owner enters it in Console. |
+| Account deletion URL configuration | OWNER ACTION | Public page is available. Owner enters `https://www.nexorainterview.io.vn/account-deletion` in Console and confirms actual email link origin/configuration. |
 | Store listing/legal URLs | OWNER ACTION | Check accessible privacy and deletion pages, publisher identity/contact, screenshots and consumption-only description. |
 | Testing tracks/requirements | OWNER ACTION | Owner confirms applicable account-specific Console requirements. |
 | Final publication | OWNER ACTION | Independent PR/legal review, resolved blockers and owner approval. |
@@ -63,6 +67,8 @@ Historical documents and captured media are preserved with explicit superseded n
 
 ## Validation results
 
+The results below describe the initial reviewed HEAD `507a2b0eba949beed936c706c45ab6030b78e300`. Corrective-update results are recorded separately below after validation.
+
 | Check | Result |
 | --- | --- |
 | `npm ci` | PASS; lockfile unchanged. 64 existing dependency audit findings (12 moderate, 52 high) and test-renderer React peer warning; dependency remediation needs separate review. |
@@ -74,3 +80,16 @@ Historical documents and captured media are preserved with explicit superseded n
 | `npx expo-doctor` | PASS: 21/21 checks |
 
 Jest uses the repository's forceExit configuration. Existing authParity test emits a hydration warning (`Unsupported BodyInit type`); assertions pass. No release build, 16 KB check, production deletion or real-device certification performed.
+
+## Corrective PR #2 validation — 2026-10-04
+
+| Check | Result |
+| --- | --- |
+| `npx tsc --noEmit` | PASS |
+| `npm run lint` | PASS |
+| `npm run test:ci -- --runInBand --coverageDirectory=E:/temp/nexora-policy-coverage-correction` | PASS: 13 suites, 56 tests; coverage outside repository |
+| `npx jest tests/accountDeletion.test.tsx tests/accountDeletionApi.test.ts tests/deletionSession.test.tsx tests/legalConsumption.test.tsx --runInBand --forceExit` | PASS: 4 suites, 32 tests; browser success/failure, accessible links, official contact and existing direct deletion behavior covered |
+| `npx expo-doctor` | PASS: 21/21 |
+| Public HTTPS/TLS/redirects | PASS for request/confirmation pages on both hosts; see rollout evidence. Actual production email token/configuration not inspected. |
+
+Current legal/account audit preserves consumption-only behavior, direct authenticated deletion and truthful queue/status wording. No checkout steering, Play refund claim, invented grace period/completion date, login cancellation or guaranteed training/retention outcome introduced. Existing Jest forceExit and authParity hydration warning remain. No FE/backend edit, production deletion, binary check or Console submission performed.

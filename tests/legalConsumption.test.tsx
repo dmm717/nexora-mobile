@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import React from 'react';
+import { Linking } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import fs from 'fs';
 import path from 'path';
@@ -8,7 +9,8 @@ import { TermsOfServiceContent } from '@/components/ui/legal/TermsOfServiceConte
 import { PaymentPolicyContent } from '@/components/ui/legal/PaymentPolicyContent';
 import { DataDeletionContent } from '@/components/ui/legal/DataDeletionContent';
 import { LegalComplianceCard } from '@/components/account/LegalComplianceCard';
-import { WEBSITE_URL, PRIVACY_URL, ACCOUNT_DELETION_URL } from '@/constants/legal';
+import { WEBSITE_URL, PRIVACY_URL, ACCOUNT_DELETION_URL, SUPPORT_EMAIL } from '@/constants/legal';
+import { toast } from '@/components/ui/toast/ToastProvider';
 
 jest.mock('@/components/themed-text', () => {
   const { Text } = require('react-native');
@@ -28,7 +30,7 @@ it.each([PrivacyPolicyContent, TermsOfServiceContent, PaymentPolicyContent, Data
   'renders current policy without false billing claims or obsolete contacts', async Component => {
     const view = await render(<Component {...props} />);
     const content = JSON.stringify(await view.toJSON());
-    expect(content).not.toMatch(/Google Play Billing|support@nexora\.vn|https:\/\/nexora\.vn|store\/account\/subscriptions/);
+    expect(content).not.toMatch(/Google Play Billing|support@nexora\.(vn|com)|nexorainterview@gmail\.com|https:\/\/nexora\.vn|store\/account\/subscriptions/);
     expect(await view.toJSON()).toBeTruthy();
   },
 );
@@ -40,13 +42,33 @@ it('keeps all four policies accessible from account settings', async () => {
   }
   expect(openLegalModal.mock.calls).toEqual([['privacy'], ['terms'], ['payment'], ['deletion']]);
 });
-it('prepares the canonical deletion URL without an active rollout link', async () => {
+it.each([PrivacyPolicyContent, DataDeletionContent])('opens the verified public deletion URL in the system browser from legal content', async Component => {
   expect(WEBSITE_URL).toBe('https://www.nexorainterview.io.vn');
   expect(PRIVACY_URL).toBe(`${WEBSITE_URL}/privacy`);
   expect(ACCOUNT_DELETION_URL).toBe(`${WEBSITE_URL}/account-deletion`);
-  const view = await render(<DataDeletionContent {...props} />);
-  expect(JSON.stringify(await view.toJSON())).toContain('chưa được xác minh');
+  const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  const view = await render(<Component {...props} />);
+  const link = view.getByRole('link', { name: 'Mở trang yêu cầu xóa tài khoản Nexora' });
+  expect(link.props.accessibilityHint).toContain('không cần đăng nhập');
+  await fireEvent.press(link);
+  expect(openURL).toHaveBeenCalledWith(ACCOUNT_DELETION_URL);
+  expect(JSON.stringify(await view.toJSON())).not.toMatch(/chưa được xác minh|đang được triển khai/);
   expect(JSON.stringify(await view.toJSON())).toContain('30 phút');
+  openURL.mockRestore();
+});
+
+it('handles browser failure without implying in-app deletion depends on the website', async () => {
+  const openURL = jest.spyOn(Linking, 'openURL').mockRejectedValue(new Error('browser unavailable'));
+  const view = await render(<DataDeletionContent {...props} />);
+  await fireEvent.press(view.getByRole('link'));
+  expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('vẫn có thể gửi yêu cầu xóa trong Cài đặt tài khoản'));
+  openURL.mockRestore();
+});
+
+it('publishes only the owner-selected support email', async () => {
+  expect(SUPPORT_EMAIL).toBe('nexorainterview.vn@gmail.com');
+  const view = await render(<PrivacyPolicyContent {...props} />);
+  expect(JSON.stringify(await view.toJSON())).toContain(SUPPORT_EMAIL);
 });
 
 it('guards active native source against checkout APIs, purchase SDKs and checkout links', () => {
