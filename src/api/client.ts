@@ -13,6 +13,10 @@ if (!API_BASE_URL) {
   throw new Error('Missing EXPO_PUBLIC_API_URL environment variable. Check your .env setup.');
 }
 
+if (process.env.EXPO_PUBLIC_ENV === 'production' && API_BASE_URL !== 'https://api.nexorainterview.io.vn/api/v1') {
+  throw new Error('Production requires EXPO_PUBLIC_API_URL=https://api.nexorainterview.io.vn/api/v1');
+}
+
 if (!__DEV__ && !API_BASE_URL.startsWith('https://')) {
   throw new Error('SECURITY: API_BASE_URL must use https:// in production.');
 }
