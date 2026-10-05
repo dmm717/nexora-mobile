@@ -8,6 +8,12 @@ const hour = now.getHours().toString().padStart(2, '0');
 const autoVersionCode = parseInt(`${year}${month}${day}${hour}`);
 
 module.exports = ({ config }) => {
+  if (process.env.EAS_BUILD_PROFILE === 'production' || process.env.EXPO_PUBLIC_ENV === 'production') {
+    if (process.env.EXPO_PUBLIC_API_URL !== 'https://api.nexorainterview.io.vn/api/v1') {
+      throw new Error('Production requires EXPO_PUBLIC_API_URL=https://api.nexorainterview.io.vn/api/v1');
+    }
+  }
+
   return {
     ...config,
     android: {
