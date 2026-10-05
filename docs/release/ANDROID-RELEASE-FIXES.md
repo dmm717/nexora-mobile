@@ -47,7 +47,7 @@ No pricing, entitlement, navigation, speech, token handling, backend, upload con
 - npm ci: passed; existing peer/deprecation warnings and 62 dependency advisories (12 moderate, 50 high).
 - npm run lint: passed.
 - npx tsc --noEmit: passed (repo has no typecheck script).
-- npm run test:ci -- --runInBand --testTimeout=15000 --coverageDirectory=dist/test-coverage: 17 suites, 119 tests passed, including auth/login/refresh/logout, pricing/entitlement and avatar regressions. Existing hydration test logs Unsupported BodyInit type; this is not device session-restore proof.
+- npm run test:ci -- --runInBand --testTimeout=15000 --coverageDirectory=dist/test-coverage: 17 suites, 119 tests passed, including existing auth validation/login-error, refresh single-flight, session-clearing, pricing/entitlement and avatar regressions. Existing hydration test logs Unsupported BodyInit type; this is not full successful-login/logout or device session-restore proof.
 - Default 5-second Jest timeout intermittently failed the existing interviewReportingResources test; it passed in another default-timeout run and in the final 15-second run. Plain npm test also left open handles; the canonical test:ci script uses forceExit.
 - npx expo-doctor: 21/21 passed.
 - npm audit --omit=dev --audit-level=critical: passed the configured threshold; the above moderate/high advisories remain.
