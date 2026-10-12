@@ -17,7 +17,8 @@
       "buildNumber": "26100213"
     },
     "android": {
-      "package": "com.nexora.app",
+      "package": "com.vuvietanh.nexora",
+      "versionCode": 26101301,
       "permissions": [],
       "blockedPermissions": [
         "android.permission.ACCESS_FINE_LOCATION",
@@ -45,6 +46,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "./plugins/with-local-android-release",
       "expo-router",
       "expo-asset",
       [

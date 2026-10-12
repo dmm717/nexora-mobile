@@ -13,6 +13,14 @@ expo-env.d.ts
 .kotlin/
 *.orig.*
 *.jks
+*.keystore
+*.pfx
+.nexora-upload-build.properties
+*.aab
+*.apk
+local.properties
+/deliverables/*.log
+/.local-build/
 *.p8
 *.p12
 *.key
