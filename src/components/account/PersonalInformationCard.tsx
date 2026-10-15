@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import React, { useEffect, useState } from 'react';
 import { View, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,7 +48,7 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
       toast.success('Cập nhật thông tin cá nhân thành công!');
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Không thể cập nhật thông tin cá nhân.');
+      toast.error(getUserErrorMessage(err, 'Không thể cập nhật thông tin cá nhân.'));
     },
   });
 
@@ -116,7 +117,7 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
         }
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Không thể tải ảnh lên. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(err, 'Không thể tải ảnh lên. Vui lòng thử lại.'));
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -137,7 +138,7 @@ export const PersonalInformationCard = ({ currentUserData, colors }: { currentUs
             await refreshUser();
             toast.success('Đã xóa ảnh đại diện.');
           } catch (err: any) {
-            toast.error(err?.message || 'Không thể xóa ảnh.');
+            toast.error(getUserErrorMessage(err, 'Không thể xóa ảnh.'));
           } finally {
             setIsUploadingAvatar(false);
           }

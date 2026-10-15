@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, Pressable, View, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -41,7 +42,7 @@ export default function VerifyEmailScreen() {
     },
     onError: (error) => {
       if (error instanceof AppError) {
-        toast.error(`[${error.code}] ${error.message}`);
+        toast.error(getUserErrorMessage(error));
       } else {
         toast.error('Có lỗi xảy ra khi gửi lại email');
       }
@@ -69,7 +70,7 @@ export default function VerifyEmailScreen() {
         >
           {/* Header */}
           <Animated.View entering={FadeInDown.duration(800).easing(Easing.out(Easing.cubic))} style={styles.brandHeader}>
-            <Image source={require('@/assets/images/logo.png')} style={styles.logoImage} resizeMode="contain" />
+            <Image source={require('@/assets/images/play-console-icon.png')} style={styles.logoImage} resizeMode="contain" />
             <ThemedText type="title" style={styles.title}>
               Kiểm tra Email
             </ThemedText>

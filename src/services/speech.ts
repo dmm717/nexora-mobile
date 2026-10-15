@@ -1,3 +1,4 @@
+import { getUserErrorMessage, UserFacingError } from '@/utils/errorTranslator';
 /**
  * speech.ts — Native STT: expo-audio recording + Azure STT REST API.
  *
@@ -120,7 +121,7 @@ async function transcribeWithAzure(
   });
 
   if (response.status !== 200) {
-    throw new Error('Không thể chuyển giọng nói thành văn bản. Vui lòng thử lại hoặc dùng bàn phím.');
+    throw new UserFacingError('Không thể chuyển giọng nói thành văn bản. Vui lòng thử lại hoặc dùng bàn phím.');
   }
 
   const json = JSON.parse(response.body);
@@ -132,7 +133,7 @@ async function transcribeWithAzure(
   if (json.RecognitionStatus === 'NoMatch' || json.RecognitionStatus === 'InitialSilenceTimeout') {
     return ''; // No speech detected
   }
-  throw new Error('Không thể nhận diện giọng nói. Vui lòng thử lại hoặc dùng bàn phím.');
+  throw new UserFacingError('Không thể nhận diện giọng nói. Vui lòng thử lại hoặc dùng bàn phím.');
 }
 
 // ---------------------------------------------------------------------------
@@ -232,7 +233,7 @@ export function useNativeStt(interviewId: string | undefined): UseNativeSttRetur
     } catch (err: any) {
       logger.warn('STT transcription failed:', { error: err?.message || err });
       setStatus('error');
-      setErrorMessage(err.message || 'Không thể nhận diện giọng nói. Vui lòng thử lại.');
+      setErrorMessage(getUserErrorMessage(err, 'Không thể nhận diện giọng nói. Vui lòng thử lại hoặc dùng bàn phím.'));
       return '';
     } finally {
       // Clean up temp file (Phase 1.2 strict requirement)

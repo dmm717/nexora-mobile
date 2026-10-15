@@ -1,3 +1,4 @@
+import { getUserErrorMessage, UserFacingError } from '@/utils/errorTranslator';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -115,14 +116,14 @@ export function useInterviewSession(id: string | undefined) {
   // Show STT errors
   useEffect(() => {
     if (audio.sttErrorMessage) {
-      toast.error(audio.sttErrorMessage);
+      toast.error('Không thể nhận diện giọng nói. Vui lòng kiểm tra microphone, thử lại hoặc dùng bàn phím.');
     }
   }, [audio.sttErrorMessage]);
   // Submit answer mutation
   const submitAnswerMutation = useMutation({
     mutationFn: async () => {
-      if (!currentQuestion) throw new Error('Không có câu hỏi hiện tại');
-      if (!answerText.trim()) throw new Error('Vui lòng nhập hoặc thu âm câu trả lời');
+      if (!currentQuestion) throw new UserFacingError('Không có câu hỏi hiện tại');
+      if (!answerText.trim()) throw new UserFacingError('Vui lòng nhập hoặc thu âm câu trả lời');
       audio.stopTts();
       if (audio.isRecording) {
         audio.toggleSpeech();
@@ -157,7 +158,7 @@ export function useInterviewSession(id: string | undefined) {
       refetch();
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể nộp câu trả lời. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(err, 'Không thể nộp câu trả lời. Vui lòng thử lại.'));
     }
   });
   // Derived AI Presence State
@@ -190,7 +191,7 @@ export function useInterviewSession(id: string | undefined) {
       refetch();
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể hoàn thành phỏng vấn.');
+      toast.error(getUserErrorMessage(err, 'Không thể hoàn thành phỏng vấn.'));
     }
   });
   // Continue Interview mutation (Paid / Deep Continuation)
@@ -205,7 +206,7 @@ export function useInterviewSession(id: string | undefined) {
       refetch();
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể tiếp tục phỏng vấn.');
+      toast.error(getUserErrorMessage(err, 'Không thể tiếp tục phỏng vấn.'));
     }
   });
   const retryQuestionPreparationMutation = useMutation({
@@ -217,7 +218,7 @@ export function useInterviewSession(id: string | undefined) {
       refetch();
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể thử lại chuẩn bị câu hỏi.');
+      toast.error(getUserErrorMessage(err, 'Không thể thử lại chuẩn bị câu hỏi.'));
     }
   });
   return {

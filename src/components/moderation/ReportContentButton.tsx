@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import { isReportableContentId, reportApi, reportContentTypes, ReportContentType, ReportReasonCode } from '@/api/report.api';
 import { AppError } from '@/api/types';
 import { toast } from '@/components/ui/toast/ToastProvider';
@@ -63,7 +64,7 @@ export function ReportContentButton({
     } catch (e: unknown) {
       toast.error(e instanceof AppError && e.code === 'RESOURCE_NOT_FOUND'
         ? 'Nội dung đã thay đổi hoặc không còn sẵn sàng. Vui lòng tải lại để báo cáo.'
-        : e instanceof Error ? e.message : 'Không thể gửi báo cáo lúc này. Vui lòng thử lại sau.');
+        : getUserErrorMessage(e, 'Không thể gửi báo cáo lúc này. Vui lòng thử lại sau.'));
     } finally {
       inFlight.current = false;
       setIsSubmitting(false);

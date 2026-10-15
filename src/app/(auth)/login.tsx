@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import { authApi } from '@/api/auth.api';
 import { AppError } from '@/api/types';
 import { LegalPolicyModal, PolicyTab } from '@/components/ui/legal-policy-modal';
@@ -94,7 +95,7 @@ export default function LoginScreen() {
             { text: 'Hủy', style: 'cancel' },
           ]);
         } else {
-          toast.error(`[${error.code}] ${error.message}`);
+          toast.error(getUserErrorMessage(error));
         }
       } else {
         toast.error('Có lỗi xảy ra khi kết nối hệ thống. Vui lòng thử lại.');
@@ -119,7 +120,7 @@ export default function LoginScreen() {
     },
     onError: (error) => {
       if (error instanceof AppError) {
-        toast.error(`[${error.code}] ${error.message}`);
+        toast.error(getUserErrorMessage(error));
       } else {
         toast.error('Có lỗi xảy ra khi tạo tài khoản');
       }
@@ -135,7 +136,7 @@ export default function LoginScreen() {
     },
     onError: (error) => {
       if (error instanceof AppError) {
-        toast.error(`[${error.code}] ${error.message}`);
+        toast.error(getUserErrorMessage(error));
       } else {
         toast.error('Có lỗi xảy ra khi gửi yêu cầu khôi phục mật khẩu.');
       }
@@ -199,7 +200,7 @@ export default function LoginScreen() {
       {isSplash && (
         <Animated.View exiting={FadeOut.duration(500)} style={styles.splashContainer}>
           <Image
-            source={require('@/assets/images/logo.png')}
+            source={require('@/assets/images/play-console-icon.png')}
             style={styles.splashLogo}
             resizeMode="contain"
           />

@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import React from 'react';
 import { ActivityIndicator, ScrollView, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -257,7 +258,7 @@ export default function LearningPathScreen() {
       queryClient.invalidateQueries({ queryKey: ['learning-path'] });
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể tạo lộ trình. Bạn đã có Mục tiêu Nghề nghiệp chưa?');
+      toast.error(getUserErrorMessage(err, 'Không thể tạo lộ trình. Bạn đã có Mục tiêu Nghề nghiệp chưa?'));
     },
   });
 
@@ -268,7 +269,7 @@ export default function LearningPathScreen() {
       queryClient.invalidateQueries({ queryKey: ['learning-path'] });
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể làm mới lộ trình học tập.');
+      toast.error(getUserErrorMessage(err, 'Không thể làm mới lộ trình học tập.'));
     },
   });
 
@@ -278,7 +279,7 @@ export default function LearningPathScreen() {
       queryClient.invalidateQueries({ queryKey: ['learning-path'] });
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể cập nhật trạng thái nhiệm vụ.');
+      toast.error(getUserErrorMessage(err, 'Không thể cập nhật trạng thái nhiệm vụ.'));
     },
   });
 

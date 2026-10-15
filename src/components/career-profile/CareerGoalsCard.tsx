@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import React from 'react';
 import { View, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -31,7 +32,7 @@ export const CareerGoalsCard = ({ activeGoal, otherGoals, colors }: CareerGoalsC
       toast.success('Kích hoạt mục tiêu nghề nghiệp thành công!');
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Không thể kích hoạt mục tiêu.');
+      toast.error(getUserErrorMessage(err, 'Không thể kích hoạt mục tiêu.'));
     },
   });
 
@@ -43,7 +44,7 @@ export const CareerGoalsCard = ({ activeGoal, otherGoals, colors }: CareerGoalsC
       toast.success('Đã lưu trữ mục tiêu nghề nghiệp');
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Không thể lưu trữ mục tiêu.');
+      toast.error(getUserErrorMessage(err, 'Không thể lưu trữ mục tiêu.'));
     },
   });
 
@@ -55,7 +56,7 @@ export const CareerGoalsCard = ({ activeGoal, otherGoals, colors }: CareerGoalsC
       toast.success('Đã xóa mục tiêu nghề nghiệp');
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Không thể xóa mục tiêu.');
+      toast.error(getUserErrorMessage(err, 'Không thể xóa mục tiêu.'));
     },
   });
 

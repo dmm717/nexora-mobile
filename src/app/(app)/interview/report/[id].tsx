@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import React, { useState } from 'react';
 import { ScrollView, View, TouchableOpacity, Share, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -142,7 +143,7 @@ export default function ReportScreen() {
       router.replace(`/(app)/interview/${data.id}` as any);
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể tạo phiên luyện tập lại. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(err, 'Không thể tạo phiên luyện tập lại. Vui lòng thử lại.'));
     },
   });
 
@@ -158,7 +159,7 @@ export default function ReportScreen() {
       toast.info('Hệ thống đang tiến hành chấm điểm lại báo cáo...');
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể yêu cầu chấm điểm lại.');
+      toast.error(getUserErrorMessage(err, 'Không thể yêu cầu chấm điểm lại.'));
     },
   });
 

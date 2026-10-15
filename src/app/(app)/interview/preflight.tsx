@@ -1,3 +1,4 @@
+import { getUserErrorMessage, UserFacingError } from '@/utils/errorTranslator';
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -98,20 +99,20 @@ export default function PreflightScreen() {
       let finalJdId = selectedJdId;
 
       if (!role.trim()) {
-        throw new Error('Vui lòng nhập vai trò mục tiêu cho phiên phỏng vấn.');
+        throw new UserFacingError('Vui lòng nhập vai trò mục tiêu cho phiên phỏng vấn.');
       }
 
       if (interviewType === 'cv_targeted') {
         const resume = resumes?.find(r => r.id === selectedResumeId);
         if (!resume || resume.status !== 'ready') {
-           throw new Error('Chủ đề phỏng vấn theo CV yêu cầu bạn phải chọn một bản CV ở trạng thái Sẵn sàng (Ready).');
+           throw new UserFacingError('Chủ đề phỏng vấn theo CV yêu cầu bạn phải chọn một bản CV ở trạng thái Sẵn sàng (Ready).');
         }
       }
 
       if (interviewType === 'jd_targeted') {
         if (jdMode === 'new') {
           if (!newJdTitle.trim() || !newJdContent.trim()) {
-            throw new Error('Vui lòng nhập tiêu đề và nội dung Job Description mới');
+            throw new UserFacingError('Vui lòng nhập tiêu đề và nội dung Job Description mới');
           }
           if (!jdIdempotencyRef.current) jdIdempotencyRef.current = require('../../../utils/uuid').generateIdempotencyKey();
           
@@ -122,7 +123,7 @@ export default function PreflightScreen() {
           finalJdId = createdJd.id;
         } else {
           if (!finalJdId) {
-            throw new Error('Vui lòng chọn một Job Description đã lưu hoặc tạo JD mới.');
+            throw new UserFacingError('Vui lòng chọn một Job Description đã lưu hoặc tạo JD mới.');
           }
         }
       }
@@ -146,7 +147,7 @@ export default function PreflightScreen() {
       router.replace(`/(app)/interview/${data.id}?micMode=${micMode}` as any);
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể khởi tạo phiên phỏng vấn. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(err, 'Không thể khởi tạo phiên phỏng vấn. Vui lòng thử lại.'));
     },
   });
 

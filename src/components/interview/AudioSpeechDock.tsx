@@ -30,8 +30,6 @@ export interface AudioSpeechDockProps {
   canFinishEarly: boolean;
   colors: any;
   isMicEnabled?: boolean;
-  isCameraOn?: boolean;
-  onToggleCamera?: () => void;
 }
 export function AudioSpeechDock({
   answerText,
@@ -48,8 +46,6 @@ export function AudioSpeechDock({
   canFinishEarly,
   colors,
   isMicEnabled = true,
-  isCameraOn = false,
-  onToggleCamera,
 }: AudioSpeechDockProps) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -259,13 +255,6 @@ export function AudioSpeechDock({
               <Ionicons name="keypad" size={20} color={colors.text} />
             </View>
             <ThemedText style={{ fontSize: 10, color: colors.textSecondary }}>Bàn phím</ThemedText>
-          </TouchableOpacity>
-          {/* Camera */}
-          <TouchableOpacity style={{ alignItems: 'center', width: 60 }} onPress={onToggleCamera} disabled={isSubmitting}>
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: isCameraOn ? (colors.primary || '#6366f1') + '20' : colors.backgroundElement, justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
-              <Ionicons name={isCameraOn ? 'videocam' : 'videocam-off'} size={20} color={isCameraOn ? colors.primary : colors.text} />
-            </View>
-            <ThemedText style={{ fontSize: 10, color: colors.textSecondary }}>Camera</ThemedText>
           </TouchableOpacity>
           {/* MAIN MIC */}
           <TouchableOpacity

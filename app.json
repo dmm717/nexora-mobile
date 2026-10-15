@@ -4,12 +4,12 @@
     "slug": "nexora-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/play-console-icon.png",
     "scheme": "nexoramobile",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.nexora.app",
-      "icon": "./assets/images/icon.png",
+      "icon": "./assets/images/play-console-icon.png",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Nexora cần quyền truy cập microphone để bạn thực hành phỏng vấn qua giọng nói.",
         "ITSAppUsesNonExemptEncryption": false
@@ -17,7 +17,8 @@
       "buildNumber": "26100213"
     },
     "android": {
-      "package": "com.nexora.app",
+      "package": "com.vuvietanh.nexora",
+      "versionCode": 26101502,
       "permissions": [],
       "blockedPermissions": [
         "android.permission.ACCESS_FINE_LOCATION",
@@ -33,25 +34,24 @@
         "android.permission.RECEIVE_BOOT_COMPLETED"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#D4EEFF",
+        "foregroundImage": "./assets/images/play-console-icon.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/play-console-icon.png"
     },
     "plugins": [
+      "./plugins/with-local-android-release",
       "expo-router",
       "expo-asset",
       [
         "expo-splash-screen",
         {
           "backgroundColor": "#ffffff",
-          "image": "./assets/images/logo.png",
+          "image": "./assets/images/play-console-icon.png",
           "imageWidth": 120
         }
       ],

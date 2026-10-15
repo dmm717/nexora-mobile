@@ -5,6 +5,7 @@ import { setAudioModeAsync } from 'expo-audio';
 
 import { AppProvider } from '@/providers/app-provider';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
+import { AppUpdatePrompt } from '@/components/AppUpdatePrompt';
 import { logger } from '@/services/logger';
 
 import { 
@@ -47,6 +48,7 @@ function RootLayout() {
       <AppProvider>
         <ThemeProvider value={DefaultTheme}>
           <Stack screenOptions={{ headerShown: false }} />
+          <AppUpdatePrompt />
         </ThemeProvider>
       </AppProvider>
     </GlobalErrorBoundary>

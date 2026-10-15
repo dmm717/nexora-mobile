@@ -1,3 +1,4 @@
+import { getUserErrorMessage, UserFacingError } from '@/utils/errorTranslator';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { ScrollView, View, Alert, RefreshControl } from 'react-native';
@@ -82,7 +83,7 @@ export default function ResumesScreen() {
       const uploadResult = await uploadTask.uploadAsync();
 
       if (!uploadResult) {
-        throw new Error('Upload bị hủy');
+        throw new UserFacingError('Upload bị hủy');
       }
 
       if (uploadResult.status < 200 || uploadResult.status >= 300) {
@@ -97,7 +98,7 @@ export default function ResumesScreen() {
       toast.success('Đã tải lên CV thành công');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Không thể tải lên CV. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(error, 'Không thể tải lên CV. Vui lòng thử lại.'));
       logger.error('Failed to upload CV', error);
     },
     onSettled: async (_, __, variables) => {
@@ -133,7 +134,7 @@ export default function ResumesScreen() {
       toast.success('Đã đặt làm CV chính');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Không thể đặt CV làm CV chính.');
+      toast.error(getUserErrorMessage(error, 'Không thể đặt CV làm CV chính.'));
     }
   });
 
@@ -147,7 +148,7 @@ export default function ResumesScreen() {
       toast.success('Đã xóa CV thành công');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Không thể xóa CV. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(error, 'Không thể xóa CV. Vui lòng thử lại.'));
     }
   });
 
@@ -267,7 +268,7 @@ export default function ResumesScreen() {
             <GlassCard style={styles.emptyContainer}>
               <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
               <ThemedText style={styles.emptyText}>
-                {(error as any)?.message ? `[${(error as any)?.code || 'Lỗi'}] ${(error as any)?.message}` : 'Có lỗi xảy ra khi tải danh sách CV.'}
+                {getUserErrorMessage(error, 'Có lỗi xảy ra khi tải danh sách CV. Vui lòng thử lại.')}
               </ThemedText>
               <TouchableScale
                 style={[styles.retryBtn, { backgroundColor: colors.primary }]}

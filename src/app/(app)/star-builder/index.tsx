@@ -1,3 +1,4 @@
+import { getUserErrorMessage, UserFacingError } from '@/utils/errorTranslator';
 import React, { useState, useEffect, useCallback } from 'react';
 import { ScrollView, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -72,8 +73,8 @@ export default function StarBuilderScreen() {
 
   const createStarMutation = useMutation({
     mutationFn: async () => {
-      if (!question.trim()) throw new Error('Vui lòng nhập câu hỏi phỏng vấn');
-      if (!answer.trim()) throw new Error('Vui lòng nhập câu trả lời');
+      if (!question.trim()) throw new UserFacingError('Vui lòng nhập câu hỏi phỏng vấn');
+      if (!answer.trim()) throw new UserFacingError('Vui lòng nhập câu trả lời');
 
       const res = await starApi.create({
         question: question.trim(),
@@ -86,7 +87,7 @@ export default function StarBuilderScreen() {
       queryClient.invalidateQueries({ queryKey: ['star-attempts'] });
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể phân tích mô hình STAR. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(err, 'Không thể phân tích mô hình STAR. Vui lòng thử lại.'));
     }
   });
 

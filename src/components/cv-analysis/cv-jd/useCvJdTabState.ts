@@ -1,3 +1,4 @@
+import { getUserErrorMessage, UserFacingError } from '@/utils/errorTranslator';
 import { useCallback, useMemo, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
@@ -157,7 +158,7 @@ export function useCvJdTabState() {
       queryClient.invalidateQueries({ queryKey: ['career-profile'] });
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể thiết lập CV chính.');
+      toast.error(getUserErrorMessage(err, 'Không thể thiết lập CV chính.'));
     }
   });
   const analyzeMutation = useMutation({
@@ -167,15 +168,15 @@ export function useCvJdTabState() {
         : selectedResumeId;
       if (!finalResumeId) {
         if (useCurrentProfile) {
-          throw new Error('Chưa chọn CV chính. Vui lòng tải lên hoặc đặt một CV làm Primary CV trước.');
+          throw new UserFacingError('Chưa chọn CV chính. Vui lòng tải lên hoặc đặt một CV làm Primary CV trước.');
         } else {
-          throw new Error('Vui lòng tải lên hoặc chọn một CV để phân tích.');
+          throw new UserFacingError('Vui lòng tải lên hoặc chọn một CV để phân tích.');
         }
       }
       let payload: any;
       if (mode === 'job_targeted') {
         if (!jdTitle.trim() || !jdContent.trim()) {
-          throw new Error('Vui lòng nhập tiêu đề và nội dung Mô Tả Công Việc (JD)');
+          throw new UserFacingError('Vui lòng nhập tiêu đề và nội dung Mô Tả Công Việc (JD)');
         }
         const createdJd = await jobDescriptionsApi.create({
           title: jdTitle.trim(),
@@ -192,7 +193,7 @@ export function useCvJdTabState() {
         if (useCurrentProfile) {
           const activeGoal = profile?.activeCareerGoal;
           if (!activeGoal) {
-            throw new Error('Vui lòng thiết lập Mục Tiêu Nghề Nghiệp trong hồ sơ trước khi phân tích theo vị trí mục tiêu.');
+            throw new UserFacingError('Vui lòng thiết lập Mục Tiêu Nghề Nghiệp trong hồ sơ trước khi phân tích theo vị trí mục tiêu.');
           }
           payload = {
             resumeId: finalResumeId,
@@ -201,7 +202,7 @@ export function useCvJdTabState() {
           };
         } else {
           if (!industry.trim() || !targetRole.trim() || !seniority.trim()) {
-            throw new Error('Vui lòng nhập đủ Ngành nghề, Vị trí và Cấp bậc kinh nghiệm.');
+            throw new UserFacingError('Vui lòng nhập đủ Ngành nghề, Vị trí và Cấp bậc kinh nghiệm.');
           }
           payload = {
             resumeId: finalResumeId,
@@ -222,13 +223,13 @@ export function useCvJdTabState() {
     },
     onError: (err: any) => {
       if (err?.code === 'FEATURE_QUOTA_EXCEEDED' || err?.code === 'FEATURE_NOT_AVAILABLE') {
-        toast.error(err.message || 'Bạn đã sử dụng hết lượt phân tích CV trong gói hiện tại.');
+        toast.error(getUserErrorMessage(err, 'Bạn đã sử dụng hết lượt phân tích CV trong gói hiện tại.'));
       } else if (err?.code === 'RESUME_NOT_READY') {
-        toast.error(err.message || 'CV của bạn đang được hệ thống xử lý (trích xuất văn bản). Vui lòng đợi vài giây và thử lại.');
+        toast.error(getUserErrorMessage(err, 'CV của bạn đang được hệ thống xử lý (trích xuất văn bản). Vui lòng đợi vài giây và thử lại.'));
       } else if (err?.code === 'RESUME_ANALYSIS_CONTEXT_INVALID') {
-        toast.error(err.message || 'Mục tiêu nghề nghiệp hiện tại của bạn chưa có đủ thông tin cho phương thức này. Vui lòng thiết lập lại mục tiêu hoặc chọn Phân tích theo mục tiêu khác.');
+        toast.error(getUserErrorMessage(err, 'Mục tiêu nghề nghiệp hiện tại của bạn chưa có đủ thông tin cho phương thức này. Vui lòng thiết lập lại mục tiêu hoặc chọn Phân tích theo mục tiêu khác.'));
       } else {
-        toast.error(err.message || 'Không thể bắt đầu phân tích CV. Vui lòng thử lại.');
+        toast.error(getUserErrorMessage(err, 'Không thể bắt đầu phân tích CV. Vui lòng thử lại.'));
       }
     }
   });
@@ -248,7 +249,7 @@ export function useCvJdTabState() {
         setCurrentFileName,
       }),
     onError: (error: any) => {
-      toast.error(error.message || 'Đã xảy ra lỗi khi upload CV.');
+      toast.error(getUserErrorMessage(error, 'Đã xảy ra lỗi khi upload CV.'));
     },
   });
   const handleUploadResume = useCallback(() => uploadMutation.mutate(), [uploadMutation]);

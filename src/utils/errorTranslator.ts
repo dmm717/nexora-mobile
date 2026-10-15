@@ -27,7 +27,43 @@ export const translateErrorMessage = (englishMessage: string): string => {
   return 'Đã có lỗi xảy ra. Vui lòng thử lại hoặc liên hệ hỗ trợ.';
 };
 
+const USER_ERRORS: Record<string, string> = {
+  EMAIL_NOT_VERIFIED: 'Bạn cần xác minh email trước khi đăng nhập.',
+  USER_UNVERIFIED: 'Bạn cần xác minh email trước khi đăng nhập.',
+  EMAIL_ALREADY_REGISTERED: 'Email này đã được đăng ký. Vui lòng đăng nhập hoặc khôi phục mật khẩu.',
+  RATE_LIMITED: 'Bạn thao tác quá nhanh. Vui lòng đợi một lúc rồi thử lại.',
+  INVALID_REFRESH_TOKEN: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+  UNAUTHENTICATED: 'Bạn cần đăng nhập để tiếp tục.',
+  FORBIDDEN: 'Bạn chưa có quyền sử dụng chức năng này.',
+  NOT_FOUND: 'Không tìm thấy nội dung. Vui lòng tải lại và thử lại.',
+  RESOURCE_NOT_FOUND: 'Nội dung không còn khả dụng. Vui lòng tải lại.',
+  INCORRECT_CURRENT_PASSWORD: 'Mật khẩu hiện tại không chính xác.',
+  EMAIL_VERIFICATION_INVALID: 'Liên kết xác minh không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu gửi lại.',
+  PASSWORD_RESET_INVALID: 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu gửi lại.',
+  FEATURE_QUOTA_EXCEEDED: 'Bạn đã sử dụng hết lượt của chức năng này trong gói hiện tại.',
+  QUOTA_EXCEEDED: 'Bạn đã sử dụng hết lượt trong gói hiện tại.',
+  FEATURE_NOT_AVAILABLE: 'Chức năng này chưa có trong gói hiện tại của bạn.',
+  RESUME_NOT_READY: 'CV đang được xử lý. Vui lòng đợi một lúc rồi thử lại.',
+  RESUME_ANALYSIS_CONTEXT_INVALID: 'Thông tin phân tích chưa đầy đủ. Vui lòng kiểm tra CV và mục tiêu nghề nghiệp.',
+  ACTIVE_CAREER_GOAL_REQUIRED: 'Vui lòng thiết lập mục tiêu nghề nghiệp trước khi tiếp tục.',
+  INTERVIEW_REPORT_PROCESSING: 'Báo cáo đang được xử lý. Vui lòng đợi một lúc.',
+  INTERVIEW_REPORT_FAILED: 'Chưa thể tạo báo cáo. Vui lòng thử lại.',
+  INTERVIEW_REPORT_UNAVAILABLE: 'Báo cáo chưa khả dụng. Vui lòng thử lại sau.',
+};
+
+// Only local, deliberately authored validation messages may bypass the code map.
+export class UserFacingError extends Error {}
+
+export function getUserErrorMessage(error: unknown, fallback = 'Đã có lỗi xảy ra. Vui lòng thử lại.'): string {
+  if (error instanceof UserFacingError) return error.message;
+  if (error && typeof error === 'object' && 'code' in error && typeof error.code === 'string') {
+    return translateErrorCode(error.code) ?? fallback;
+  }
+  return fallback;
+}
+
 export const translateErrorCode = (code: string): string | null => {
+  if (Object.prototype.hasOwnProperty.call(USER_ERRORS, code)) return USER_ERRORS[code];
   switch (code) {
     case 'UNAUTHORIZED':
     case 'INVALID_CREDENTIALS':
@@ -58,9 +94,8 @@ export function extractErrorMessage(data: any, fallbackMessage: string): string 
       const codeMsg = translateErrorCode(data.error.code);
       if (codeMsg) return codeMsg;
     }
-    if (data.error.message) {
-      return data.error.message;
-    }
+    // Backend/provider messages are untrusted display text, even if Vietnamese.
+    return translateErrorMessage(fallbackMessage);
   }
 
   // 2. Direct message string

@@ -77,12 +77,12 @@ class WebSpeechAPI {
             this.recognition.start();
             this.isListening = true;
             return;
-          } catch (e: any) {
-            listener.onError(e.message || 'Không thể bật Microphone');
+          } catch {
+            listener.onError('Không thể bật microphone. Vui lòng kiểm tra quyền truy cập rồi thử lại.');
             return;
           }
         }
-        listener.onError(err.message || 'Không thể bật Microphone');
+        listener.onError('Không thể bật microphone. Vui lòng kiểm tra quyền truy cập rồi thử lại.');
       }
     } else {
       this.isListening = true;
@@ -146,7 +146,7 @@ class WebSpeechAPI {
       }
 
       this.isListening = false;
-      let userFriendlyError = event.error || 'Lỗi nhận diện giọng nói';
+      let userFriendlyError = 'Không thể nhận diện giọng nói. Vui lòng thử lại hoặc dùng bàn phím.';
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
         userFriendlyError = 'Microphone chưa được cấp quyền. Vui lòng cho phép truy cập Micro trong cài đặt trình duyệt hoặc thiết bị.';
       } else if (event.error === 'network') {

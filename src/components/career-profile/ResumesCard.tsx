@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import React, { useState } from 'react';
 import { View, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -32,7 +33,7 @@ export const ResumesCard = ({ resumes, primaryResume, colors }: ResumesCardProps
       toast.success('Đã cập nhật CV chính');
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Không thể cập nhật CV chính.');
+      toast.error(getUserErrorMessage(err, 'Không thể cập nhật CV chính.'));
     },
   });
 
@@ -44,7 +45,7 @@ export const ResumesCard = ({ resumes, primaryResume, colors }: ResumesCardProps
       toast.success('Đã xóa CV');
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Không thể xóa CV.');
+      toast.error(getUserErrorMessage(err, 'Không thể xóa CV.'));
     },
   });
 
@@ -97,7 +98,7 @@ export const ResumesCard = ({ resumes, primaryResume, colors }: ResumesCardProps
         toast.success('Đã tải lên CV mới thành công!');
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Không thể tải lên CV. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(err, 'Không thể tải lên CV. Vui lòng thử lại.'));
     } finally {
       setIsUploadingCv(false);
     }

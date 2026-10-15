@@ -14,6 +14,16 @@ function configure(env) {
 }
 
 describe("Android release configuration", () => {
+  it("uses the registered Play package and a deterministic Android versionCode", () => {
+    const first = configure({});
+    const second = configure({});
+    expect(first.android.package).toBe("com.vuvietanh.nexora");
+    expect(first.android.versionCode).toBe(app.android.versionCode);
+    expect(second.android.versionCode).toBe(first.android.versionCode);
+    expect(first.android.versionCode).toBeGreaterThan(0);
+    expect(first.android.versionCode).toBeLessThanOrEqual(2100000000);
+    expect(first.ios.bundleIdentifier).toBe("com.nexora.app");
+  });
   it("blocks broad image access while retaining microphone and picker", () => {
     expect(app.android.blockedPermissions).toContain("android.permission.READ_MEDIA_IMAGES");
     expect(app.android.blockedPermissions).not.toContain("android.permission.RECORD_AUDIO");

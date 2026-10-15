@@ -1,3 +1,4 @@
+import { UserFacingError } from '@/utils/errorTranslator';
 import { apiClient, createIdempotencyKey } from './client';
 import { UserDto } from './types/auth.types';
 
@@ -26,7 +27,7 @@ function unwrapDeletionRequest(body: unknown): DeletionRequest | null {
   if (!value || typeof value !== 'object' || !('id' in value) || typeof value.id !== 'string' ||
       !('status' in value) || typeof value.status !== 'string' ||
       !('requestedAt' in value) || typeof value.requestedAt !== 'string') {
-    throw new Error('Không thể xác minh trạng thái yêu cầu xóa. Vui lòng kiểm tra lại trước khi gửi tiếp.');
+    throw new UserFacingError('Không thể xác minh trạng thái yêu cầu xóa. Vui lòng kiểm tra lại trước khi gửi tiếp.');
   }
   return value as DeletionRequest;
 }
@@ -60,7 +61,7 @@ export const userApi = {
       headers: { 'Idempotency-Key': idempotencyKey, 'X-No-Auth-Retry': 'true' }
     });
     const request = unwrapDeletionRequest(res.data);
-    if (!request) throw new Error('Máy chủ chưa xác nhận yêu cầu xóa tài khoản.');
+    if (!request) throw new UserFacingError('Máy chủ chưa xác nhận yêu cầu xóa tài khoản.');
     return request;
   },
 

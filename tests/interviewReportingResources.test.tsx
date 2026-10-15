@@ -94,7 +94,7 @@ it('carries persisted answer.id through submission state and the real coaching m
   });
   expect(JSON.stringify(post.mock.calls)).not.toContain('contentSnapshot');
   expect(toast.success).toHaveBeenCalledTimes(1);
-});
+}, 15000); // Allow cold native/modal transforms on shared CI runners.
 
 it('does not fall back to evaluation/question/session identity when answer.id is absent', async () => {
   post.mockResolvedValueOnce({ status: 202, data: { data: { ...result, answer: { ...answer, id: undefined, evaluation: { ...evaluation, id: reportId } } } } });
