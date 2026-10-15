@@ -12,3 +12,5 @@ Local verification:
 The previously handed-off, signed AAB 26101502 was built from commit `2fd26b14ac85baf61472f3210fa9eb8f38f2fd6e` and earlier local build sources, before this dependency remediation. Its SHA-256 remains `919eddfed2d0f89224cd597b62bda995335b7e18d93fb2f149e94eec3ac134bf`. It does not contain these new dependency patches. No AAB was rebuilt, uploaded or replaced during this follow-up. A subsequent release needs a higher versionCode, a fresh signed native build and binary/device validation.
 
 Existing tracked historical coverage reports are retained; newly generated coverage output is ignored.
+
+The first GitHub rerun passed TypeScript, ESLint, Security Audit and Expo Doctor, but the initial full interview/coaching/report interaction exceeded Jest's default five-second timeout. CI now executes suites sequentially to avoid runner contention, and that one cold-render integration test has a 15-second budget. Its assertions are unchanged; no tests are skipped and no CI gate is bypassed.
