@@ -47,6 +47,7 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+/coverage/
 
 example
 
