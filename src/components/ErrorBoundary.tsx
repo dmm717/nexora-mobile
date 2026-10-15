@@ -56,11 +56,6 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
         <Text style={styles.description}>
           Xin lỗi, ứng dụng Nexora vừa gặp lỗi và không thể tiếp tục. Bạn có thể thử lại hoặc mở email để liên hệ hỗ trợ; ứng dụng không tự động gửi báo cáo lỗi.
         </Text>
-        {__DEV__ && (
-          <View style={styles.devErrorBox}>
-            <Text style={styles.devErrorText}>{error.message}</Text>
-          </View>
-        )}
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={retry}>
             <Text style={styles.primaryButtonText}>Thử lại ngay</Text>

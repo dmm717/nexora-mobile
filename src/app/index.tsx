@@ -8,7 +8,7 @@ export default function RootRedirect() {
   if (isLoading) {
     return (
       <View style={styles.splashContainer}>
-        <Image source={require('@/assets/images/logo.png')} style={styles.splashLogo} resizeMode="contain" />
+        <Image source={require('@/assets/images/play-console-icon.png')} style={styles.splashLogo} resizeMode="contain" />
       </View>
     );
   }

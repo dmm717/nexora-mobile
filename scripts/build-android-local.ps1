@@ -68,7 +68,7 @@ try {
     Push-Location android
     try {
         $ErrorActionPreference = 'Continue'
-        & ./gradlew.bat :app:bundleRelease --no-daemon --console=plain --stacktrace --max-workers=2 *> $gradleLog
+        & ./gradlew.bat :app:bundleRelease --no-daemon --console=plain --stacktrace --max-workers=1 *> $gradleLog
         $gradleExit = $LASTEXITCODE
     } finally {
         $ErrorActionPreference = 'Stop'

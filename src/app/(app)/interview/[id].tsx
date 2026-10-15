@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, TouchableOpacity, View, AppState, Linking } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
@@ -29,35 +28,6 @@ export default function InterviewRoomScreen() {
   const themeKey = colorScheme === 'dark' ? 'dark' : 'light';
   const colors = Colors[themeKey];
   const [showExitModal, setShowExitModal] = useState(false);
-  const [isCameraOn, setIsCameraOn] = useState(false);
-  const [permission, requestPermission] = useCameraPermissions();
-  const [appState, setAppState] = useState(AppState.currentState);
-  React.useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      setAppState(nextAppState);
-    });
-    return () => subscription.remove();
-  }, []);
-  const handleToggleCamera = async () => {
-    if (isCameraOn) {
-      setIsCameraOn(false);
-      return;
-    }
-    
-    if (!permission?.granted) {
-      const response = await requestPermission();
-      if (!response.granted) {
-        if (!response.canAskAgain) {
-           Alert.alert('Cấp quyền Camera', 'Chúng tôi cần camera để phân tích biểu cảm phỏng vấn. Vui lòng vào Cài đặt để cấp quyền cho Nexora.', [
-             { text: 'Hủy', style: 'cancel' },
-             { text: 'Mở Cài đặt', onPress: () => Linking.openSettings() }
-           ]);
-        }
-        return;
-      }
-    }
-    setIsCameraOn(true);
-  };
   const {
     router,
     interview,
@@ -280,28 +250,6 @@ export default function InterviewRoomScreen() {
           </View>
           <View style={{ width: 32 }} />
         </View>
-        {isCameraOn && permission?.granted && appState === 'active' && (
-          <View style={{
-            position: 'absolute',
-            top: 75,
-            right: 16,
-            width: 100,
-            height: 140,
-            borderRadius: 12,
-            overflow: 'hidden',
-            borderWidth: 2,
-            borderColor: colors.cardBorder,
-            backgroundColor: '#000',
-            elevation: 5,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-            zIndex: 100,
-          }}>
-            <CameraView style={{ flex: 1 }} facing="front" mute={true} />
-          </View>
-        )}
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* AI Presence Header */}
           <AiInterviewerPresence
@@ -370,8 +318,6 @@ export default function InterviewRoomScreen() {
             canFinishEarly={interview.continuation?.canFinishNow === true}
             colors={colors}
             isMicEnabled={isMicEnabled}
-            isCameraOn={isCameraOn}
-            onToggleCamera={handleToggleCamera}
           />
         )}
         {/* Quick Coaching Drawer / Modal */}

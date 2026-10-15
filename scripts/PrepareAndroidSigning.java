@@ -10,6 +10,25 @@ import java.util.*;
 // Run in a real console. Passwords never enter process arguments or logs.
 class PrepareAndroidSigning {
   public static void main(String[] args) throws Exception {
+    try {
+      prepare(args);
+    } catch (Exception failure) {
+      // Only exception class names are logged; never passwords or key material.
+      if (args.length == 4) {
+        Throwable cause = failure;
+        StringBuilder types = new StringBuilder();
+        while (cause != null) {
+          types.append(cause.getClass().getName()).append(System.lineSeparator());
+          cause = cause.getCause();
+        }
+        Files.writeString(Path.of(args[0]).toAbsolutePath().getParent()
+            .resolve("signing-validation-error.txt"), types.toString());
+      }
+      throw failure;
+    }
+  }
+
+  private static void prepare(String[] args) throws Exception {
     if (args.length != 4) throw new IllegalArgumentException("Expected keystore, PEM, protected properties path and public SHA-256");
     Path keystore = Path.of(args[0]).toAbsolutePath();
     Path output = Path.of(args[2]).toAbsolutePath();

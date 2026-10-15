@@ -5,7 +5,8 @@ import { validatePassword, validateEmail } from '../src/utils/validation';
 import { toast } from '../src/components/ui/toast/ToastProvider';
 import LoginScreen from '../src/app/(auth)/login';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '../src/context/auth-context';
+import { AuthProvider, useAuth } from '../src/context/auth-context';
+import { authApi } from '../src/api/auth.api';
 
 // ── All mocks MUST be at top-level ──────────────────────────────
 
@@ -100,6 +101,43 @@ const renderWithProviders = (ui: React.ReactElement) => {
 // ── Tests ───────────────────────────────────────────────────────
 
 describe('Auth Parity & Validation Tests', () => {
+  describe('Login failure recovery', () => {
+    it.each(['HTTP 401', 'Network Error'])(
+      'ends loading after %s and allows a successful retry', async (message) => {
+        let auth!: ReturnType<typeof useAuth>;
+        function Probe() {
+          auth = useAuth();
+          return null;
+        }
+        renderWithProviders(<Probe />);
+        await waitFor(() => expect(auth.isLoading).toBe(false));
+        let rejectRequest!: (error: Error) => void;
+        jest.mocked(authApi.login).mockImplementationOnce(() => new Promise((_, reject) => {
+          rejectRequest = reject;
+        }));
+        let request!: Promise<void>;
+        await act(async () => {
+          request = auth.login({ email: 'test@example.com', password: 'wrong-password' });
+        });
+        expect(auth.isLoading).toBe(true);
+        await act(async () => {
+          rejectRequest(new Error(message));
+          await expect(request).rejects.toThrow(message);
+        });
+        expect(auth.isLoading).toBe(false);
+        expect(auth.isAuthenticated).toBe(false);
+        jest.mocked(authApi.login).mockResolvedValueOnce({
+          accessToken: 'test-access', refreshToken: 'test-refresh',
+          user: { id: 'user-1', name: 'Test User' },
+        } as any);
+        await act(async () => {
+          await auth.login({ email: 'test@example.com', password: 'valid-password' });
+        });
+        expect(auth.isLoading).toBe(false);
+        expect(auth.isAuthenticated).toBe(true);
+      },
+    );
+  });
   describe('validatePassword', () => {
     it('returns error for short password', () => {
       expect(validatePassword('abc')).toBe('Mật khẩu phải có ít nhất 8 ký tự');

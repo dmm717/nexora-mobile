@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -60,7 +61,7 @@ export function ProductFeedbackModal({ visible, onClose, myFeedback }: ProductFe
       onClose();
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể gửi đánh giá. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(err, 'Không thể gửi đánh giá. Vui lòng thử lại.'));
     },
   });
 
@@ -72,7 +73,7 @@ export function ProductFeedbackModal({ visible, onClose, myFeedback }: ProductFe
       onClose();
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể xóa đánh giá. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(err, 'Không thể xóa đánh giá. Vui lòng thử lại.'));
     },
   });
 

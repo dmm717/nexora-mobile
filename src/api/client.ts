@@ -142,22 +142,20 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const reqIdSuffix = requestId ? ` (ReqID: ${requestId.substring(0, 8)})` : '';
-
     // Auto-trigger Toast for API failures (displaying ONLY Vietnamese message, NO raw error codes)
     // Skip toast for transient polling status (409 INTERVIEW_REPORT_PROCESSING) and expected empty states (404/400/403)
     if (isReportProcessing || error.response?.status === 404 || isCareerGoalRequired || isFeatureNotAvailable) {
       // Do not trigger toast error for expected polling state or missing initial state
     } else if (!error.response) {
-      toast.error(`Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.${reqIdSuffix}`);
+      toast.error('Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.');
     } else if (error.response.status === 401) {
       // Handled via refresh flow below
     } else if (error.response.status === 429) {
-      toast.warning(`Hệ thống đang xử lý quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.${reqIdSuffix}`);
+      toast.warning('Hệ thống đang xử lý quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.');
     } else if (error.response.status >= 500) {
-      toast.error(`Máy chủ gặp sự cố tạm thời. Vui lòng thử lại sau.${reqIdSuffix}`);
+      toast.error('Máy chủ gặp sự cố tạm thời. Vui lòng thử lại sau.');
     } else if (extractedMessage) {
-      toast.error(`${extractedMessage}${reqIdSuffix}`);
+      toast.error(extractedMessage);
     }
 
     // Xử lý 401 Unauthorized

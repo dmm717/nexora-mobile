@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import React, { useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
@@ -22,7 +23,7 @@ export const SecurityCard = ({ colors }: { colors: any }) => {
       setConfirmPassword('');
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Lỗi khi đổi mật khẩu.');
+      toast.error(getUserErrorMessage(err, 'Lỗi khi đổi mật khẩu.'));
     },
   });
   const handleChangePassword = () => {

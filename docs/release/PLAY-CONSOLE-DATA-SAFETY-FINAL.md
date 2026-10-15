@@ -1,5 +1,7 @@
 # Google Play Data Safety — final source-backed worksheet
 
+**Android release update, 2026-10-15:** package `com.vuvietanh.nexora`, versionCode `26101501` now has binary-backed SDK evidence in [the release addendum](ANDROID-26101501-RELEASE.md). `expo-camera` and its ML Kit/DataTransport dependencies were removed. The older scope and backend evidence below remain historical; do not use the older “SDK installation identifier: No” row to certify version `26101301`, which contained ML Kit, or all active tracks without reconciliation.
+
 Reviewed 2026-10-05. **Declaration strategy ready; release/submission not yet approved.**
 See [provider scope review](PROVIDER-AGREEMENT-REVIEW.md).
 Use with [final audit](GOOGLE-PLAY-POLICY-FINAL-AUDIT.md) and [published-content checklist](PUBLISHED-PRIVACY-APPROVAL-CHECKLIST.md).
@@ -129,4 +131,10 @@ Owner's real deletion test accepted as evidence; no destructive repeat.
 - [Payments / consumption-only](https://support.google.com/googleplay/android-developer/answer/10281818?hl=en).
 
 Owner must reconcile all active distributed versions; do not copy this new-release matrix onto an older Sentry-enabled build.
+
+### Release 26101502 addendum — Google Play update check
+
+26101502 adds `com.google.android.play:app-update:2.1.0` through a local Expo module. The prior "SDK-free" wording above refers to the older proposed configuration and must not be read as a claim that this release has no SDK data handling. The module checks actual Play update availability; it does not add Advertising ID access or an analytics SDK. Final binary checks are recorded in `ANDROID-26101502-RELEASE.md`.
+
+Google's [in-app updates Data safety guidance](https://developer.android.com/guide/playcore/in-app-updates) documents device metadata, application version and installed modules/asset packs used for update availability/size, encryption, no third-party transfer and fixed retention. Reconcile this library with the applicable Play form and all active versions. This addendum does not modify the live Console declaration or certify device/network behavior.
 

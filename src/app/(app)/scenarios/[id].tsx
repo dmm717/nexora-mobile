@@ -1,3 +1,4 @@
+import { getUserErrorMessage, UserFacingError } from '@/utils/errorTranslator';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { ActivityIndicator, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -75,7 +76,7 @@ export default function ScenarioDetailScreen() {
   // Start new attempt mutation
   const startAttemptMutation = useMutation({
     mutationFn: async () => {
-      if (!scenario?.id) throw new Error('Chưa chọn tình huống');
+      if (!scenario?.id) throw new UserFacingError('Chưa chọn tình huống');
       return await scenariosApi.createAttempt(scenario.id);
     },
     onSuccess: (newAttempt) => {
@@ -84,13 +85,13 @@ export default function ScenarioDetailScreen() {
       queryClient.invalidateQueries({ queryKey: ['scenario-history', id] });
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể tạo lượt thử mới.');
+      toast.error(getUserErrorMessage(err, 'Không thể tạo lượt thử mới.'));
     },
   });
   // Submit attempt mutation
   const submitAttemptMutation = useMutation({
     mutationFn: async () => {
-      if (!answer.trim()) throw new Error('Vui lòng nhập hoặc thu âm câu trả lời');
+      if (!answer.trim()) throw new UserFacingError('Vui lòng nhập hoặc thu âm câu trả lời');
       let targetAttemptId = activeAttemptId;
       if (!targetAttemptId || activeAttempt?.status !== 'draft') {
         try {
@@ -121,13 +122,13 @@ export default function ScenarioDetailScreen() {
       queryClient.invalidateQueries({ queryKey: ['scenario-attempt', data.id] });
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Không thể nộp bài làm tình huống. Vui lòng thử lại.');
+      toast.error(getUserErrorMessage(err, 'Không thể nộp bài làm tình huống. Vui lòng thử lại.'));
     },
   });
   // Retry scenario mutation
   const retryMutation = useMutation({
     mutationFn: async () => {
-      if (!scenario?.id) throw new Error('Chưa chọn tình huống');
+      if (!scenario?.id) throw new UserFacingError('Chưa chọn tình huống');
       return await scenariosApi.retry(scenario.id);
     },
     onSuccess: (newAttempt) => {
@@ -148,7 +149,7 @@ export default function ScenarioDetailScreen() {
           return;
         }
       }
-      toast.error(err.message || 'Không thể tạo lượt luyện tập mới.');
+      toast.error(getUserErrorMessage(err, 'Không thể tạo lượt luyện tập mới.'));
     },
   });
   const [isExporting, setIsExporting] = useState(false);

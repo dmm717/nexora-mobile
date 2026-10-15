@@ -1,3 +1,4 @@
+import { UserFacingError } from '@/utils/errorTranslator';
 import { apiClient as api } from './client';
 
 export type ReportContentType = 
@@ -54,7 +55,7 @@ export interface ReportContentPayload {
 
 export const reportApi = {
   submitReport: async (payload: ReportContentPayload): Promise<ReportReceipt> => {
-    if (!isReportableContentId(payload.contentId)) throw new Error('Tải lại nội dung để báo cáo.');
+    if (!isReportableContentId(payload.contentId)) throw new UserFacingError('Tải lại nội dung để báo cáo.');
     // Explicit allow-list: callers cannot attach snapshots or reporter identities.
     const { data, status } = await api.post<{ data?: ReportReceipt }>('/content-reports', {
       contentType: payload.contentType,
@@ -65,7 +66,7 @@ export const reportApi = {
     const receipt = data?.data;
     if (status !== 202 || !receipt || !isReportableContentId(receipt.reportId) ||
         typeof receipt.receivedAt !== 'string' || !Number.isFinite(Date.parse(receipt.receivedAt))) {
-      throw new Error('Máy chủ chưa xác nhận đã nhận báo cáo. Vui lòng thử lại sau.');
+      throw new UserFacingError('Máy chủ chưa xác nhận đã nhận báo cáo. Vui lòng thử lại sau.');
     }
     return receipt;
   },

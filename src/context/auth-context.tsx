@@ -117,25 +117,29 @@ async function loginAsync(
   queryClient: QueryClient,
 ): Promise<void> {
   setIsLoading(true);
-  clearInterviewSpeechAuthorizationCache();
-  queryClient.clear(); // Flush cached data from any previous account session
-  const res = await authApi.login(payload);
-  if (res.accessToken) {
-    await tokenStorage.setAccessToken(res.accessToken);
-  }
-  if (res.refreshToken) {
-    await tokenStorage.setRefreshToken(res.refreshToken);
-  }
-  if (res.user) {
-    setUser(res.user);
-  } else {
-    const token = await tokenStorage.getAccessToken();
-    if (token) {
-      const me = await authApi.getMe();
-      setUser(me);
+  try {
+    clearInterviewSpeechAuthorizationCache();
+    queryClient.clear(); // Flush cached data from any previous account session
+    const res = await authApi.login(payload);
+    if (res.accessToken) {
+      await tokenStorage.setAccessToken(res.accessToken);
     }
+    if (res.refreshToken) {
+      await tokenStorage.setRefreshToken(res.refreshToken);
+    }
+    if (res.user) {
+      setUser(res.user);
+    } else {
+      const token = await tokenStorage.getAccessToken();
+      if (token) {
+        const me = await authApi.getMe();
+        setUser(me);
+      }
+    }
+  } finally {
+    // Keep the form usable when login or the follow-up profile request fails.
+    setIsLoading(false);
   }
-  setIsLoading(false);
 }
 
 async function logoutAsync(

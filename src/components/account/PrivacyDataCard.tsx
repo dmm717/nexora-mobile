@@ -1,3 +1,4 @@
+import { getUserErrorMessage } from '@/utils/errorTranslator';
 import React, { useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,7 +35,7 @@ export const PrivacyDataCard = ({ currentUserData, colors }: { currentUserData: 
         fileUriToCleanUp = null;
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Không thể trích xuất dữ liệu.');
+      toast.error(getUserErrorMessage(err, 'Không thể trích xuất dữ liệu.'));
     } finally {
       setIsExporting(false);
       if (fileUriToCleanUp) {
